@@ -11,6 +11,7 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadCont
 import { parseEther } from 'viem';
 import ShareModal from '@/components/ui/ShareModal';
 import MUSDLogo from '@/components/ui/MUSDLogo';
+import SubscriptionSection from '@/components/profile/SubscriptionSection';
 
 // Simplified ABIs
 const TIPPING_ABI = [
@@ -292,6 +293,14 @@ export default function CreatorProfile() {
                 </p>
               </div>
             </div>
+          </div>
+
+          {/* Subscription Section */}
+          <div className="glass-card p-10 relative overflow-hidden">
+            <SubscriptionSection 
+              creatorAddress={creator.address} 
+              creatorName={creator.name} 
+            />
           </div>
 
           {/* Tipping Section */}
