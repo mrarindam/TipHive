@@ -26,7 +26,7 @@ export default function CreatorCard({ creator }: CreatorProps) {
     <>
       <motion.div
         whileHover={{ y: -5 }}
-        className="glass-card overflow-hidden group hover:border-[#F7931A]/50 transition-all"
+        className="glass-card overflow-hidden group hover:border-[#F7931A]/30 transition-all border-white/5"
       >
         <div className="h-32 bg-gradient-to-br from-[#F7931A]/20 to-transparent relative">
           <div className="absolute -bottom-8 left-6">
@@ -39,26 +39,37 @@ export default function CreatorCard({ creator }: CreatorProps) {
               unoptimized
             />
           </div>
-          <div className="absolute top-4 right-4 bg-black/40 backdrop-blur-md px-3 py-1 rounded-full text-xs font-bold text-[#F7931A] border border-white/5">
-            {creator.category}
-          </div>
         </div>
 
         <div className="p-6 pt-12">
           <div className="flex justify-between items-start mb-4">
-            <div>
-              <h3 className="text-xl font-bold text-white group-hover:text-[#F7931A] transition-colors font-outfit">
+            <div className="min-w-0 flex-1">
+              <h3 className="text-xl font-bold text-white group-hover:text-[#F7931A] transition-colors font-outfit truncate">
                 {creator.name}
               </h3>
-              <p className="text-xs text-slate-500 font-mono">
-                {creator.address.slice(0, 6)}...{creator.address.slice(-4)}
+              <p className="text-xs text-[#F7931A]/80 font-bold mt-0.5">
+                {creator.username ? `@${creator.username}` : ''}
               </p>
             </div>
-            <div className="text-right">
+            <div className="text-right shrink-0 ml-3">
               <p className="text-sm font-semibold text-slate-400 uppercase tracking-wider">Total Tips</p>
-              <p className="text-lg font-black text-white flex items-center gap-1">{creator.total_earned || 0} <MUSDLogo className="w-5 h-5" /></p>
+              <p className="text-lg font-black text-white flex items-center gap-1 justify-end">{creator.total_earned || 0} <MUSDLogo className="w-5 h-5" /></p>
             </div>
           </div>
+
+          {/* Categories */}
+          {creator.category && (
+            <div className="flex flex-wrap gap-1.5 mb-3">
+              {creator.category.split(',').map((cat) => cat.trim()).filter(Boolean).map((cat) => (
+                <span
+                  key={cat}
+                  className="text-[10px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded-full bg-[#F7931A]/10 border border-[#F7931A]/25 text-[#F7931A]"
+                >
+                  {cat}
+                </span>
+              ))}
+            </div>
+          )}
 
           <p className="text-slate-400 text-sm line-clamp-2 mb-6 h-10">
             {creator.bio}
@@ -72,9 +83,9 @@ export default function CreatorCard({ creator }: CreatorProps) {
               <Heart className="w-4 h-4 fill-current" />
               Tip Creator
             </Link>
-            <button 
+            <button
               onClick={() => setIsShareModalOpen(true)}
-              className="p-2.5 rounded-xl bg-white/5 border border-white/10 hover:bg-white/10 transition-colors"
+              className="p-2.5 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10 transition-colors"
             >
               <Share2 className="w-4 h-4 text-[#F7931A]" />
             </button>
@@ -82,7 +93,7 @@ export default function CreatorCard({ creator }: CreatorProps) {
         </div>
       </motion.div>
 
-      <ShareModal 
+      <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
         url={`http://localhost:3000/profile/${creator.username || creator.address}`}

@@ -15,10 +15,10 @@ const mezoTestnet = {
   name: 'Mezo Testnet',
   nativeCurrency: { name: 'Bitcoin', symbol: 'BTC', decimals: 18 },
   rpcUrls: {
-    default: { http: ['https://mezo-testnet.drpc.org'] },
+    default: { http: ['https://rpc.test.mezo.org'] },
   },
   blockExplorers: {
-    default: { name: 'MezoScan', url: 'https://testnet.mezoscan.io' },
+    default: { name: 'Mezo Explorer', url: 'https://explorer.test.mezo.org' },
   },
 } as const satisfies Chain;
 
@@ -27,16 +27,17 @@ const config = getDefaultConfig({
   projectId: process.env.NEXT_PUBLIC_WC_PROJECT_ID || '80300a74d538e14674718507c30d931a',
   chains: [mezoTestnet],
   transports: {
-    [mezoTestnet.id]: http(process.env.NEXT_PUBLIC_MEZO_RPC_URL),
+    [mezoTestnet.id]: http(process.env.NEXT_PUBLIC_MEZO_RPC_URL || 'https://rpc.test.mezo.org'),
   },
   ssr: true,
+  multiInjectedProviderDiscovery: true,
 });
 
 const queryClient = new QueryClient();
 
 export function Web3Provider({ children }: { children: React.ReactNode }) {
   return (
-    <WagmiProvider config={config}>
+    <WagmiProvider config={config} reconnectOnMount={true}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider 
           theme={darkTheme({

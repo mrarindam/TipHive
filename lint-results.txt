@@ -1,0 +1,119 @@
+
+C:\Hackathon\superpay\web\src\app\dashboard\page.tsx
+  134:21  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  199:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Hackathon\superpay\web\src\app\dashboard\page.tsx:199:7
+  197 |   useEffect(() => {
+  198 |     if (isConnected && address) {
+> 199 |       fetchData();
+      |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  200 |     }
+  201 |   }, [address, isConnected, fetchData]);
+  202 |                                                                                                                                                    react-hooks/set-state-in-effect
+  207:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Hackathon\superpay\web\src\app\dashboard\page.tsx:207:7
+  205 |       refetchTipBalance();
+  206 |       refetchSubEarnings();
+> 207 |       fetchData();
+      |       ^^^^^^^^^ Avoid calling setState() directly within an effect
+  208 |       setWithdrawCelebration({ amount: pendingWithdrawAmount });
+  209 |     }
+  210 |   }, [tipWithdrawSuccess, subWithdrawSuccess, fetchData, refetchTipBalance, refetchSubEarnings, pendingWithdrawAmount]);  react-hooks/set-state-in-effect
+  576:48  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  655:10  warning  'EditProfileModal' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                        @typescript-eslint/no-unused-vars
+  655:71  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  681:19  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+  760:57  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                            @typescript-eslint/no-explicit-any
+
+C:\Hackathon\superpay\web\src\app\discover\page.tsx
+  55:40  error  Unexpected any. Specify a different type  @typescript-eslint/no-explicit-any
+
+C:\Hackathon\superpay\web\src\app\page.tsx
+   12:3    warning  'Heart' is defined but never used                                @typescript-eslint/no-unused-vars
+   24:8    warning  'Image' is defined but never used                                @typescript-eslint/no-unused-vars
+  256:147  error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  343:33   error    `'` can be escaped with `&apos;`, `&lsquo;`, `&#39;`, `&rsquo;`  react/no-unescaped-entities
+  527:10   warning  'StatItem' is defined but never used                             @typescript-eslint/no-unused-vars
+  548:10   warning  'FeatureCard' is defined but never used                          @typescript-eslint/no-unused-vars
+
+C:\Hackathon\superpay\web\src\app\profile\[address]\page.tsx
+  6:100  warning  'MessageCircle' is defined but never used  @typescript-eslint/no-unused-vars
+  6:115  warning  'AtSign' is defined but never used         @typescript-eslint/no-unused-vars
+
+C:\Hackathon\superpay\web\src\app\profile\page.tsx
+  214:9   warning  'handleEnableCreator' is assigned a value but never used                                                                                                                                                                                                                                 @typescript-eslint/no-unused-vars
+  300:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  401:26  error    'Loader2' is not defined                                                                                                                                                                                                                                                                 react/jsx-no-undef
+
+C:\Hackathon\superpay\web\src\app\register\page.tsx
+   14:42  error    Unexpected any. Specify a different type                                                                                                                                                                                                                                                 @typescript-eslint/no-explicit-any
+  125:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+C:\Hackathon\superpay\web\src\app\settings\page.tsx
+  11:9  warning  'router' is assigned a value but never used  @typescript-eslint/no-unused-vars
+
+C:\Hackathon\superpay\web\src\components\dashboard\MySubscriptions.tsx
+   42:22  warning  'isConfirming' is assigned a value but never used                                                                                            @typescript-eslint/no-unused-vars
+   48:6   warning  React Hook useEffect has a missing dependency: 'fetchSubscriptions'. Either include it or remove the dependency array                        react-hooks/exhaustive-deps
+   64:68  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+   72:73  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+   81:41  error    Unexpected any. Specify a different type                                                                                                     @typescript-eslint/no-explicit-any
+  151:6   warning  React Hook useEffect has missing dependencies: 'fetchSubscriptions' and 'subscriptions'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Hackathon\superpay\web\src\components\dashboard\SubscriptionManager.tsx
+    5:16  warning  'Edit2' is defined but never used                                                                                                                                                                                                                     @typescript-eslint/no-unused-vars
+    5:37  warning  'AlertCircle' is defined but never used                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+    5:71  warning  'DollarSign' is defined but never used                                                                                                                                                                                                                @typescript-eslint/no-unused-vars
+   41:17  warning  'receipt' is assigned a value but never used                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+   47:36  error    Unexpected any. Specify a different type                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+   52:6   warning  React Hook useEffect has a missing dependency: 'fetchPlans'. Either include it or remove the dependency array                                                                                                                                         react-hooks/exhaustive-deps
+  100:39  error    Unexpected any. Specify a different type                                                                                                                                                                                                              @typescript-eslint/no-explicit-any
+  161:6   warning  React Hook useEffect has missing dependencies: 'fetchPlans', 'formData.description', 'formData.durationDays', 'formData.name', 'formData.perks', 'formData.price', 'plans', and 'refetchCounter'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+C:\Hackathon\superpay\web\src\components\layout\NotificationBell.tsx
+   4:26  warning  'Check' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               @typescript-eslint/no-unused-vars
+   4:33  warning  'Trash2' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                              @typescript-eslint/no-unused-vars
+   4:41  warning  'X' is defined but never used                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                   @typescript-eslint/no-unused-vars
+  40:7   error    Error: Calling setState synchronously within an effect can trigger cascading renders
+
+Effects are intended to synchronize state between React and external systems such as manually updating the DOM, state management libraries, or other platform APIs. In general, the body of an effect should do one or both of the following:
+* Update external systems with the latest state from React.
+* Subscribe for updates from some external system, calling setState in a callback function when external state changes.
+
+Calling setState synchronously within an effect body causes cascading renders that can hurt performance, and is not recommended. (https://react.dev/learn/you-might-not-need-an-effect).
+
+C:\Hackathon\superpay\web\src\components\layout\NotificationBell.tsx:40:7
+  38 |   useEffect(() => {
+  39 |     if (isConnected && address) {
+> 40 |       fetchNotifications();
+     |       ^^^^^^^^^^^^^^^^^^ Avoid calling setState() directly within an effect
+  41 |       const interval = setInterval(fetchNotifications, 30000); // Poll every 30s
+  42 |       return () => clearInterval(interval);
+  43 |     }  react-hooks/set-state-in-effect
+  44:6   warning  React Hook useEffect has a missing dependency: 'fetchNotifications'. Either include it or remove the dependency array                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                           react-hooks/exhaustive-deps
+
+C:\Hackathon\superpay\web\src\components\profile\SubscriptionSection.tsx
+  5:30  warning  'Star' is defined but never used         @typescript-eslint/no-unused-vars
+  5:43  warning  'AlertCircle' is defined but never used  @typescript-eslint/no-unused-vars
+
+C:\Hackathon\superpay\web\src\components\wallet\WalletProfileMenu.tsx
+   42:10  warning  'formatToken' is defined but never used                                                                                                                                                                                                                                                  @typescript-eslint/no-unused-vars
+   58:19  warning  'setMezoUsd' is assigned a value but never used                                                                                                                                                                                                                                          @typescript-eslint/no-unused-vars
+  227:15  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+  243:23  warning  Using `<img>` could result in slower LCP and higher bandwidth. Consider using `<Image />` from `next/image` or a custom image loader to automatically optimize images. This may incur additional usage or cost from your provider. See: https://nextjs.org/docs/messages/no-img-element  @next/next/no-img-element
+
+✖ 48 problems (18 errors, 30 warnings)

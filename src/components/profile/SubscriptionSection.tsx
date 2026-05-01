@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Zap, Shield, Star, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { Check, Zap, Shield, Clock, Loader2 } from 'lucide-react';
 import { useAccount, useWriteContract, useReadContract, useConfig } from 'wagmi';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther, formatEther } from 'viem';
@@ -33,6 +33,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<'idle' | 'approving' | 'subscribing' | 'success' | 'error'>('idle');
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
+  const [previewPlan, setPreviewPlan] = useState<Plan | null>(null);
 
   const config = useConfig();
 
@@ -88,6 +89,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
     }
 
     setSelectedPlan(plan);
+    setPreviewPlan(null);
 
     try {
       // 1. Check Allowance
@@ -135,6 +137,31 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
         amount_to_add: parseFloat(plan.price.toString())
       });
 
+      // Create subscription notification via API
+      try {
+        // Fetch subscriber's name
+        const { data: subscriberProfile } = await supabase
+          .from('user_profiles')
+          .select('display_name, username')
+          .eq('wallet_address', userAddress.toLowerCase())
+          .single();
+
+        const subscriberName = subscriberProfile?.display_name || (subscriberProfile?.username ? `@${subscriberProfile.username}` : `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`);
+
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            wallet: creatorAddress.toLowerCase(),
+            action: 'create',
+            type: 'subscription',
+            content: `New subscriber! ${subscriberName} joined your ${plan.name} circle. 🌟`,
+          })
+        });
+      } catch (err) {
+        console.error('Failed to create notification:', err);
+      }
+
       setTimeout(() => {
         setStatus('idle');
         setSelectedPlan(null);
@@ -148,13 +175,13 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
   if (loading) return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
       {[1, 2].map(i => (
-        <div key={i} className="h-80 bg-white/5 rounded-[2rem] border border-white/10" />
+        <div key={i} className="h-80 bg-white/5 rounded-[2rem] border border-white/5" />
       ))}
     </div>
   );
 
   if (plans.length === 0) return (
-    <div className="py-12 text-center glass-card border-dashed border-white/10">
+    <div className="py-12 text-center glass-card border-dashed border-white/5">
       <Zap className="w-10 h-10 text-slate-800 mx-auto mb-4 opacity-50" />
       <p className="text-slate-500 font-medium uppercase text-xs tracking-widest">No Exclusive Tiers Available Yet</p>
     </div>
@@ -182,7 +209,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
             className={`relative group rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${
               index === 1 
                 ? 'bg-gradient-to-br from-[#F7931A]/20 via-black to-black border-[#F7931A]/40 hover:border-[#F7931A]' 
-                : 'bg-white/5 border-white/10 hover:border-white/30'
+                : 'bg-white/5 border-white/5 hover:border-white/30'
             }`}
           >
             <div className={`absolute top-0 inset-x-0 h-40 opacity-20 blur-3xl pointer-events-none ${
@@ -235,7 +262,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
               </div>
 
               <button
-                onClick={() => handleSubscribe(plan)}
+                onClick={() => setPreviewPlan(plan)}
                 disabled={status === 'approving' || status === 'subscribing'}
                 className={`w-full py-5 rounded-2xl font-black font-outfit uppercase tracking-tighter flex items-center justify-center gap-3 transition-all ${
                   index === 1 
@@ -258,6 +285,49 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
       </div>
 
       <AnimatePresence>
+        {previewPlan && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4 backdrop-blur-xl"
+            onClick={() => setPreviewPlan(null)}
+          >
+            <motion.div
+              initial={{ scale: 0.92, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.92, y: 20 }}
+              className="glass-card max-w-lg w-full p-8 relative overflow-hidden"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-[#F7931A]/20 blur-3xl" />
+              <h3 className="relative font-outfit text-4xl font-black uppercase tracking-tighter text-white">{previewPlan.name}</h3>
+              <p className="relative mt-2 text-slate-400">{previewPlan.description || `Support ${creatorName} and unlock this tier.`}</p>
+              <div className="relative my-6 rounded-2xl border border-white/5 bg-white/5 p-5">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-500">Price</span>
+                  <span className="flex items-center gap-2 text-2xl font-black text-[#F7931A]">{previewPlan.price} <MUSDLogo className="h-5 w-5" /></span>
+                </div>
+                <div className="mt-3 flex items-center justify-between">
+                  <span className="text-xs font-black uppercase tracking-widest text-slate-500">Duration</span>
+                  <span className="text-sm font-black text-white">{previewPlan.duration / 86400} days</span>
+                </div>
+              </div>
+              <div className="relative space-y-3">
+                {(previewPlan.perks?.length ? previewPlan.perks : ['Exclusive Content Access']).map((perk, index) => (
+                  <div key={index} className="flex items-center gap-3 text-sm font-bold text-slate-300">
+                    <Check className="h-4 w-4 text-[#F7931A]" />
+                    {perk}
+                  </div>
+                ))}
+              </div>
+              <button onClick={() => handleSubscribe(previewPlan)} className="btn-primary relative mt-8 w-full py-5">
+                Confirm Subscription
+              </button>
+            </motion.div>
+          </motion.div>
+        )}
+
         {status === 'success' && (
           <motion.div
             initial={{ opacity: 0, scale: 0.9 }}
@@ -272,9 +342,20 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
                  <Check className="w-12 h-12 text-white stroke-[4px]" />
                </div>
                
-               <h3 className="text-4xl font-black text-white font-outfit uppercase tracking-tighter mb-4">Welcome Aboard!</h3>
+               <div className="absolute inset-0 pointer-events-none">
+                 {[...Array(12)].map((_, index) => (
+                   <motion.span
+                    key={index}
+                    initial={{ opacity: 0, scale: 0 }}
+                    animate={{ opacity: [0, 1, 0], scale: [0, 1, 0], x: Math.cos(index) * 150, y: Math.sin(index) * 130 }}
+                    transition={{ duration: 1.5, delay: index * 0.04 }}
+                    className="absolute left-1/2 top-1/2 h-2 w-2 rounded-full bg-[#F7931A]"
+                   />
+                 ))}
+               </div>
+               <h3 className="text-4xl font-black text-white font-outfit uppercase tracking-tighter mb-4">Plan Live!</h3>
                <p className="text-slate-400 font-medium mb-8">
-                 You are now officially subscribed to <span className="text-white font-bold">{selectedPlan?.name}</span>. 
+                 You are now subscribed to <span className="text-white font-bold">{selectedPlan?.name}</span> with {selectedPlan?.duration ? selectedPlan.duration / 86400 : 0} days access.
                </p>
                
                <button 

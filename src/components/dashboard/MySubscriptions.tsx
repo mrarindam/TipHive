@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Clock, ExternalLink, Zap, AlertCircle, RefreshCw, XCircle, Loader2, CheckCircle2 } from 'lucide-react';
 import { supabase } from '@/lib/supabase';
@@ -39,37 +39,60 @@ export default function MySubscriptions() {
   const [activeSubId, setActiveSubId] = useState<string | null>(null);
 
   const { writeContract, data: hash } = useWriteContract();
-  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+  const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
-  useEffect(() => {
-    if (address) {
-      fetchSubscriptions();
-    }
-  }, [address]);
-
-  async function fetchSubscriptions() {
+  const fetchSubscriptions = useCallback(async () => {
+    if (!address) return;
     setLoading(true);
     try {
       const { data, error } = await supabase
         .from('subscriptions')
         .select(`
           *,
-          subscription_plans(name, price, chain_plan_id),
-          creators(name, username, avatar_url)
+          subscription_plans(name, price, chain_plan_id)
         `)
-        .eq('fan_address', address?.toLowerCase())
+        .eq('fan_address', address.toLowerCase())
         .order('end_date', { ascending: false });
 
       if (error) throw error;
       if (data) {
-        setSubscriptions(data as any[]);
+        const creatorAddresses = Array.from(new Set(data.map((sub) => sub.creator_address).filter(Boolean)));
+        const { data: profiles } = creatorAddresses.length
+          ? await supabase
+              .from('user_profiles')
+              .select('wallet_address, display_name, username, avatar_url')
+              .in('wallet_address', creatorAddresses)
+          : { data: [] };
+
+        const profileByAddress = new Map((profiles || []).map((profile) => [
+          profile.wallet_address,
+          {
+            name: profile.display_name,
+            username: profile.username,
+            avatar_url: profile.avatar_url,
+          },
+        ]));
+
+        setSubscriptions(data.map((sub) => ({
+          ...sub,
+          creators: profileByAddress.get(sub.creator_address) || {
+            name: sub.creator_address?.slice(0, 8),
+            username: sub.creator_address?.slice(0, 8),
+            avatar_url: '',
+          },
+        })) as unknown as Subscription[]);
       }
     } catch (err) {
       console.error('Error fetching subscriptions:', err);
     } finally {
       setLoading(false);
     }
-  }
+  }, [address]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchSubscriptions();
+  }, [address, fetchSubscriptions]);
 
   const handleRenew = async (sub: Subscription) => {
     if (!sub.subscription_plans?.chain_plan_id && sub.subscription_plans?.chain_plan_id !== 0) return;
@@ -125,7 +148,7 @@ export default function MySubscriptions() {
       };
       updateDb();
     }
-  }, [isConfirmed, actionStatus, activeSubId]);
+  }, [isConfirmed, actionStatus, activeSubId, subscriptions, fetchSubscriptions]);
 
   if (loading) return <div className="py-20 text-center animate-pulse text-slate-500 font-outfit">Loading Your Subscriptions...</div>;
 
@@ -148,7 +171,7 @@ export default function MySubscriptions() {
                     alt={sub.creators?.name || 'Creator'}
                     width={48}
                     height={48}
-                    className="w-12 h-12 rounded-xl object-cover border-2 border-white/10"
+                    className="w-12 h-12 rounded-xl object-cover border-2 border-white/5"
                     unoptimized
                   />
                   <div>
@@ -169,7 +192,7 @@ export default function MySubscriptions() {
                   </div>
                 </div>
 
-                <div className="bg-white/5 rounded-2xl p-4 mb-6 border border-white/5 group-hover:border-white/10 transition-all">
+                <div className="bg-white/5 rounded-2xl p-4 mb-6 border border-white/5 group-hover:border-white/5 transition-all">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Selected Plan</span>
                     <span className="text-sm font-black text-white uppercase tracking-tight">{sub.subscription_plans?.name}</span>
@@ -188,7 +211,7 @@ export default function MySubscriptions() {
                     <span>{isExpired ? 'Expired on' : 'Renews on'} {new Date(sub.end_date).toLocaleDateString()}</span>
                   </div>
                   <a 
-                    href={`https://testnet.mezoscan.io/tx/${sub.tx_hash}`}
+                    href={`https://explorer.test.mezo.org/tx/${sub.tx_hash}`}
                     target="_blank"
                     className="flex items-center gap-2 text-[10px] text-slate-600 hover:text-white uppercase tracking-widest font-black transition-colors"
                   >
@@ -198,18 +221,28 @@ export default function MySubscriptions() {
                 </div>
 
                 <div className="flex gap-2 relative z-10">
-                  <button 
-                    onClick={() => handleRenew(sub)}
-                    disabled={isProcessing}
-                    className="flex-1 py-3 bg-white/5 hover:bg-[#F7931A]/10 border border-white/10 hover:border-[#F7931A]/50 rounded-xl text-[10px] font-black text-white transition-all uppercase tracking-widest flex items-center justify-center gap-2"
-                  >
-                    {isProcessing && actionStatus === 'processing' ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 text-[#F7931A]" />}
-                    Renew
-                  </button>
+                  {!isExpired && sub.active ? (
+                    <button 
+                      disabled
+                      className="flex-1 py-3 bg-green-500/10 border border-green-500/20 rounded-xl text-[10px] font-black text-green-400 uppercase tracking-widest flex items-center justify-center gap-2"
+                    >
+                      <CheckCircle2 className="w-3 h-3" />
+                      Current Plan Live
+                    </button>
+                  ) : (
+                    <button 
+                      onClick={() => handleRenew(sub)}
+                      disabled={isProcessing}
+                      className="flex-1 py-3 bg-white/5 hover:bg-[#F7931A]/10 border border-white/5 hover:border-[#F7931A]/50 rounded-xl text-[10px] font-black text-white transition-all uppercase tracking-widest flex items-center justify-center gap-2"
+                    >
+                      {isProcessing && actionStatus === 'processing' ? <Loader2 className="w-3 h-3 animate-spin" /> : <RefreshCw className="w-3 h-3 text-[#F7931A]" />}
+                      Renew
+                    </button>
+                  )}
                   <button 
                     onClick={() => handleCancel(sub)}
                     disabled={isProcessing || isExpired}
-                    className="py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/10 hover:border-red-500/50 rounded-xl text-[10px] font-black text-slate-400 hover:text-red-500 transition-all uppercase tracking-widest"
+                    className="py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/5 hover:border-red-500/50 rounded-xl text-[10px] font-black text-slate-400 hover:text-red-500 transition-all uppercase tracking-widest"
                     title="Cancel Auto-renew"
                   >
                     <XCircle className="w-4 h-4" />
@@ -235,7 +268,7 @@ export default function MySubscriptions() {
           })}
         </div>
       ) : (
-        <div className="py-24 text-center glass-card border-dashed border-white/10 relative overflow-hidden">
+        <div className="py-24 text-center glass-card border-dashed border-white/5 relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F7931A]/5 to-transparent opacity-50" />
           <AlertCircle className="w-12 h-12 text-slate-800 mx-auto mb-6 opacity-50" />
           <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">No Active Support</h3>

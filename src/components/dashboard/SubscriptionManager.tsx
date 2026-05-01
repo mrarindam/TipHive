@@ -1,8 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Plus, Edit2, CheckCircle2, AlertCircle, Loader2, Zap, Clock, DollarSign, X, Power, PowerOff } from 'lucide-react';
+import { Plus, CheckCircle2, Loader2, Zap, Clock, X, Power, PowerOff } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther } from 'viem';
 import { supabase } from '@/lib/supabase';
@@ -38,20 +38,17 @@ export default function SubscriptionManager() {
   });
 
   const { writeContract, data: hash } = useWriteContract();
-  const { data: receipt, isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
+  const { isLoading: isConfirming, isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
   // Read current plan counter from contract
   const { data: planCounter, refetch: refetchCounter } = useReadContract({
     address: SUBSCRIPTION_CONTRACT,
     abi: SUBSCRIPTION_ABI,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     functionName: 'planCounter' as any,
   });
 
-  useEffect(() => {
-    fetchPlans();
-  }, [address]);
-
-  async function fetchPlans() {
+  const fetchPlans = useCallback(async () => {
     if (!address) return;
     setLoading(true);
     try {
@@ -67,7 +64,12 @@ export default function SubscriptionManager() {
     } finally {
       setLoading(false);
     }
-  }
+  }, [address]);
+
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    fetchPlans();
+  }, [address, fetchPlans]);
 
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -97,6 +99,7 @@ export default function SubscriptionManager() {
       writeContract({
         address: SUBSCRIPTION_CONTRACT,
         abi: SUBSCRIPTION_ABI,
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         functionName: 'updatePlan' as any,
         args: [BigInt(plan.chain_plan_id), plan.name, priceWei, !plan.active],
       });
@@ -110,11 +113,9 @@ export default function SubscriptionManager() {
     if (isConfirmed && hash && address) {
       if (creating) {
         const saveToDb = async () => {
-          // Refetch the counter to get the updated value after transaction is confirmed
           const { data: updatedCounter } = await refetchCounter();
           let chainId = 0;
           if (updatedCounter !== undefined) {
-             // The new counter is the next plan ID, so the newly created plan ID is updatedCounter - 1
              chainId = Number(updatedCounter) - 1;
           }
 
@@ -158,7 +159,7 @@ export default function SubscriptionManager() {
         updateDb();
       }
     }
-  }, [isConfirmed, hash, creating, activeActionId, address, planCounter]);
+  }, [isConfirmed, hash, creating, activeActionId, address, planCounter, refetchCounter, fetchPlans, formData, plans]);
 
   if (loading) return <div className="py-20 text-center animate-pulse text-slate-500 font-outfit uppercase tracking-widest font-black">Syncing Tiers with Mezo...</div>;
 
@@ -214,7 +215,7 @@ export default function SubscriptionManager() {
                   disabled={isProcessing || isConfirming}
                   className={`flex-1 py-3 rounded-xl text-[10px] font-black transition-all flex items-center justify-center gap-2 uppercase tracking-widest ${
                     plan.active 
-                      ? 'bg-white/5 hover:bg-red-500/10 text-white hover:text-red-500 border border-white/10 hover:border-red-500/30' 
+                      ? 'bg-white/5 hover:bg-red-500/10 text-white hover:text-red-500 border border-white/5 hover:border-red-500/30' 
                       : 'bg-[#F7931A]/10 hover:bg-[#F7931A]/20 text-[#F7931A] border border-[#F7931A]/30'
                   }`}
                 >
@@ -225,7 +226,7 @@ export default function SubscriptionManager() {
             </div>
           );
         }) : (
-          <div className="col-span-full py-24 text-center glass-card border-dashed border-white/10">
+          <div className="col-span-full py-24 text-center glass-card border-dashed border-white/5">
             <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6">
               <Zap className="w-10 h-10 text-slate-700" />
             </div>
@@ -266,7 +267,7 @@ export default function SubscriptionManager() {
                     required
                     type="text" 
                     placeholder="e.g. Diamond Circle"
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium"
+                    className="w-full bg-white/5 border border-white/5 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium"
                     value={formData.name}
                     onChange={(e) => setFormData({...formData, name: e.target.value})}
                   />
@@ -280,7 +281,7 @@ export default function SubscriptionManager() {
                         required
                         type="number" 
                         placeholder="10"
-                        className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium"
+                        className="w-full bg-white/5 border border-white/5 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium"
                         value={formData.price}
                         onChange={(e) => setFormData({...formData, price: e.target.value})}
                       />
@@ -290,7 +291,7 @@ export default function SubscriptionManager() {
                   <div className="space-y-2">
                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Tier Duration</label>
                     <select 
-                      className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none appearance-none font-medium"
+                      className="w-full bg-white/5 border border-white/5 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none appearance-none font-medium"
                       value={formData.durationDays}
                       onChange={(e) => setFormData({...formData, durationDays: e.target.value})}
                     >
@@ -303,14 +304,60 @@ export default function SubscriptionManager() {
                 </div>
 
                 <div className="space-y-2">
-                  <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Description & Perks</label>
+                  <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Description</label>
                   <textarea 
                     rows={3}
                     placeholder="List the exclusive benefits for this tier..."
-                    className="w-full bg-white/5 border border-white/10 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none resize-none font-medium"
+                    className="w-full bg-white/5 border border-white/5 rounded-xl py-3 px-4 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none resize-none font-medium"
                     value={formData.description}
                     onChange={(e) => setFormData({...formData, description: e.target.value})}
                   />
+                </div>
+
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Included Perks</label>
+                    <button 
+                      type="button"
+                      onClick={() => setFormData({...formData, perks: [...formData.perks, '']})}
+                      className="text-xs font-black text-[#F7931A] uppercase hover:text-white flex items-center gap-1"
+                    >
+                      <Plus className="w-3 h-3" /> Add Perk
+                    </button>
+                  </div>
+                  <div className="space-y-2">
+                    {formData.perks.map((perk, index) => (
+                      <div key={index} className="flex items-center gap-2">
+                        <div className="w-6 h-6 rounded-full bg-[#F7931A]/10 flex items-center justify-center shrink-0">
+                          <CheckCircle2 className="w-3 h-3 text-[#F7931A]" />
+                        </div>
+                        <input
+                          type="text"
+                          placeholder="e.g. Early access to videos"
+                          className="flex-1 bg-white/5 border border-white/5 rounded-lg py-2 px-3 text-sm text-white focus:ring-1 focus:ring-[#F7931A] focus:outline-none"
+                          value={perk}
+                          onChange={(e) => {
+                            const newPerks = [...formData.perks];
+                            newPerks[index] = e.target.value;
+                            setFormData({...formData, perks: newPerks});
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const newPerks = formData.perks.filter((_, i) => i !== index);
+                            setFormData({...formData, perks: newPerks});
+                          }}
+                          className="p-2 text-slate-500 hover:text-red-500 transition-colors rounded-lg hover:bg-red-500/10"
+                        >
+                          <X className="w-4 h-4" />
+                        </button>
+                      </div>
+                    ))}
+                    {formData.perks.length === 0 && (
+                      <div className="text-sm text-slate-500 italic py-2">No perks added yet.</div>
+                    )}
+                  </div>
                 </div>
 
                 <button

@@ -4,9 +4,10 @@ import { useState } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
 import { Menu, X, Compass, LayoutDashboard, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import WalletProfileMenu from '@/components/wallet/WalletProfileMenu';
+import NotificationBell from './NotificationBell';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -19,29 +20,38 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="sticky top-0 z-[100] border-b border-white/10 bg-black/60 backdrop-blur-2xl">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <nav className="fixed top-0 w-full z-[100] border-b border-white/5 bg-black/60 backdrop-blur-2xl">
+      <div className="w-full px-[5%] md:px-[8%]">
         <div className="flex items-center justify-between h-20">
           {/* Logo */}
           <div className="flex items-center gap-2">
-            <Link href="/" className="flex items-center gap-3 group">
+            <Link 
+              href="/" 
+              className="flex items-center gap-2 md:gap-3 group"
+              onClick={(e) => {
+                if (window.innerWidth < 768) {
+                  e.preventDefault();
+                  window.dispatchEvent(new CustomEvent('toggle-wallet-menu'));
+                }
+              }}
+            >
               <Image 
                 src="/logo.png" 
                 alt="TipHive" 
-                width={48} 
-                height={48} 
-                className="group-hover:rotate-12 transition-all duration-300 mix-blend-screen"
+                width={40} 
+                height={40} 
+                className="group-hover:rotate-12 transition-all duration-300 mix-blend-screen w-8 md:w-12"
                 style={{ height: 'auto' }}
                 unoptimized
               />
-              <span className="text-2xl font-black tracking-tighter text-white font-outfit uppercase">
+              <span className="text-xl md:text-2xl font-black tracking-tighter text-white font-outfit uppercase">
                 TIP<span className="text-[#F7931A]">HIVE</span>
               </span>
             </Link>
           </div>
 
           {/* Desktop Navigation */}
-          <div className="hidden md:flex items-center bg-white/5 border border-white/10 p-1.5 rounded-2xl">
+          <div className="hidden md:flex items-center bg-white/5 border border-white/5 p-1.5 rounded-2xl">
             {navLinks.map((link) => {
               const isActive = pathname === link.href;
               return (
@@ -61,19 +71,15 @@ export default function Navbar() {
             })}
           </div>
 
-          {/* Wallet Button & Mobile Toggle */}
-          <div className="flex items-center gap-3">
-            <div className="hidden sm:block">
-              <ConnectButton 
-                accountStatus="avatar"
-                showBalance={false}
-                chainStatus="icon"
-              />
-            </div>
+          {/* Wallet Button, Notifications & Mobile Toggle */}
+          <div className="flex items-center gap-2.5 md:gap-4">
+            <NotificationBell />
+            <WalletProfileMenu />
             
             <button
               onClick={() => setIsOpen(!isOpen)}
-              className="md:hidden p-3 bg-white/5 border border-white/10 rounded-xl text-white hover:bg-white/10 transition-all"
+              className="md:hidden p-2.5 bg-white/5 border border-white/5 rounded-xl text-white hover:bg-white/10 transition-all flex items-center justify-center shadow-lg shadow-black/20"
+              aria-label="Toggle menu"
             >
               {isOpen ? <X className="w-6 h-6 text-[#F7931A]" /> : <Menu className="w-6 h-6" />}
             </button>
@@ -90,7 +96,7 @@ export default function Navbar() {
             exit={{ opacity: 0, height: 0 }}
             className="md:hidden border-t border-white/5 bg-black/95 backdrop-blur-3xl overflow-hidden"
           >
-            <div className="px-4 py-8 space-y-4">
+            <div className="px-4 py-8 space-y-3">
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (
@@ -111,14 +117,6 @@ export default function Navbar() {
                   </Link>
                 );
               })}
-              
-              <div className="pt-6 sm:hidden border-t border-white/5 flex justify-center">
-                <ConnectButton 
-                  accountStatus="avatar"
-                  showBalance={false}
-                  chainStatus="icon"
-                />
-              </div>
             </div>
           </motion.div>
         )}

@@ -59,7 +59,7 @@ export default function AboutPage() {
         <div className="absolute top-20 left-1/4 w-96 h-96 bg-[#F7931A]/5 blur-[150px] rounded-full" />
         <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-[#F7931A]/10 blur-[100px] rounded-full" />
 
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="w-full px-[5%] md:px-[8%] relative z-10">
           <motion.div 
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
@@ -92,10 +92,10 @@ export default function AboutPage() {
 
       {/* Mission Section */}
       <section className="py-24 relative">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-[5%] md:px-[8%]">
           <div className="grid md:grid-cols-2 gap-16 items-center">
             <motion.div {...fadeUp}>
-              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/10 rounded-full px-4 py-1.5 mb-6">
+              <div className="inline-flex items-center gap-2 bg-white/5 border border-white/5 rounded-full px-4 py-1.5 mb-6">
                 <Target className="w-3.5 h-3.5 text-[#F7931A]" />
                 <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Our Mission</span>
               </div>
@@ -158,7 +158,7 @@ export default function AboutPage() {
       {/* Values Section */}
       <section className="py-24 relative">
         <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F7931A]/3 to-transparent" />
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
+        <div className="w-full px-[5%] md:px-[8%] relative z-10">
           <motion.div {...fadeUp} className="text-center mb-16">
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4 font-outfit uppercase tracking-tighter">
               What We <span className="text-[#F7931A]">Stand For</span>
@@ -200,7 +200,7 @@ export default function AboutPage() {
 
       {/* Stats Section */}
       <section className="py-24">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-[5%] md:px-[8%]">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             {stats.map((stat, i) => (
               <motion.div
@@ -224,7 +224,7 @@ export default function AboutPage() {
 
       {/* CTA Section */}
       <section className="py-24">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="w-full px-[5%] md:px-[8%]">
           <motion.div 
             {...fadeUp}
             className="glass-card p-12 text-center relative overflow-hidden"

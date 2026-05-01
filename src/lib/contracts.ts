@@ -1,4 +1,6 @@
 export const MUSD_ADDRESS = process.env.NEXT_PUBLIC_MUSD_ADDRESS as `0x${string}`;
+export const BTC_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_BTC_TOKEN_ADDRESS || '0x7b7C000000000000000000000000000000000000') as `0x${string}`;
+export const MEZO_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_MEZO_TOKEN_ADDRESS || '0x7B7c000000000000000000000000000000000001') as `0x${string}`;
 export const TIPPING_CONTRACT = process.env.NEXT_PUBLIC_TIPPING_CONTRACT as `0x${string}`;
 export const SUBSCRIPTION_CONTRACT = process.env.NEXT_PUBLIC_SUBSCRIPTION_CONTRACT as `0x${string}`;
 

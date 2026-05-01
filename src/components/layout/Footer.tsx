@@ -15,6 +15,7 @@ export default function Footer() {
         { name: 'Discover', href: '/discover' },
         { name: 'Register', href: '/register' },
         { name: 'Dashboard', href: '/dashboard' },
+        { name: 'Documentation', href: '/docs' },
       ]
     },
     {
@@ -35,11 +36,11 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative border-t border-white/10 bg-[#050505] pt-24 pb-12 overflow-hidden">
+    <footer className="relative border-t border-white/5 bg-[#050505] pt-24 pb-12 overflow-hidden">
       {/* Background Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#F7931A]/5 blur-[120px] rounded-full -z-10" />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="w-full px-[5%] md:px-[8%]">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-12 mb-20">
           {/* Brand Section */}
           <div className="lg:col-span-2 space-y-8">
@@ -116,7 +117,7 @@ function SocialLink({ icon, href }: { icon: React.ReactNode, href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#F7931A] hover:border-[#F7931A] transition-all"
+      className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#F7931A] hover:border-[#F7931A] transition-all"
     >
       {icon}
     </a>

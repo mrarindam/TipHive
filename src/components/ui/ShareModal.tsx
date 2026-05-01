@@ -107,7 +107,7 @@ export default function ShareModal({ isOpen, onClose, url, title }: ShareModalPr
             <div className="space-y-2">
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Profile Link</label>
               <div className="flex gap-2">
-                <div className="flex-1 bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-slate-400 text-sm font-mono truncate">
+                <div className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-slate-400 text-sm font-mono truncate">
                   {url}
                 </div>
                 <button
