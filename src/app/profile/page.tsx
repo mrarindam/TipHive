@@ -22,10 +22,13 @@ import {
   Upload,
   UserRound,
   Wallet,
+  Globe,
+  Link as LinkIcon,
 } from 'lucide-react';
 import { ERC20_ABI, MUSD_ADDRESS, SUBSCRIPTION_ABI, SUBSCRIPTION_CONTRACT, TIPPING_ABI, TIPPING_CONTRACT } from '@/lib/contracts';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import { supabase } from '@/lib/supabase';
+import BannerCropper from '@/components/profile/BannerCropper';
 
 const ZERO = BigInt(0);
 
@@ -39,11 +42,9 @@ interface Profile {
   creator_category?: string | null;
   creator_description?: string | null;
   total_earned?: number | null;
-  social_links?: {
-    twitter?: string;
-    discord?: string;
-    website?: string;
-  } | null;
+  social_links?: string[] | null;
+  banner_url?: string | null;
+  location?: string | null;
 }
 
 function shortAddress(address?: string) {
@@ -67,17 +68,26 @@ export default function ConnectedProfilePage() {
   const [copied, setCopied] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
+  const [bannerFile, setBannerFile] = useState<File | null>(null);
+  const [origin, setOrigin] = useState('');
+
   const [formData, setFormData] = useState({
     username: '',
     display_name: '',
     bio: '',
     avatar_url: '',
-    twitter: '',
-    discord: '',
-    website: '',
-    creator_category: 'Content Creator',
+    banner_url: '',
+    social_links: [] as string[],
     creator_description: '',
+    location: '',
   });
+
+  const [tempBannerUrl, setTempBannerUrl] = useState<string | null>(null);
+  const [isCropping, setIsCropping] = useState(false);
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const { data: musdBalance } = useReadContract({
     address: MUSD_ADDRESS,
@@ -123,8 +133,7 @@ export default function ConnectedProfilePage() {
 
     fetch(`/api/auth?wallet=${address}`)
       .then((res) => res.json())
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      .then((data: any) => {
+      .then((data: { user: Profile | null }) => {
         if (cancelled) return;
         const nextProfile = data.user || null;
         setProfile(nextProfile);
@@ -133,11 +142,10 @@ export default function ConnectedProfilePage() {
           display_name: nextProfile?.display_name || '',
           bio: nextProfile?.bio || '',
           avatar_url: nextProfile?.avatar_url || '',
-          twitter: nextProfile?.social_links?.twitter || '',
-          discord: nextProfile?.social_links?.discord || '',
-          website: nextProfile?.social_links?.website || '',
-          creator_category: nextProfile?.creator_category || 'Content Creator',
+          banner_url: nextProfile?.banner_url || '',
+          social_links: Array.isArray(nextProfile?.social_links) ? nextProfile.social_links : [],
           creator_description: nextProfile?.creator_description || '',
+          location: nextProfile?.location || '',
         });
       })
       .finally(() => {
@@ -167,18 +175,24 @@ export default function ConnectedProfilePage() {
     setSaving(true);
     try {
       let avatarUrl = formData.avatar_url;
+      let bannerUrl = formData.banner_url;
 
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop() || 'png';
-        const fileName = `${address.toLowerCase()}-${Date.now()}.${fileExt}`;
-        const { error: uploadError } = await supabase.storage
-          .from('tipmusd')
-          .upload(fileName, avatarFile, { upsert: true });
-
+        const fileName = `${address.toLowerCase()}-avatar-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('tipmusd').upload(fileName, avatarFile, { upsert: true });
         if (uploadError) throw uploadError;
-
         const { data } = supabase.storage.from('tipmusd').getPublicUrl(fileName);
         avatarUrl = data.publicUrl;
+      }
+
+      if (bannerFile) {
+        const fileExt = bannerFile.name.split('.').pop() || 'png';
+        const fileName = `${address.toLowerCase()}-banner-${Date.now()}.${fileExt}`;
+        const { error: uploadError } = await supabase.storage.from('tipmusd').upload(fileName, bannerFile, { upsert: true });
+        if (uploadError) throw uploadError;
+        const { data } = supabase.storage.from('tipmusd').getPublicUrl(fileName);
+        bannerUrl = data.publicUrl;
       }
 
       const response = await fetch('/api/profile', {
@@ -190,14 +204,11 @@ export default function ConnectedProfilePage() {
           display_name: formData.display_name,
           bio: formData.bio,
           avatar_url: avatarUrl,
-          social_links: {
-            twitter: formData.twitter,
-            discord: formData.discord,
-            website: formData.website,
-          },
+          banner_url: bannerUrl,
+          social_links: formData.social_links.filter(url => url.trim() !== ''),
           enable_creator: profile?.is_creator,
-          creator_category: formData.creator_category,
           creator_description: formData.creator_description,
+          location: formData.location,
         }),
       });
 
@@ -213,6 +224,41 @@ export default function ConnectedProfilePage() {
       setSaving(false);
     }
   };
+
+  // Helper to extract specific socials from the array
+  const getSocialValue = (platform: string) => {
+    const link = formData.social_links.find(l => l.toLowerCase().includes(platform));
+    if (!link) return '';
+    // Handle handle extraction
+    if (platform === 'x.com' || platform === 'twitter.com' || platform === 'github.com' || platform === 'discord.com') {
+      const parts = link.split('/');
+      return parts[parts.length - 1] || '';
+    }
+    return link;
+  };
+
+  const updateSpecificSocial = (platform: string, value: string, baseUrl: string) => {
+    const newLinks = [...formData.social_links];
+    const index = newLinks.findIndex(l => l.toLowerCase().includes(platform));
+    const fullUrl = value ? (value.startsWith('http') ? value : `${baseUrl}${value.replace('@', '')}`) : '';
+    
+    if (index >= 0) {
+      if (fullUrl) newLinks[index] = fullUrl;
+      else newLinks.splice(index, 1);
+    } else if (fullUrl) {
+      newLinks.push(fullUrl);
+    }
+    setFormData({ ...formData, social_links: newLinks });
+  };
+
+  const twitterVal = getSocialValue('x.com') || getSocialValue('twitter.com');
+  const githubVal = getSocialValue('github.com');
+  const discordVal = getSocialValue('discord.com');
+  const websiteVal = formData.social_links.find(l => !l.includes('x.com') && !l.includes('twitter.com') && !l.includes('github.com') && !l.includes('discord.com')) || '';
+
+  const extraLinks = formData.social_links.filter(l => 
+    !l.includes('x.com') && !l.includes('twitter.com') && !l.includes('github.com') && !l.includes('discord.com')
+  );
 
   if (!isConnected) {
     return (
@@ -252,7 +298,7 @@ export default function ConnectedProfilePage() {
           </h1>
         </div>
         {profile?.username && (
-          <Link href={`/profile/${profile.username}`} className="btn-primary inline-flex items-center justify-center gap-2 px-6 py-4">
+          <Link href={`/${profile.username}`} target="_blank" className="btn-primary inline-flex items-center justify-center gap-2 px-6 py-4">
             <ExternalLink className="h-4 w-4" />
             View Public Profile
           </Link>
@@ -309,7 +355,7 @@ export default function ConnectedProfilePage() {
             </div>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-5">
+          <form onSubmit={handleSubmit} className="space-y-6">
             <Field label="Username">
               <div className="relative">
                 <AtSign className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-600" />
@@ -324,8 +370,9 @@ export default function ConnectedProfilePage() {
                   required
                 />
               </div>
-              <p className="text-xs font-bold text-slate-600">Share URL: http://localhost:3000/profile/{formData.username || 'username'}</p>
+              <p className="text-xs font-bold text-slate-600 italic">Live URL: <span className="text-[#F7931A]">{origin}/{formData.username || 'username'}</span></p>
             </Field>
+
             <Field label="Display name">
               <input
                 value={formData.display_name}
@@ -335,36 +382,204 @@ export default function ConnectedProfilePage() {
                 required
               />
             </Field>
-            <Field label="Avatar">
-              <div className="relative overflow-hidden rounded-2xl border border-dashed border-white/5 bg-white/5 p-5 transition hover:border-[#F7931A]/50">
-                <input
-                  type="file"
-                  accept="image/*"
-                  className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
-                  onChange={(event) => setAvatarFile(event.target.files?.[0] || null)}
-                />
-                <div className="flex items-center gap-4">
-                  <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-white/10 text-[#F7931A]">
-                    <Upload className="h-5 w-5" />
-                  </div>
-                  <div>
-                    <p className="font-black text-white">{avatarFile ? avatarFile.name : 'Upload or change avatar'}</p>
-                    <p className="text-sm font-medium text-slate-500">JPG, PNG, GIF from your device</p>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Field label="Avatar">
+                <div className="relative overflow-hidden rounded-2xl border border-dashed border-white/5 bg-white/5 p-4 transition hover:border-[#F7931A]/50">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                    onChange={(event) => setAvatarFile(event.target.files?.[0] || null)}
+                  />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#F7931A]">
+                      <Upload className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-white truncate max-w-[120px]">{avatarFile ? avatarFile.name : 'Change Avatar'}</p>
+                    </div>
                   </div>
                 </div>
-              </div>
-            </Field>
-            <Field label="Bio">
+              </Field>
+
+              <Field label="Banner">
+                <div className="relative overflow-hidden rounded-2xl border border-dashed border-white/5 bg-white/5 p-4 transition hover:border-[#F7931A]/50">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    className="absolute inset-0 z-10 h-full w-full cursor-pointer opacity-0"
+                    onChange={(event) => {
+                      const file = event.target.files?.[0];
+                      if (file) {
+                        const reader = new FileReader();
+                        reader.onload = () => {
+                          setTempBannerUrl(reader.result as string);
+                          setIsCropping(true);
+                        };
+                        reader.readAsDataURL(file);
+                      }
+                    }}
+                  />
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#F7931A]">
+                      <Upload className="h-4 w-4" />
+                    </div>
+                    <div>
+                      <p className="text-xs font-black text-white truncate max-w-[120px]">{bannerFile ? 'New Banner' : 'Change Banner'}</p>
+                    </div>
+                  </div>
+                </div>
+              </Field>
+            </div>
+
+            {isCropping && tempBannerUrl && (
+              <BannerCropper
+                image={tempBannerUrl}
+                onCancel={() => {
+                  setIsCropping(false);
+                  setTempBannerUrl(null);
+                }}
+                onCropComplete={(croppedBlob) => {
+                  const file = new File([croppedBlob], 'banner.jpg', { type: 'image/jpeg' });
+                  setBannerFile(file);
+                  setIsCropping(false);
+                  setTempBannerUrl(null);
+                }}
+              />
+            )}
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <Field label="Headline">
+                <input
+                  value={formData.creator_description}
+                  onChange={(event) => setFormData({ ...formData, creator_description: event.target.value })}
+                  className="profile-input"
+                  maxLength={100}
+                  placeholder="e.g. Piano Player"
+                />
+              </Field>
+
+              <Field label="Location">
+                <input
+                  value={formData.location}
+                  onChange={(event) => setFormData({ ...formData, location: event.target.value })}
+                  className="profile-input"
+                  maxLength={100}
+                  placeholder="e.g. New York, USA"
+                />
+              </Field>
+            </div>
+
+            <Field label="About me">
               <textarea
                 value={formData.bio}
                 onChange={(event) => setFormData({ ...formData, bio: event.target.value })}
-                className="profile-input min-h-28 resize-none"
-                maxLength={280}
-                placeholder="What are you building, collecting, or supporting?"
+                className="profile-input min-h-24 resize-none"
+                maxLength={500}
+                placeholder="Tell your supporters more about yourself..."
               />
             </Field>
 
-            <button type="submit" disabled={saving} className="btn-primary flex w-full items-center justify-center gap-3 py-5 text-lg">
+            <div className="pt-6 border-t border-white/5 space-y-6">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-black text-white uppercase tracking-widest">Connect Socials</h3>
+                <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Optional</span>
+              </div>
+              
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-xs uppercase">X</span>
+                  <input
+                    type="text"
+                    value={twitterVal}
+                    onChange={(e) => updateSpecificSocial('x.com', e.target.value, 'https://x.com/')}
+                    className="profile-input pl-10 text-sm"
+                    placeholder="@handle"
+                  />
+                </div>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-[10px] uppercase">GH</span>
+                  <input
+                    type="text"
+                    value={githubVal}
+                    onChange={(e) => updateSpecificSocial('github.com', e.target.value, 'https://github.com/')}
+                    className="profile-input pl-12 text-sm"
+                    placeholder="username"
+                  />
+                </div>
+                <div className="relative">
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-[10px] uppercase">DS</span>
+                  <input
+                    type="text"
+                    value={discordVal}
+                    onChange={(e) => updateSpecificSocial('discord.com', e.target.value, 'https://discord.com/users/')}
+                    className="profile-input pl-10 text-sm"
+                    placeholder="ID"
+                  />
+                </div>
+                <div className="relative">
+                  <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <input
+                    type="url"
+                    value={websiteVal}
+                    onChange={(e) => {
+                      const newLinks = [...formData.social_links];
+                      const index = newLinks.findIndex(l => !l.includes('x.com') && !l.includes('twitter.com') && !l.includes('github.com') && !l.includes('discord.com'));
+                      if (index >= 0) {
+                        if (e.target.value) newLinks[index] = e.target.value;
+                        else newLinks.splice(index, 1);
+                      } else if (e.target.value) {
+                        newLinks.push(e.target.value);
+                      }
+                      setFormData({ ...formData, social_links: newLinks });
+                    }}
+                    className="profile-input pl-12 text-sm"
+                    placeholder="Website URL"
+                  />
+                </div>
+              </div>
+
+              <div className="space-y-3">
+                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Extra Links</p>
+                {extraLinks.map((link, index) => (
+                  <div key={index} className="flex items-center gap-2 relative">
+                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                    <input
+                      value={link}
+                      onChange={(e) => {
+                        const actualIndex = formData.social_links.indexOf(link);
+                        const newLinks = [...formData.social_links];
+                        newLinks[actualIndex] = e.target.value;
+                        setFormData({ ...formData, social_links: newLinks });
+                      }}
+                      className="profile-input pl-12 pr-10 text-sm"
+                      placeholder="https://..."
+                    />
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const actualIndex = formData.social_links.indexOf(link);
+                        const newLinks = formData.social_links.filter((_, i) => i !== actualIndex);
+                        setFormData({ ...formData, social_links: newLinks });
+                      }}
+                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-red-400 font-black text-xl"
+                    >
+                      ×
+                    </button>
+                  </div>
+                ))}
+                <button
+                  type="button"
+                  onClick={() => setFormData({ ...formData, social_links: [...formData.social_links, ''] })}
+                  className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white transition-all w-full justify-center"
+                >
+                  <LinkIcon className="w-3 h-3" /> Add extra social link
+                </button>
+              </div>
+            </div>
+
+            <button type="submit" disabled={saving} className="btn-primary flex w-full items-center justify-center gap-3 py-5 text-lg shadow-[0_20px_40px_rgba(247,147,26,0.2)]">
               {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
               {saving ? 'Saving Profile...' : 'Save Wallet Profile'}
             </button>
@@ -383,15 +598,15 @@ export default function ConnectedProfilePage() {
         <p className="mt-4 max-w-xl text-sm font-medium text-slate-500">
           {profile?.is_creator 
             ? 'Manage your creator page, categories, and subscription settings.' 
-            : 'Send value directly to your favorite creators. No middlemen, no waiting periods. 100% of your tip goes straight into the creator&apos;s wallet in real-time using Bitcoin-backed stablecoins.'}
+            : 'Send value directly to your favorite creators. No middlemen, no waiting periods.'}
         </p>
         <div className="mt-8">
           <Link
-            href="/register"
+            href="/dashboard"
             className="btn-primary flex items-center justify-center gap-3 py-4 px-8"
           >
             <Rocket className="h-5 w-5" />
-            {profile?.is_creator ? 'Edit Creator Profile' : 'Become Creator'}
+            Go to Dashboard
           </Link>
         </div>
       </section>

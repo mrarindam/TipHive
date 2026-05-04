@@ -69,6 +69,10 @@ interface Profile {
     discord?: string;
     website?: string;
   };
+  button_text?: string;
+  theme_color?: string;
+  thank_you_message?: string;
+  suggested_amounts?: number[];
 }
 
 interface Tip {
@@ -398,16 +402,16 @@ export default function CreatorProfile() {
           {creator.is_creator && (
             <div className="glass-card p-10 relative overflow-hidden">
               <div className="absolute top-0 left-0 w-32 h-32 bg-[#F7931A]/5 blur-3xl rounded-full -ml-16 -mt-16" />
-              <h2 className="text-3xl font-black text-white mb-8 font-outfit uppercase tracking-tighter">Send a <span className="text-[#F7931A]">Tip</span></h2>
+              <h2 className="text-3xl font-black text-white mb-8 font-outfit uppercase tracking-tighter">Send a <span className="text-[#F7931A]">{creator.button_text || 'Tip'}</span></h2>
               <div className="space-y-8 relative z-10">
                 <div>
                   <label className="text-xs font-black text-slate-500 uppercase tracking-[0.2em] mb-4 flex items-center gap-2"><MUSDLogo className="w-4 h-4" /> Select Amount (MUSD)</label>
-                  <div className="grid grid-cols-4 gap-4 mb-8">
-                    {['1', '5', '10', '50'].map((val) => (
+                  <div className="grid grid-cols-3 gap-4 mb-8">
+                    {(creator.suggested_amounts || [10, 25, 50]).map((val) => (
                       <button
                         key={val}
-                        onClick={() => setAmount(val)}
-                        className={`py-4 rounded-2xl font-black text-xl transition-all ${amount === val
+                        onClick={() => setAmount(val.toString())}
+                        className={`py-4 rounded-2xl font-black text-xl transition-all ${amount === val.toString()
                           ? 'bg-[#F7931A] text-white shadow-xl shadow-orange-500/20'
                           : 'bg-white/5 text-slate-400 border border-white/5 hover:border-[#F7931A]/50'
                           }`}
@@ -438,7 +442,7 @@ export default function CreatorProfile() {
                     <Heart className="w-6 h-6 fill-current" />
                   )}
                   {status === 'approving' ? 'Confirming Approval...' :
-                    status === 'tipping' ? 'Sending Tip...' : 'Send Tip Instantly'}
+                    status === 'tipping' ? 'Sending Tip...' : `Send ${creator.button_text || 'Tip'} Instantly`}
                 </button>
               </div>
             </div>
@@ -562,9 +566,9 @@ export default function CreatorProfile() {
               <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#F7931A] shadow-2xl shadow-orange-500/40">
                 <Heart className="h-10 w-10 fill-white text-white" />
               </div>
-              <h3 className="font-outfit text-4xl font-black uppercase tracking-tighter text-white">Tip Sent</h3>
+              <h3 className="font-outfit text-4xl font-black uppercase tracking-tighter text-white">Thank You!</h3>
               <p className="mt-3 text-slate-400">
-                You tipped <span className="font-black text-[#F7931A]">@{creator.username}</span> with {amount} MUSDC.
+                {creator.thank_you_message || `You tipped @${creator.username} with ${amount} MUSD.`}
               </p>
               <button className="btn-primary mt-8 w-full" onClick={() => setShowTipCelebration(false)}>
                 Nice

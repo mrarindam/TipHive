@@ -11,13 +11,11 @@ import {
   Bitcoin,
   ChevronLeft,
   Coins,
-  Copy,
   ExternalLink,
   Loader2,
   LogOut,
   Mail,
   Save,
-  Send,
   Settings,
   ShieldCheck,
   Wallet,
@@ -50,7 +48,6 @@ export default function WalletProfileMenu() {
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
   const [view, setView] = useState<'main' | 'settings'>('main');
-  const [copied, setCopied] = useState(false);
   const [profile, setProfile] = useState<WalletProfile | null>(null);
   const [email, setEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
@@ -190,9 +187,9 @@ export default function WalletProfileMenu() {
   const username = profile?.username ? `@${profile.username}` : shortAddress(address);
   const avatar = profile?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${address}`;
   const btcAmount = Number(formatEther((typeof btcBalance === 'bigint' ? btcBalance : ZERO)));
-  const musdcAmount = Number(formatEther((typeof musdBalance === 'bigint' ? musdBalance : ZERO)));
+  const musdAmount = Number(formatEther((typeof musdBalance === 'bigint' ? musdBalance : ZERO)));
   const mezoAmount = Number(formatEther((typeof mezoBalance === 'bigint' ? mezoBalance : ZERO)));
-  const totalAssets = (btcAmount * btcUsd) + musdcAmount + (mezoAmount * mezoUsd) + Number(formatEther(claimable));
+  const totalAssets = (btcAmount * btcUsd) + musdAmount + (mezoAmount * mezoUsd) + Number(formatEther(claimable));
 
   const handleSaveEmail = async () => {
     if (!address || !email) return;
@@ -215,12 +212,6 @@ export default function WalletProfileMenu() {
     }
   };
 
-  const copyAddress = async () => {
-    if (!address) return;
-    await navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1500);
-  };
 
   return (
     <ConnectButton.Custom>
@@ -294,9 +285,13 @@ export default function WalletProfileMenu() {
                               </div>
                             </div>
 
-                            <div className="relative mt-5 grid grid-cols-3 gap-3">
-                              <MenuAction href="/discover" icon={<Send className="h-4 w-4" />} label="Send" />
-                              <MenuAction onClick={copyAddress} icon={<Copy className="h-4 w-4" />} label={copied ? 'Copied' : 'Receive'} />
+                            <div className="relative mt-5 grid grid-cols-2 gap-3">
+                              <MenuAction 
+                                href="https://mezo.org/overview" 
+                                external 
+                                icon={<Coins className="h-4 w-4" />} 
+                                label="BUY MUSD" 
+                              />
                               <MenuAction
                                 href={`https://explorer.test.mezo.org/address/${address}`}
                                 icon={<ExternalLink className="h-4 w-4" />}
@@ -337,9 +332,9 @@ export default function WalletProfileMenu() {
                               />
                               <AssetRow
                                 icon={<MUSDLogo className="h-5 w-5" />}
-                                title="MUSDC"
+                                title="MUSD"
                                 subtitle="Wallet balance"
-                                value={`$${musdcAmount.toFixed(2)}`}
+                                value={`$${musdAmount.toFixed(2)}`}
                               />
                               <AssetRow
                                 icon={<Coins className="h-5 w-5" />}

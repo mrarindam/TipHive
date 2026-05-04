@@ -93,13 +93,13 @@ export default function Home() {
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-5 md:gap-10 px-8"
           >
-            <Link href="/discover" className="btn-primary group w-full sm:w-auto py-5 md:py-6">
+            <Link href="/explore" className="btn-primary group w-full sm:w-auto py-5 md:py-6">
               <span className="relative z-10 flex items-center justify-center gap-3 text-lg font-black uppercase tracking-tighter">
                 Explore Creators
                 <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" />
               </span>
             </Link>
-            <Link href="/register" className="btn-secondary group w-full sm:w-auto py-5 md:py-6 text-lg font-black uppercase tracking-tighter">
+            <Link href="/dashboard" className="btn-secondary group w-full sm:w-auto py-5 md:py-6 text-lg font-black uppercase tracking-tighter">
               <span className="relative z-10 flex items-center justify-center gap-3">
                 Join as Creator
                 <Rocket className="w-5 h-5 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
@@ -416,6 +416,97 @@ export default function Home() {
                 </div>
               </div>
             </motion.div>
+
+            {/* Posting to Earn Feature */}
+            <motion.div 
+              initial={{ opacity: 0, y: 80 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: false, margin: "-10%" }}
+              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
+              className="flex flex-col lg:flex-row items-center gap-16"
+            >
+              <div className="flex-1 space-y-8">
+                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-sm uppercase tracking-wider border border-emerald-500/20">
+                  <Rocket className="w-4 h-4" /> Content Economy
+                </div>
+                <h3 className="text-5xl md:text-6xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
+                  Post to <br /> Earn
+                </h3>
+                <p className="text-xl text-slate-400 leading-relaxed max-w-lg">
+                  Share exclusive &quot;Drops&quot; with your inner circle. Whether it&apos;s art, music, or updates, your followers and subscribers can support you directly for every piece of content you create.
+                </p>
+                <ul className="space-y-4">
+                  {[
+                    "Monetize exclusive content drops",
+                    "Public feeds for discovery",
+                    "Direct fan-to-creator engagement"
+                  ].map((item, i) => (
+                    <motion.li 
+                      key={i}
+                      initial={{ opacity: 0, x: -20 }}
+                      whileInView={{ opacity: 1, x: 0 }}
+                      viewport={{ once: false }}
+                      transition={{ delay: 0.4 + (i * 0.1) }}
+                      className="flex items-center gap-3 text-slate-300 font-medium"
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
+                      {item}
+                    </motion.li>
+                  ))}
+                </ul>
+              </div>
+              <div className="flex-1 w-full relative">
+                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
+                  {/* Decorative background grid */}
+                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
+                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-emerald-600/20 blur-[100px] rounded-full" />
+                  
+                  {/* Animated Posting UI */}
+                  <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl p-6 shadow-2xl flex flex-col gap-6">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-3">
+                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
+                          <Rocket className="w-5 h-5 text-emerald-500" />
+                        </div>
+                        <div className="text-white font-bold">New Drop</div>
+                      </div>
+                      <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
+                        Exclusive
+                      </div>
+                    </div>
+                    <div className="h-24 w-full bg-white/5 rounded-xl border border-white/5 p-4 flex flex-col gap-2">
+                      <div className="w-3/4 h-2 bg-white/10 rounded-full" />
+                      <div className="w-1/2 h-2 bg-white/10 rounded-full" />
+                      <div className="w-2/3 h-2 bg-white/10 rounded-full" />
+                    </div>
+                    <motion.div 
+                      whileHover={{ scale: 1.05 }}
+                      whileTap={{ scale: 0.95 }}
+                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
+                    >
+                      Share with Fans
+                    </motion.div>
+                  </div>
+                  
+                  {/* Floating Elements */}
+                  <motion.div
+                    animate={{ y: [-15, 15, -15], scale: [1, 1.1, 1] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-[15%] right-[10%] w-16 h-16 bg-[#1a1a1a] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl"
+                  >
+                    <Plus className="w-8 h-8 text-emerald-400" />
+                  </motion.div>
+                  <motion.div
+                    animate={{ y: [15, -15, 15], rotate: [-10, 10, -10] }}
+                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                    className="absolute bottom-[20%] left-[5%] w-14 h-14 bg-[#1a1a1a] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl"
+                  >
+                    <Star className="w-6 h-6 text-emerald-500 fill-emerald-500/20" />
+                  </motion.div>
+                </div>
+              </div>
+            </motion.div>
+
           </div>
 
         </div>
@@ -431,24 +522,33 @@ export default function Home() {
               <h2 className="text-6xl font-black text-white uppercase tracking-tighter font-outfit">How it works</h2>
               <p className="text-xl text-slate-500 font-medium">Three steps to join the future of the creator economy.</p>
             </div>
-            <div className="hidden lg:block h-px flex-1 bg-gradient-to-r from-[#F7931A]/20 to-transparent mx-10 mb-6" />
+            <motion.div 
+              initial={{ scaleX: 0 }}
+              whileInView={{ scaleX: 1 }}
+              viewport={{ once: false, margin: "-10%" }}
+              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
+              className="hidden lg:block h-px flex-1 bg-gradient-to-r from-[#F7931A]/40 to-transparent mx-10 mb-6 origin-left" 
+            />
           </div>
 
           <div className="grid md:grid-cols-3 gap-12">
             <StepItem 
               number="01" 
+              index={0}
               icon={<Wallet className="w-10 h-10" />}
               title="Connect Identity" 
               desc="Link your Mezo wallet. Your address is your unique profile across the Hive."
             />
             <StepItem 
               number="02" 
+              index={1}
               icon={<LayoutDashboard className="w-10 h-10" />}
               title="Set Up Page" 
               desc="Customize your creator dashboard and share your tipping link with your fans."
             />
             <StepItem 
               number="03" 
+              index={2}
               icon={<Gem className="w-10 h-10" />}
               title="Earn in MUSD" 
               desc="Receive Bitcoin-backed stablecoin tips instantly and withdraw anytime."
@@ -461,7 +561,7 @@ export default function Home() {
       <section className="relative w-full py-24 md:py-40 px-4 bg-black/30">
         <div className="w-full px-[5%] md:px-[8%]">
           <div className="text-center mb-24 space-y-4">
-            <h2 className="text-5xl font-black text-white uppercase tracking-tighter font-outfit">Deep Dive</h2>
+            <h2 className="text-5xl font-black text-white uppercase tracking-tighter font-outfit">FAQ</h2>
             <p className="text-slate-500 text-lg font-medium">Everything you need to know about TipHive.</p>
           </div>
 
@@ -476,6 +576,10 @@ export default function Home() {
                 a: "MUSD is a Bitcoin-backed stablecoin used on the Mezo network. It maintains a 1:1 value with the US Dollar, allowing creators to receive stable payments without worrying about Bitcoin's volatility."
               },
               {
+                q: "How secure is TipHive for users?",
+                a: "Security is our top priority. All interactions are governed by audited smart contracts on the Mezo network. Because we are non-custodial, we never have access to your private keys or funds—you remain in 100% control, protected by the security of the Bitcoin network."
+              },
+              {
                 q: "Are there any platform fees?",
                 a: "Zero. TipHive is built to support the creator economy. We don't take a percentage of your tips. 100% of the MUSD sent goes directly to the creator's contract."
               },
@@ -484,7 +588,7 @@ export default function Home() {
                 a: "Yes. TipHive is non-custodial. We never hold your private keys. All tipping logic is handled by verified smart contracts on the Mezo network, ensuring transparency and security."
               }
             ].map((item, i) => (
-              <FAQItem key={i} question={item.q} answer={item.a} delay={i * 0.1} />
+              <FAQItem key={i} question={item.q} answer={item.a} delay={i * 0.15} />
             ))}
           </div>
         </div>
@@ -507,10 +611,10 @@ export default function Home() {
                 Ready to join the <br /> <span className="text-[#F7931A]">New Economy?</span>
               </h2>
               <div className="flex flex-col sm:flex-row items-center justify-center gap-10">
-                <Link href="/register" className="btn-primary px-16 py-6 text-2xl min-w-[300px]">
+                <Link href="/dashboard" className="btn-primary px-16 py-6 text-2xl min-w-[300px]">
                   Get Started
                 </Link>
-                <Link href="/discover" className="btn-secondary px-16 py-6 text-2xl min-w-[300px]">
+                <Link href="/explore" className="btn-secondary px-16 py-6 text-2xl min-w-[300px]">
                   Browse Feed
                 </Link>
               </div>
@@ -536,16 +640,33 @@ function PainPointCard({ icon, title, desc }: { icon: React.ReactNode, title: st
 }
 
 
-function StepItem({ number, icon, title, desc }: { number: string, icon: React.ReactNode, title: string, desc: string }) {
+function StepItem({ number, icon, title, desc, index }: { number: string, icon: React.ReactNode, title: string, desc: string, index: number }) {
   return (
     <div className="relative group">
-      <div className="absolute -top-10 -left-6 text-[10rem] font-black text-white/[0.03] select-none group-hover:text-[#F7931A]/5 transition-colors duration-500">
+      <motion.div 
+        initial={{ opacity: 0, scale: 0.8, x: -20 }}
+        whileInView={{ opacity: 1, scale: 1, x: 0 }}
+        viewport={{ once: false }}
+        transition={{ duration: 1, delay: (index * 0.1) + 0.2, ease: "easeOut" }}
+        className="absolute -top-10 -left-6 text-[10rem] font-black text-white/[0.03] select-none group-hover:text-[#F7931A]/5 transition-colors duration-500"
+      >
         {number}
-      </div>
+      </motion.div>
       <div className="relative z-10 pt-10">
-        <div className="mb-8 p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] inline-block group-hover:border-[#F7931A]/40 transition-all duration-500 group-hover:-rotate-6">
+        <motion.div 
+          initial={{ rotate: 12, scale: 0.8, opacity: 0 }}
+          whileInView={{ rotate: 0, scale: 1, opacity: 1 }}
+          viewport={{ once: false }}
+          transition={{ 
+            type: "spring", 
+            stiffness: 100, 
+            damping: 15, 
+            delay: (index * 0.1) + 0.3 
+          }}
+          className="mb-8 p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] inline-block group-hover:border-[#F7931A]/40 transition-all duration-500 group-hover:-rotate-6"
+        >
           <div className="text-[#F7931A]">{icon}</div>
-        </div>
+        </motion.div>
         <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter font-outfit">{title}</h3>
         <p className="text-slate-500 font-medium leading-relaxed text-lg">{desc}</p>
       </div>
@@ -558,10 +679,14 @@ function FAQItem({ question, answer, delay }: { question: string, answer: string
 
   return (
     <motion.div
-      initial={{ opacity: 0, y: 20 }}
+      initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ delay }}
+      viewport={{ once: true, margin: "-5%" }}
+      transition={{ 
+        duration: 0.8, 
+        delay, 
+        ease: [0.16, 1, 0.3, 1] 
+      }}
       className="border-b border-white/5"
     >
       <button

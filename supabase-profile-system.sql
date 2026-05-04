@@ -39,9 +39,10 @@ alter table public.user_profiles add column if not exists creator_category text;
 alter table public.user_profiles add column if not exists creator_description text;
 alter table public.user_profiles add column if not exists portfolio_link text;
 alter table public.user_profiles add column if not exists total_earned numeric not null default 0;
-alter table public.user_profiles add column if not exists verified_on_chain boolean not null default true;
-alter table public.user_profiles add column if not exists created_at timestamptz not null default now();
-alter table public.user_profiles add column if not exists updated_at timestamptz not null default now();
+alter table public.user_profiles add column if not exists button_text text default 'Support me';
+alter table public.user_profiles add column if not exists theme_color text default '#f7931a';
+alter table public.user_profiles add column if not exists thank_you_message text default 'Thank you for the support! 🎉';
+alter table public.user_profiles add column if not exists suggested_amounts jsonb default '[10, 25, 50]'::jsonb;
 
 -- Old previous migration columns are no longer used by the app.
 alter table public.user_profiles drop column if exists profile_picture_url;

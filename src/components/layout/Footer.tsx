@@ -2,8 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { Mail, Heart, ExternalLink, Globe, MessageCircle } from 'lucide-react';
-import { motion } from 'framer-motion';
+import { Mail, ExternalLink, Globe, MessageCircle } from 'lucide-react';
 
 export default function Footer() {
   const currentYear = new Date().getFullYear();
@@ -12,9 +11,7 @@ export default function Footer() {
     {
       title: 'Platform',
       links: [
-        { name: 'Discover', href: '/discover' },
-        { name: 'Register', href: '/register' },
-        { name: 'Dashboard', href: '/dashboard' },
+        { name: 'Explore', href: '/explore' },
         { name: 'Documentation', href: '/docs' },
       ]
     },
@@ -99,12 +96,6 @@ export default function Footer() {
           <p className="text-slate-600 text-sm font-bold">
             © {currentYear} TIPHIVE. All rights reserved.
           </p>
-          <motion.div 
-            whileHover={{ scale: 1.05 }}
-            className="flex items-center gap-2 text-sm font-bold bg-white/5 px-4 py-2 rounded-full text-slate-500"
-          >
-            Built with <Heart className="w-4 h-4 text-[#F7931A] fill-[#F7931A]" /> on Mezo
-          </motion.div>
         </div>
       </div>
     </footer>

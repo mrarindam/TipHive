@@ -6,6 +6,7 @@ import { Web3Provider } from "@/components/providers/web3-provider";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import SmoothScroll from "@/components/providers/SmoothScroll";
+import OnboardingGuard from "@/components/providers/onboarding-guard";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -28,13 +29,15 @@ export default function RootLayout({
       <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`} suppressHydrationWarning>
         <Web3Provider>
           <SmoothScroll>
-            <div className="flex flex-col min-h-screen bg-[#050505]">
-              <Navbar />
-              <main className="flex-grow">
-                {children}
-              </main>
-              <Footer />
-            </div>
+            <OnboardingGuard>
+              <div id="root-container" className="flex flex-col min-h-screen bg-[#050505]">
+                <Navbar />
+                <main className="flex-grow">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </OnboardingGuard>
           </SmoothScroll>
         </Web3Provider>
       </body>

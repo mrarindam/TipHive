@@ -112,7 +112,7 @@ export default function PrivacyPolicyPage() {
               We believe in transparency. Here&apos;s exactly how TipHive handles your data.
             </p>
             <p className="text-sm text-slate-600 font-bold">
-              Last Updated: April 26, 2026
+              Last Updated: May 4, 2026
             </p>
           </motion.div>
         </div>

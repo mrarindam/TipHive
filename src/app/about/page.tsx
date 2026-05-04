@@ -239,7 +239,7 @@ export default function AboutPage() {
                 Join TipHive today and start receiving Bitcoin-backed tips from your audience worldwide.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/register" className="btn-primary px-10 py-4 text-lg inline-flex items-center justify-center gap-2">
+                <Link href="/dashboard" className="btn-primary px-10 py-4 text-lg inline-flex items-center justify-center gap-2">
                   <Rocket className="w-5 h-5" /> Become a Creator
                 </Link>
                 <Link href="/discover" className="btn-secondary px-10 py-4 text-lg inline-flex items-center justify-center gap-2">

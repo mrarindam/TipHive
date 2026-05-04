@@ -17,13 +17,11 @@ import { Line, Bar } from 'react-chartjs-2';
 import { 
   Calendar, 
   TrendingUp, 
-  Users, 
   BarChart3, 
   LineChart as LineChartIcon,
   PieChart as PieChartIcon,
   Heart
 } from 'lucide-react';
-import MUSDLogo from '../ui/MUSDLogo';
 
 // Register ChartJS components
 ChartJS.register(
@@ -177,10 +175,6 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
     },
   };
 
-  const totalAmount = filteredData.reduce((acc, curr) => acc + Number(curr.amount), 0);
-  const totalItems = filteredData.length;
-  const avgAmount = totalItems > 0 ? (totalAmount / totalItems).toFixed(2) : 0;
-
   return (
     <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
       <div className="grid lg:grid-cols-4 gap-8">
@@ -229,11 +223,11 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
 
         {/* Main Chart Area */}
         <div className="lg:col-span-3 space-y-6">
-          <div className="glass-card p-8 h-[400px] relative overflow-hidden group">
+          <div className="glass-card p-8 h-[600px] relative overflow-hidden group">
             <div className={`absolute top-0 right-0 w-64 h-64 blur-[100px] rounded-full -mr-32 -mt-32 ${isCreator ? 'bg-[#F7931A]/5' : 'bg-cyan-500/5'}`} />
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div>
-                <h3 className="text-2xl font-black text-white font-outfit uppercase tracking-tighter">
+                <h3 className="text-3xl md:text-4xl font-black text-white font-outfit uppercase tracking-tighter">
                   {isCreator ? 'Earnings' : 'Spending'} <span className={isCreator ? 'text-[#F7931A]' : 'text-cyan-400'}>Analytics</span>
                 </h3>
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
@@ -243,38 +237,20 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isCreator ? 'Growth Rate' : 'Activity Status'}</p>
-                  <p className={`text-lg font-black flex items-center justify-end gap-1 font-outfit ${isCreator ? 'text-green-400' : 'text-cyan-400'}`}>
+                  <p className={`text-xl font-black flex items-center justify-end gap-1 font-outfit ${isCreator ? 'text-green-400' : 'text-cyan-400'}`}>
                     {isCreator ? '+12.4%' : 'Active'} {isCreator ? <TrendingUp className="w-4 h-4" /> : <Heart className="w-4 h-4" />}
                   </p>
                 </div>
               </div>
             </div>
 
-            <div className="h-[280px] w-full relative z-10">
+            <div className="h-[480px] w-full relative z-10">
               {chartType === 'line' ? (
                 <Line data={chartData} options={options} />
               ) : (
                 <Bar data={chartData} options={options} />
               )}
             </div>
-          </div>
-
-          <div className="grid md:grid-cols-3 gap-4">
-            <MiniStat 
-              label={isCreator ? "Avg. Earning" : "Avg. Tip Sent"} 
-              value={`${avgAmount}`} 
-              icon={<TrendingUp className={`w-4 h-4 ${isCreator ? 'text-green-400' : 'text-cyan-400'}`} />} 
-            />
-            <MiniStat 
-              label={isCreator ? "Active Subs" : "Subscriptions"} 
-              value={totalItems.toString()} 
-              icon={<Users className="w-4 h-4 text-blue-400" />} 
-            />
-            <MiniStat 
-              label="Impact Score" 
-              value={isCreator ? "Healthy" : "Top Supporter"} 
-              icon={<TrendingUp className="w-4 h-4 text-green-400" />} 
-            />
           </div>
         </div>
       </div>
@@ -297,22 +273,5 @@ function TimeButton({ label, active, onClick, icon }: { label: string, active: b
       </div>
       {label}
     </button>
-  );
-}
-
-function MiniStat({ label, value, icon }: { label: string, value: string, icon: React.ReactNode }) {
-  return (
-    <div className="glass-card p-5 flex items-center justify-between group hover:bg-white/[0.02] transition-all">
-      <div className="min-w-0">
-        <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">{label}</p>
-        <div className="flex items-center gap-2">
-           <p className="text-lg font-black text-white font-outfit truncate">{value}</p>
-           {(label.includes('Earning') || label.includes('Tip')) && <MUSDLogo className="w-4 h-4 shrink-0" />}
-        </div>
-      </div>
-      <div className="w-10 h-10 rounded-xl bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform shrink-0 ml-2">
-        {icon}
-      </div>
-    </div>
   );
 }

@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { Share2, Heart } from 'lucide-react';
+import { Share2, Eye } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useState } from 'react';
@@ -57,19 +57,6 @@ export default function CreatorCard({ creator }: CreatorProps) {
             </div>
           </div>
 
-          {/* Categories */}
-          {creator.category && (
-            <div className="flex flex-wrap gap-1.5 mb-3">
-              {creator.category.split(',').map((cat) => cat.trim()).filter(Boolean).map((cat) => (
-                <span
-                  key={cat}
-                  className="text-[10px] font-black uppercase tracking-[0.15em] px-2.5 py-1 rounded-full bg-[#F7931A]/10 border border-[#F7931A]/25 text-[#F7931A]"
-                >
-                  {cat}
-                </span>
-              ))}
-            </div>
-          )}
 
           <p className="text-slate-400 text-sm line-clamp-2 mb-6 h-10">
             {creator.bio}
@@ -77,11 +64,11 @@ export default function CreatorCard({ creator }: CreatorProps) {
 
           <div className="flex gap-3">
             <Link
-              href={`/profile/${creator.username || creator.address}`}
+              href={`/${creator.username || creator.address}`}
               className="flex-1 btn-primary py-2.5 text-sm flex items-center justify-center gap-2"
             >
-              <Heart className="w-4 h-4 fill-current" />
-              Tip Creator
+              <Eye className="w-4 h-4" />
+              View Creator
             </Link>
             <button
               onClick={() => setIsShareModalOpen(true)}
@@ -96,7 +83,7 @@ export default function CreatorCard({ creator }: CreatorProps) {
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        url={`http://localhost:3000/profile/${creator.username || creator.address}`}
+        url={`http://localhost:3000/${creator.username || creator.address}`}
         title={`👋 Check out my profile on TipHive! If you enjoy my work, \n\nyou can now support me by tipping via MUSD on the Mezo Network. Every bit helps! 🚀💎`}
       />
     </>

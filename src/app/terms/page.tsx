@@ -119,7 +119,7 @@ export default function TermsPage() {
               Please read these terms carefully before using TipHive. They govern your access and use of the platform.
             </p>
             <p className="text-sm text-slate-600 font-bold">
-              Last Updated: April 26, 2026
+              Last Updated: May 4, 2026
             </p>
           </motion.div>
         </div>

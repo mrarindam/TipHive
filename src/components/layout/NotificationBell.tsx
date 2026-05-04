@@ -37,7 +37,6 @@ export default function NotificationBell() {
 
   useEffect(() => {
     if (isConnected && address) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 5000); // Poll every 5s
       return () => clearInterval(interval);

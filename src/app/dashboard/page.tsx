@@ -1,229 +1,26 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import { supabase } from '@/lib/supabase';
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { Wallet, History, TrendingUp, DollarSign, Copy, Check, Loader2, User, Plus, CheckCircle2, Share2, Zap, Star, Globe2, MessageCircle, AtSign } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useDashboard } from './layout';
+
+import { User, CheckCircle2, DollarSign, Loader2, Copy, Check, TrendingUp, History, Globe } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
-import ShareModal from '@/components/ui/ShareModal';
+import { useState, useEffect } from 'react';
 import MUSDLogo from '@/components/ui/MUSDLogo';
-import SubscriptionManager from '@/components/dashboard/SubscriptionManager';
-import MySubscriptions from '@/components/dashboard/MySubscriptions';
-import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard';
 
-import { TIPPING_CONTRACT, TIPPING_ABI, SUBSCRIPTION_CONTRACT, SUBSCRIPTION_ABI } from '@/lib/contracts';
-
-interface Creator {
-  address: string;
-  username: string;
-  name: string;
-  bio: string;
-  avatar_url: string;
-  category: string;
-  link: string;
-  total_earned: number;
-  is_creator: boolean;
-  social_links?: {
-    twitter?: string;
-    discord?: string;
-    website?: string;
-  };
+function shortAddress(address?: string) {
+  if (!address) return '';
+  return `${address.slice(0, 6)}...${address.slice(-4)}`;
 }
 
-interface Activity {
-  id: string;
-  type: 'received' | 'sent' | 'withdrawn';
-  source: 'tip' | 'subscription';
-  amount: number;
-  from_address?: string;
-  to_address?: string;
-  to_name?: string;
-  created_at: string;
-  tx_hash: string;
-  plan_name?: string;
-}
-
-export default function Dashboard() {
-  const { address, isConnected } = useAccount();
-  const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<'activity' | 'earnings' | 'tips' | 'subscriptions' | 'my_subscriptions' | 'analytics'>('activity');
-  const [creatorProfile, setCreatorProfile] = useState<Creator | null>(null);
-  const [activities, setActivities] = useState<Activity[]>([]);
+export default function DashboardPage() {
+  const { creatorProfile, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, address } = useDashboard();
   const [copied, setCopied] = useState(false);
-  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
-  const [withdrawCelebration, setWithdrawCelebration] = useState<{ amount: string } | null>(null);
-  const [pendingWithdrawAmount, setPendingWithdrawAmount] = useState('0.00');
-  const [activityPage, setActivityPage] = useState(1);
-  const PAGE_SIZE = 10;
-
-  // Stats
-  const [totalTippedByMe, setTotalTippedByMe] = useState(0);
-
-  // Contract Reads (Tipping)
-  const { data: tipBalance, refetch: refetchTipBalance } = useReadContract({
-    address: TIPPING_CONTRACT,
-    abi: TIPPING_ABI,
-    functionName: 'getCreatorBalance',
-    args: [address as `0x${string}`],
-  });
-
-  // Contract Reads (Subscription)
-  const { data: subEarnings, refetch: refetchSubEarnings } = useReadContract({
-    address: SUBSCRIPTION_CONTRACT,
-    abi: SUBSCRIPTION_ABI,
-    functionName: 'getCreatorEarnings',
-    args: [address as `0x${string}`],
-  });
-
-  // Total balance combining both contract holds
-  const totalOnChainBalance = (tipBalance ? Number(tipBalance) : 0) + (subEarnings ? Number(subEarnings) : 0);
-  const onChainBalanceFormatted = (totalOnChainBalance / 1e18).toFixed(2);
-
-  const { writeContract: withdrawTips, data: tipHash } = useWriteContract();
-  const { isLoading: isWithdrawingTips, isSuccess: tipWithdrawSuccess } = useWaitForTransactionReceipt({ hash: tipHash });
-
-  const { writeContract: withdrawSub, data: subHash } = useWriteContract();
-  const { isLoading: isWithdrawingSub, isSuccess: subWithdrawSuccess } = useWaitForTransactionReceipt({ hash: subHash });
-
-  const isAnyWithdrawing = isWithdrawingTips || isWithdrawingSub;
-
-  const fetchData = useCallback(async () => {
-    if (!address) return;
-    setLoading(true);
-    const userAddr = address.toLowerCase();
-
-    // 1. Fetch or auto-create universal profile
-    const authResponse = await fetch(`/api/auth?wallet=${address}`);
-    const authData = await authResponse.json();
-    const profile = authData.user ? {
-      address: authData.user.wallet_address,
-      username: authData.user.username,
-      name: authData.user.display_name,
-      bio: authData.user.creator_description || authData.user.bio,
-      avatar_url: authData.user.avatar_url,
-      category: authData.user.creator_category || '',
-      link: authData.user.social_links?.website || '',
-      total_earned: authData.user.total_earned || 0,
-      is_creator: authData.user.is_creator,
-      social_links: authData.user.social_links || {},
-    } : null;
-
-    setCreatorProfile(profile);
-
-    // 2. Fetch Sent Tips
-    const { data: sentTips } = await supabase
-      .from('tips')
-      .select('*')
-      .eq('from_address', userAddr);
-
-    // 3. Fetch Received Tips
-    const { data: receivedTips } = await supabase
-      .from('tips')
-      .select('*')
-      .eq('to_address', userAddr);
-
-    // 4. Fetch Received Subscriptions
-    const { data: receivedSubs } = await supabase
-      .from('subscriptions')
-      .select('*, subscription_plans(name)')
-      .eq('creator_address', userAddr);
-
-    // Combine for Activity Overview
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const combined: any[] = [];
-    const knownAddresses = Array.from(new Set([
-      ...(sentTips || []).map((tip) => tip.to_address),
-      ...(receivedTips || []).map((tip) => tip.from_address),
-      ...(receivedSubs || []).map((sub) => sub.fan_address),
-    ].filter(Boolean).map((item) => item.toLowerCase())));
-
-    const { data: knownProfiles } = knownAddresses.length
-      ? await supabase
-        .from('user_profiles')
-        .select('wallet_address, display_name, username')
-        .in('wallet_address', knownAddresses)
-      : { data: [] };
-
-    const profileByAddress = new Map((knownProfiles || []).map((item) => [
-      item.wallet_address,
-      item.username ? `${item.display_name} (@${item.username})` : item.display_name,
-    ]));
-
-    if (sentTips) {
-      sentTips.forEach(s => combined.push({
-        id: s.id,
-        type: 'sent',
-        source: 'tip',
-        amount: s.amount,
-        to_name: profileByAddress.get(s.to_address?.toLowerCase()) || s.to_address?.slice(0, 10),
-        created_at: s.created_at,
-        tx_hash: s.tx_hash
-      }));
-      setTotalTippedByMe(sentTips.reduce((acc, curr) => acc + curr.amount, 0));
-    }
-
-    if (receivedTips) {
-      receivedTips.forEach(r => combined.push({
-        id: r.id,
-        type: 'received',
-        source: 'tip',
-        amount: r.amount,
-        from_address: r.from_address,
-        to_name: profileByAddress.get(r.from_address?.toLowerCase()),
-        created_at: r.created_at,
-        tx_hash: r.tx_hash
-      }));
-    }
-
-    if (receivedSubs) {
-      receivedSubs.forEach(sub => combined.push({
-        id: sub.id,
-        type: 'received',
-        source: 'subscription',
-        amount: sub.total_paid,
-        from_address: sub.fan_address,
-        to_name: profileByAddress.get(sub.fan_address?.toLowerCase()),
-        created_at: sub.created_at,
-        tx_hash: sub.tx_hash,
-        plan_name: sub.subscription_plans?.name
-      }));
-    }
-
-    setActivities(combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
-    setLoading(false);
-  }, [address]);
+  const [linkCopied, setLinkCopied] = useState(false);
+  const [origin, setOrigin] = useState('');
 
   useEffect(() => {
-    if (isConnected && address) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchData();
-    }
-  }, [address, isConnected, fetchData]);
-
-  useEffect(() => {
-    if (tipWithdrawSuccess || subWithdrawSuccess) {
-      refetchTipBalance();
-      refetchSubEarnings();
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      fetchData();
-      setWithdrawCelebration({ amount: pendingWithdrawAmount });
-
-      // Create withdrawal notification via API
-      fetch('/api/notifications', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          wallet: address?.toLowerCase(),
-          action: 'create',
-          type: 'tip',
-          content: `Success! ${pendingWithdrawAmount} MUSD has been transferred to your wallet. 💸`,
-        })
-      }).catch(err => console.error('Failed to create payout notification:', err));
-    }
-  }, [tipWithdrawSuccess, subWithdrawSuccess, fetchData, refetchTipBalance, refetchSubEarnings, pendingWithdrawAmount, address]);
+    setOrigin(window.location.origin);
+  }, []);
 
   const copyAddress = () => {
     if (!address) return;
@@ -232,456 +29,134 @@ export default function Dashboard() {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleWithdraw = async () => {
-    if (totalOnChainBalance <= 0) return alert('No funds available for withdrawal.');
-    setPendingWithdrawAmount(onChainBalanceFormatted);
-
-    // 1. Withdraw from Tipping if balance exists
-    if (tipBalance && Number(tipBalance) > 0) {
-      withdrawTips({
-        address: TIPPING_CONTRACT,
-        abi: TIPPING_ABI,
-        functionName: 'withdraw',
-        args: [BigInt(tipBalance.toString())],
-      });
-    }
-
-    // 2. Withdraw from Subscription if earnings exist
-    if (subEarnings && Number(subEarnings) > 0) {
-      withdrawSub({
-        address: SUBSCRIPTION_CONTRACT,
-        abi: SUBSCRIPTION_ABI,
-        functionName: 'withdrawEarnings',
-        args: [BigInt(subEarnings.toString())],
-      });
-    }
+  const copyPageLink = () => {
+    if (!creatorProfile?.username) return;
+    navigator.clipboard.writeText(`${origin}/${creatorProfile.username}`);
+    setLinkCopied(true);
+    setTimeout(() => setLinkCopied(false), 2000);
   };
 
-  if (!isConnected) {
-    return (
-      <div className="w-full px-[5%] md:px-[8%] py-32 text-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}>
-          <div className="w-24 h-24 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-8 border border-white/5 shadow-2xl">
-            <Wallet className="w-10 h-10 text-slate-500" />
-          </div>
-          <h2 className="text-5xl font-black text-white mb-4 uppercase tracking-tighter font-outfit">Gateway Locked</h2>
-          <p className="text-slate-500 text-lg mb-12 max-w-md mx-auto">Connect your wallet to access your creator sanctuary and manage your earnings.</p>
-          <ConnectButton.Custom>
-            {({ openConnectModal }) => (
-              <button onClick={openConnectModal} className="btn-primary px-12 py-4 text-lg" type="button">
-                Connect Mezo Wallet
-              </button>
+  if (loading) return <div className="animate-pulse space-y-8"><div className="h-40 bg-white/5 rounded-3xl" /><div className="grid grid-cols-3 gap-6"><div className="h-32 bg-white/5 rounded-3xl" /><div className="h-32 bg-white/5 rounded-3xl" /><div className="h-32 bg-white/5 rounded-3xl" /></div></div>;
+
+  return (
+    <div className="space-y-8">
+      {/* CREATOR HEADER */}
+      <div className="bg-[#0f0f14] border border-white/5 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:items-center justify-between relative overflow-hidden shadow-2xl">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#f7931a]/10 blur-[80px] rounded-full pointer-events-none" />
+        
+        <div className="flex items-center gap-6 relative z-10">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl overflow-hidden border-2 border-white/10 bg-black shrink-0">
+            {creatorProfile?.avatar_url ? (
+              <img src={creatorProfile.avatar_url} alt="" className="w-full h-full object-cover" />
+            ) : (
+              <User className="w-full h-full p-4 text-slate-800" />
             )}
-          </ConnectButton.Custom>
-        </motion.div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="w-full px-[5%] md:px-[8%] py-12 pt-32">
-      {loading ? (
-        <DashboardSkeleton />
-      ) : (
-        <div className="space-y-10">
-          {/* Header Profile Section */}
-          <div className="glass-card p-1 relative overflow-hidden group">
-            <div className="absolute top-0 right-0 w-[500px] h-[500px] bg-gradient-to-br from-[#F7931A]/20 to-transparent blur-[120px] rounded-full -mr-64 -mt-64 group-hover:from-[#F7931A]/30 transition-all duration-700" />
-
-            <div className="p-8 md:p-12 flex flex-col md:flex-row gap-12 items-center md:items-start relative z-10">
-              <div className="relative group">
-                <div className="absolute -inset-1 bg-gradient-to-br from-[#F7931A] to-orange-600 rounded-[3rem] blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                <div className="relative w-44 h-44 rounded-[2.8rem] overflow-hidden border-4 border-black bg-[#0d0d0d] shadow-2xl">
-                  {creatorProfile?.avatar_url ? (
-                    <Image
-                      src={creatorProfile.avatar_url}
-                      width={176}
-                      height={176}
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
-                      alt="Profile"
-                      unoptimized
-                    />
-                  ) : (
-                    <div className="w-full h-full flex items-center justify-center bg-[#111]">
-                      <User className="w-16 h-16 text-slate-800" />
-                    </div>
-                  )}
-                </div>
-              </div>
-
-              <div className="flex-1 text-center md:text-left pt-2">
-                <div className="flex flex-col mb-6">
-                  <div className="flex flex-col md:flex-row md:items-center gap-6 mb-3">
-                    <h1 className="text-5xl font-black text-white uppercase tracking-tighter font-outfit leading-none">
-                      {creatorProfile?.name || 'Wallet Profile'}
-                    </h1>
-                    <div className="flex items-center gap-3 self-center md:self-auto">
-                      <button
-                        onClick={copyAddress}
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-white/5 border border-white/5 rounded-xl text-[10px] font-black text-slate-400 hover:text-white hover:bg-white/10 transition-all uppercase tracking-widest"
-                      >
-                        {address?.slice(0, 6)}...{address?.slice(-4)}
-                        {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
-                      </button>
-                      <button onClick={() => setIsShareModalOpen(true)} className="p-2.5 bg-[#F7931A]/10 text-[#F7931A] rounded-xl border border-[#F7931A]/20 hover:bg-[#F7931A]/20 transition-all">
-                        <Share2 className="w-4 h-4" />
-                      </button>
-                    </div>
-                  </div>
-                  {creatorProfile?.username && (
-                    <div className="flex flex-wrap justify-center md:justify-start gap-3">
-                      <span className="text-xs font-black text-[#F7931A] px-4 py-1.5 bg-[#F7931A]/10 rounded-full border border-[#F7931A]/30 uppercase tracking-[0.2em]">
-                        @{creatorProfile.username}
-                      </span>
-                      {creatorProfile.is_creator && (
-                        <span className="text-xs font-black px-4 py-1.5 rounded-full border uppercase tracking-[0.2em] text-green-400 bg-green-500/10 border-green-500/25">
-                          {creatorProfile.category}
-                        </span>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                <p className="text-slate-400 text-lg mb-10 max-w-2xl font-medium leading-relaxed">
-                  {creatorProfile?.bio || "You haven't added a bio yet. Set up your profile to start receiving support!"}
-                </p>
-
-                {creatorProfile?.is_creator && creatorProfile.social_links && (
-                  <div className="mb-8 flex flex-wrap justify-center md:justify-start gap-3">
-                    {creatorProfile.social_links.twitter && (
-                      <a href={`https://x.com/${creatorProfile.social_links.twitter.replace('@', '')}`} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-bold text-white hover:border-[#F7931A]/50">
-                        <AtSign className="h-4 w-4 text-[#F7931A]" />
-                        X
-                      </a>
-                    )}
-                    {creatorProfile.social_links.discord && (
-                      <span className="inline-flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-bold text-white">
-                        <MessageCircle className="h-4 w-4 text-[#F7931A]" />
-                        {creatorProfile.social_links.discord}
-                      </span>
-                    )}
-                    {creatorProfile.social_links.website && (
-                      <a href={creatorProfile.social_links.website} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-2 text-sm font-bold text-white hover:border-[#F7931A]/50">
-                        <Globe2 className="h-4 w-4 text-[#F7931A]" />
-                        Website
-                      </a>
-                    )}
-                  </div>
-                )}
-
-                <div className="flex flex-wrap justify-center md:justify-start gap-4">
-                  {creatorProfile?.is_creator ? (
-                    <>
-                      <button
-                        onClick={handleWithdraw}
-                        disabled={isAnyWithdrawing || totalOnChainBalance <= 0}
-                        className="btn-primary px-10 py-4 flex items-center gap-3 shadow-xl shadow-orange-500/20 group overflow-hidden relative"
-                      >
-                        <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300" />
-                        {isAnyWithdrawing ? <Loader2 className="w-5 h-5 animate-spin" /> : <DollarSign className="w-5 h-5" />}
-                        <span className="relative z-10">{totalOnChainBalance <= 0 ? 'No Funds to Claim' : 'Withdraw All Earnings'}</span>
-                      </button>
-                    </>
-                  ) : (
-                    <Link href="/profile" className="btn-primary px-12 py-5 flex items-center gap-3 text-xl shadow-2xl shadow-orange-500/30">
-                      <Plus className="w-6 h-6" />
-                      Become Creator
-                    </Link>
-                  )}
-                  <Link href="/profile" className="btn-secondary px-8 py-4 flex items-center gap-2 border-white/5 hover:border-[#F7931A]/30">
-                    Edit Profile
-                  </Link>
-                </div>
-              </div>
-            </div>
           </div>
-
-          {/* Stats Grid */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            <StatCard
-              label="Total Earnings"
-              value={`${creatorProfile?.total_earned || 0}`}
-              icon={<DollarSign className="w-6 h-6" />}
-              color="text-[#F7931A]"
-              subtext="Lifetime Combined"
-            />
-            <StatCard
-              label="Claimable Funds"
-              value={`${onChainBalanceFormatted}`}
-              icon={<TrendingUp className="w-6 h-6" />}
-              color="text-green-400"
-              subtext="Tips + Subscriptions"
-            />
-            <StatCard
-              label="Sent By You"
-              value={`${totalTippedByMe}`}
-              icon={<History className="w-6 h-6" />}
-              color="text-slate-500"
-              subtext="Your Contributions"
-            />
-          </div>
-
-          <div className="space-y-8 pt-6">
-            <div className="flex items-center gap-10 border-b border-white/5 pb-1 overflow-x-auto no-scrollbar">
-              <TabButton
-                label="Activity Feed"
-                active={activeTab === 'activity'}
-                onClick={() => { setActiveTab('activity'); setActivityPage(1); }}
-              />
-              {creatorProfile?.is_creator && (
-                <TabButton
-                  label={`Revenue Logs`}
-                  active={activeTab === 'earnings'}
-                  onClick={() => { setActiveTab('earnings'); setActivityPage(1); }}
-                />
-              )}
-              <TabButton
-                label="My Analytics"
-                active={activeTab === 'analytics'}
-                onClick={() => { setActiveTab('analytics'); setActivityPage(1); }}
-              />
-              <TabButton
-                label="Support Sent"
-                active={activeTab === 'tips'}
-                onClick={() => { setActiveTab('tips'); setActivityPage(1); }}
-              />
-              <TabButton
-                label="My Subscriptions"
-                active={activeTab === 'my_subscriptions'}
-                onClick={() => { setActiveTab('my_subscriptions'); setActivityPage(1); }}
-              />
-              {creatorProfile?.is_creator && (
-                <TabButton
-                  label="Subscription Tiers"
-                  active={activeTab === 'subscriptions'}
-                  onClick={() => { setActiveTab('subscriptions'); setActivityPage(1); }}
-                />
-              )}
-            </div>
-
-            <div className="space-y-4">
-              <AnimatePresence mode="wait">
-                <motion.div
-                  key={activeTab}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0, y: -10 }}
-                  className="space-y-4"
-                >
-                  {activeTab === 'subscriptions' ? (
-                    <SubscriptionManager />
-                  ) : activeTab === 'my_subscriptions' ? (
-                    <MySubscriptions />
-                  ) : activeTab === 'analytics' ? (
-                    <AnalyticsDashboard activities={activities} isCreator={creatorProfile?.is_creator || false} />
-                  ) : (() => {
-                    const filtered = getFilteredActivities(activeTab, activities);
-                    const totalPages = Math.ceil(filtered.length / PAGE_SIZE);
-                    const paginated = filtered.slice((activityPage - 1) * PAGE_SIZE, activityPage * PAGE_SIZE);
-                    return filtered.length > 0 ? (
-                      <>
-                        {paginated.map(activity => (
-                          <ActivityRow key={activity.id} activity={activity} />
-                        ))}
-                        {totalPages > 1 && (
-                          <div className="flex items-center justify-center gap-2 pt-4">
-                            {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                              <button
-                                key={page}
-                                onClick={() => setActivityPage(page)}
-                                className={`h-9 w-9 rounded-xl text-sm font-black transition-all border ${
-                                  page === activityPage
-                                    ? 'bg-[#F7931A] border-[#F7931A] text-white shadow-lg shadow-orange-500/25'
-                                    : 'bg-white/5 border-white/5 text-slate-400 hover:border-[#F7931A]/40 hover:text-white'
-                                }`}
-                              >
-                                {page}
-                              </button>
-                            ))}
-                          </div>
-                        )}
-                      </>
-                    ) : (
-                      <div className="py-32 text-center glass-card border-dashed border-white/5">
-                        <div className="w-20 h-20 bg-white/5 rounded-[2rem] flex items-center justify-center mx-auto mb-6">
-                          <History className="w-8 h-8 text-slate-800" />
-                        </div>
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight">Empty Feed</h3>
-                        <p className="text-slate-600 font-medium max-w-xs mx-auto mt-2">No activity records found in this category yet.</p>
-                      </div>
-                    );
-                  })()}
-                </motion.div>
-              </AnimatePresence>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {creatorProfile && (
-        <ShareModal
-          isOpen={isShareModalOpen}
-          onClose={() => setIsShareModalOpen(false)}
-          url={`http://localhost:3000/profile/${creatorProfile.username || creatorProfile.address}`}
-          title={`👋 Check out my profile on SuperPay! Support me with MUSD on Mezo Network.`}
-        />
-      )}
-
-      <AnimatePresence>
-        {withdrawCelebration && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[200] flex items-center justify-center bg-black/75 p-4 backdrop-blur-xl"
-            onClick={() => setWithdrawCelebration(null)}
-          >
-            <motion.div
-              initial={{ scale: 0.9, y: 20 }}
-              animate={{ scale: 1, y: 0 }}
-              className="glass-card relative max-w-lg p-10 text-center overflow-hidden"
-            >
-              <div className="absolute inset-x-0 top-0 h-1 bg-gradient-to-r from-transparent via-[#F7931A] to-transparent" />
-              <div className="mx-auto mb-6 flex h-20 w-20 items-center justify-center rounded-full bg-[#F7931A] shadow-2xl shadow-orange-500/40">
-                <DollarSign className="h-10 w-10 text-white" />
-              </div>
-              <h3 className="font-outfit text-4xl font-black uppercase tracking-tighter text-white">Congratulations</h3>
-              <p className="mt-3 text-slate-400">
-                You withdrew <span className="font-black text-[#F7931A]">{withdrawCelebration.amount} MUSDC</span> from your creator earnings.
-              </p>
-              <button className="btn-primary mt-8 w-full" onClick={() => setWithdrawCelebration(null)}>
-                Done
-              </button>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
-function StatCard({ label, value, icon, color, subtext }: { label: string, value: string, icon: React.ReactNode, color: string, subtext?: string }) {
-  return (
-    <div className="glass-card p-1 group">
-      <div className="p-6 md:p-8 rounded-[1.9rem] bg-black/40 group-hover:bg-black/20 transition-all duration-500">
-        <div className={`w-12 h-12 md:w-14 md:h-14 rounded-2xl bg-white/5 flex items-center justify-center mb-6 md:mb-8 group-hover:scale-110 group-hover:rotate-6 transition-all duration-500 ${color}`}>
-          {icon}
-        </div>
-        <p className="text-[10px] md:text-[11px] font-black text-slate-500 uppercase tracking-[0.3em] mb-3">{label}</p>
-        <div className="flex items-end justify-between">
-          <h3 className="text-3xl md:text-4xl font-black text-white tracking-tighter flex items-center gap-2 md:gap-3">
-            {value} <MUSDLogo className="w-6 h-6 md:w-7 md:h-7" />
-          </h3>
-        </div>
-        {subtext && <p className="text-[10px] text-slate-600 font-bold uppercase mt-4 tracking-widest leading-tight">{subtext}</p>}
-      </div>
-    </div>
-  );
-}
-
-function TabButton({ label, active, onClick }: { label: string, active: boolean, onClick: () => void }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`pb-5 px-2 text-[11px] md:text-xs font-black uppercase tracking-[0.2em] transition-all relative whitespace-nowrap ${active ? 'text-[#F7931A]' : 'text-slate-500 hover:text-white'}`}
-    >
-      {label}
-      {active && (
-        <motion.div
-          layoutId="activeTabUnderline"
-          className="absolute bottom-0 left-0 right-0 h-1 bg-[#F7931A] rounded-full shadow-[0_0_15px_rgba(247,147,26,0.5)]"
-        />
-      )}
-    </button>
-  );
-}
-
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function ActivityRow({ activity }: { activity: any }) {
-  const isReceived = activity.type === 'received';
-  const isTip = activity.source === 'tip';
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, x: -10 }}
-      animate={{ opacity: 1, x: 0 }}
-      className="glass-card p-5 flex items-center justify-between group hover:border-[#F7931A]/30 transition-all duration-300"
-    >
-      <div className="flex items-center gap-6">
-        <div className={`w-14 h-14 rounded-2xl flex items-center justify-center border transition-all ${isReceived
-            ? 'bg-green-500/10 text-green-500 border-green-500/20'
-            : 'bg-white/5 text-slate-400 border-white/5'
-          }`}>
-          {isTip ? <Zap className="w-5 h-5 fill-current" /> : <Star className="w-5 h-5 fill-current" />}
-        </div>
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h4 className="text-white font-black text-lg uppercase tracking-tight font-outfit">
-              {isReceived
-                ? (isTip ? 'MUSD Tip Received' : `Sub Joined: ${activity.plan_name}`)
-                : `Tipped ${activity.to_name || 'Creator'}`}
-            </h4>
-            <span className={`text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest border ${isTip
-                ? 'bg-blue-500/10 text-blue-400 border-blue-500/20'
-                : 'bg-purple-500/10 text-purple-400 border-purple-500/20'
-              }`}>
-              {isTip ? 'Tip' : 'Subscription'}
-            </span>
-            {isReceived && !isTip && (
-              <span className="text-[8px] font-black px-2 py-0.5 rounded-full uppercase tracking-widest bg-green-500/10 text-green-400 border border-green-500/20">
-                Paid Direct to Wallet
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h1 className="text-2xl md:text-3xl font-black text-white tracking-tight">{creatorProfile?.name || 'Creator'}</h1>
+              <span className="text-[10px] font-black uppercase tracking-widest text-green-400 bg-green-500/10 border border-green-500/20 px-2 py-0.5 rounded-md flex items-center gap-1">
+                <CheckCircle2 className="w-3 h-3" /> Verified on Mezo
               </span>
-            )}
+            </div>
+            <div className="flex items-center gap-3 text-sm">
+              <span className="font-bold text-[#f7931a]">@{creatorProfile?.username}</span>
+              <span className="text-slate-600">•</span>
+              <button onClick={copyAddress} className="text-slate-400 font-mono flex items-center gap-1 hover:text-white transition-colors">
+                {shortAddress(address)} {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+              </button>
+            </div>
           </div>
-          <p className="text-slate-600 text-[10px] font-black uppercase tracking-widest flex items-center gap-2">
-            {new Date(activity.created_at).toLocaleDateString()}
-            <span className="w-1 h-1 rounded-full bg-slate-800" />
-            From: {activity.to_name || `${activity.from_address?.slice(0, 10)}...`}
-          </p>
+        </div>
+
+        <div className="flex flex-col gap-3 relative z-10">
+          <button
+            onClick={handleWithdraw}
+            disabled={isAnyWithdrawing || totalOnChainBalance <= 0}
+            className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-black transition-all hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {isAnyWithdrawing ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
+            Withdraw Earnings
+          </button>
+          <Link href="/profile" className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl font-bold transition-all hover:bg-white/10">
+            Edit Profile
+          </Link>
         </div>
       </div>
-      <div className="text-right">
-        <p className={`text-2xl font-black flex items-center gap-2 justify-end ${isReceived ? 'text-[#F7931A]' : 'text-slate-500'}`}>
-          {isReceived ? '+' : '-'}{activity.amount} <MUSDLogo className="w-5 h-5" />
-        </p>
-        <a
-          href={`https://explorer.test.mezo.org/tx/${activity.tx_hash}`}
-          target="_blank"
-          className="text-[8px] text-slate-700 hover:text-[#F7931A] uppercase tracking-[0.2em] mt-2 block font-black transition-colors"
-        >
-          Verify on Mezo
-        </a>
-      </div>
-    </motion.div>
-  );
-}
 
-function DashboardSkeleton() {
-  return (
-    <div className="space-y-10 animate-pulse">
-      <div className="h-72 bg-white/5 rounded-[3rem]" />
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="h-52 bg-white/5 rounded-[2rem]" />
-        <div className="h-52 bg-white/5 rounded-[2rem]" />
-        <div className="h-52 bg-white/5 rounded-[2rem]" />
-        <div className="h-52 bg-white/5 rounded-[2rem]" />
+      {/* LIVE PAGE LINK */}
+      <div className="bg-[#f7931a]/10 border border-[#f7931a]/20 rounded-2xl p-4 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-3 text-sm font-medium">
+          <div className="w-2 h-2 rounded-full bg-[#f7931a] animate-pulse" />
+          <span className="text-slate-400">Your page is live:</span>
+          <a href={`/${creatorProfile?.username}`} target="_blank" rel="noreferrer" className="text-white hover:text-[#f7931a] hover:underline font-bold transition-colors">
+            {origin}/{creatorProfile?.username}
+          </a>
+        </div>
+        <div className="flex items-center gap-6">
+          <Link 
+            href={`/${creatorProfile?.username}`} 
+            target="_blank" 
+            className="text-[10px] font-black uppercase tracking-widest bg-white/5 hover:bg-white/10 px-4 py-2 rounded-lg transition-all flex items-center gap-2 text-white border border-white/10 group"
+          >
+            <Globe className="w-3.5 h-3.5 group-hover:rotate-12 transition-transform" /> Go to Page
+          </Link>
+          <button onClick={copyPageLink} className="text-[10px] font-black uppercase tracking-widest text-[#f7931a] hover:text-white transition-colors flex items-center gap-2 group">
+            {linkCopied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5 group-hover:scale-110 transition-transform" />}
+            {linkCopied ? 'Copied!' : 'Copy Link'}
+          </button>
+        </div>
       </div>
-      <div className="space-y-4">
-        <div className="h-24 bg-white/5 rounded-3xl" />
-        <div className="h-24 bg-white/5 rounded-3xl" />
-        <div className="h-24 bg-white/5 rounded-3xl" />
+
+      {/* EARNINGS CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <DashboardCard 
+          icon={<DollarSign className="w-5 h-5 text-orange-500" />}
+          label="Total Earnings" 
+          value={creatorProfile?.total_earned?.toString() || "0"} 
+          subtitle="Lifetime Combined"
+        />
+        <DashboardCard 
+          icon={<TrendingUp className="w-5 h-5 text-green-500" />}
+          label="Claimable Funds" 
+          value={onChainBalanceFormatted} 
+          subtitle="Tips + Subscriptions"
+          highlight={true}
+        />
+        <DashboardCard 
+          icon={<History className="w-5 h-5 text-blue-400" />}
+          label="Sent By You" 
+          value="10" 
+          subtitle="Your Contributions"
+        />
       </div>
     </div>
   );
 }
 
+interface DashboardCardProps {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  subtitle: string;
+  highlight?: boolean;
+}
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function DashboardCard({ icon, label, value, subtitle, highlight }: DashboardCardProps) {
+  return (
+    <div className={`bg-[#0f0f14] border rounded-[2rem] p-8 relative overflow-hidden group transition-all hover:scale-[1.02] ${highlight ? 'border-[#f7931a]/30 shadow-[0_0_40px_rgba(247,147,26,0.1)]' : 'border-white/5 shadow-xl'}`}>
+      <div className="w-12 h-12 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center mb-8 group-hover:scale-110 transition-transform">
+        {icon}
+      </div>
+      
+      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500 mb-4">{label}</p>
+      
+      <div className="flex items-center gap-3 mb-4">
+        <h3 className="text-4xl md:text-5xl font-black tracking-tighter text-white">{value}</h3>
+        <MUSDLogo className="w-8 h-8" />
+      </div>
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
-function getFilteredActivities(tab: string, activities: any[]) {
-  if (tab === 'activity') return activities;
-  if (tab === 'earnings') return activities.filter(a => a.type === 'received');
-  if (tab === 'tips') return activities.filter(a => a.type === 'sent');
-  return [];
+      <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{subtitle}</p>
+    </div>
+  );
 }

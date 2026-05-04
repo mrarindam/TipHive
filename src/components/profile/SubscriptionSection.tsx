@@ -2,13 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Check, Zap, Shield, Clock, Loader2 } from 'lucide-react';
+import { Check, Zap, Clock, Loader2, X, CheckCircle2 } from 'lucide-react';
 import { useAccount, useWriteContract, useReadContract, useConfig } from 'wagmi';
 import { waitForTransactionReceipt } from 'wagmi/actions';
-import { parseEther, formatEther } from 'viem';
+import { parseEther } from 'viem';
 import { supabase } from '@/lib/supabase';
 import { SUBSCRIPTION_ABI, SUBSCRIPTION_CONTRACT, MUSD_ADDRESS, ERC20_ABI } from '@/lib/contracts';
 import MUSDLogo from '@/components/ui/MUSDLogo';
+import CelebrationModal from '@/components/ui/CelebrationModal';
 
 interface Plan {
   id: string;
@@ -25,17 +26,27 @@ interface Plan {
 interface SubscriptionSectionProps {
   creatorAddress: string;
   creatorName: string;
+  limit?: number;
+  onSuccess?: () => void;
 }
 
-export default function SubscriptionSection({ creatorAddress, creatorName }: SubscriptionSectionProps) {
+export default function SubscriptionSection({ creatorAddress, creatorName, limit, onSuccess }: SubscriptionSectionProps) {
   const { address: userAddress, isConnected } = useAccount();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<'idle' | 'approving' | 'subscribing' | 'success' | 'error'>('idle');
   const [selectedPlan, setSelectedPlan] = useState<Plan | null>(null);
   const [previewPlan, setPreviewPlan] = useState<Plan | null>(null);
+  const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
   const config = useConfig();
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const { writeContractAsync: approveWriteAsync } = useWriteContract();
   const { writeContractAsync: subscribeWriteAsync } = useWriteContract();
@@ -55,14 +66,20 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
   });
 
   useEffect(() => {
-    async function fetchPlans() {
-      setLoading(true);
-      const { data, error } = await supabase
-        .from('subscription_plans')
-        .select('*')
-        .eq('creator_address', creatorAddress.toLowerCase())
-        .eq('active', true)
-        .order('price', { ascending: true });
+      async function fetchPlans() {
+        setLoading(true);
+        let query = supabase
+          .from('subscription_plans')
+          .select('*')
+          .eq('creator_address', creatorAddress.toLowerCase())
+          .eq('active', true)
+          .order('created_at', { ascending: false });
+
+        if (limit) {
+          query = query.limit(limit);
+        }
+
+        const { data, error } = await query;
 
       if (!error && data) {
         setPlans(data as Plan[]);
@@ -73,19 +90,24 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
     if (creatorAddress) {
       fetchPlans();
     }
-  }, [creatorAddress]);
+  }, [creatorAddress, limit]);
 
   const handleSubscribe = async (plan: Plan) => {
-    if (!isConnected || !userAddress) return alert('Please connect your wallet');
+    if (!isConnected || !userAddress) {
+      setNotification({ message: 'Please connect your wallet first! 🔌', type: 'error' });
+      return;
+    }
     if (userAddress.toLowerCase() === creatorAddress.toLowerCase()) {
-      return alert("You can't subscribe to yourself!");
+      setNotification({ message: "Creators can't subscribe to themselves! 🛡️", type: 'error' });
+      return;
     }
 
     const amount = parseEther(plan.price.toString());
     
     // Balance check
     if (balance && BigInt(balance.toString()) < amount) {
-      return alert(`Insufficient MUSD balance. This plan costs ${plan.price} MUSD, but you only have ${formatEther(BigInt(balance.toString()))} MUSD.`);
+      setNotification({ message: `Insufficient MUSD. This plan costs ${plan.price} MUSD. 💰`, type: 'error' });
+      return;
     }
 
     setSelectedPlan(plan);
@@ -161,11 +183,6 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
       } catch (err) {
         console.error('Failed to create notification:', err);
       }
-
-      setTimeout(() => {
-        setStatus('idle');
-        setSelectedPlan(null);
-      }, 5000);
     } catch (err) {
       console.error(err);
       setStatus('error');
@@ -188,97 +205,119 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
   );
 
   return (
-    <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h2 className="text-3xl font-black text-white font-outfit uppercase tracking-tighter">
-          Exclusive <span className="text-[#F7931A]">Plans</span>
-        </h2>
-        <div className="flex items-center gap-2 bg-[#F7931A]/10 px-4 py-2 rounded-full border border-[#F7931A]/20">
-          <Shield className="w-4 h-4 text-[#F7931A]" />
-          <span className="text-[10px] font-black text-[#F7931A] uppercase tracking-widest">On-chain Protected</span>
-        </div>
-      </div>
+    <div className="space-y-8 relative">
+      <AnimatePresence>
+        {notification && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-full max-md:px-4"
+          >
+            <div className={`glass-card p-4 flex items-center justify-between border ${notification.type === 'error' ? 'border-red-500/50 bg-red-500/10' : 'border-green-500/50 bg-green-500/10'} shadow-[0_20px_40px_rgba(0,0,0,0.4)]`}>
+              <div className="flex items-center gap-3">
+                {notification.type === 'error' ? (
+                  <X className="w-5 h-5 text-red-500" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                )}
+                <p className="text-sm font-bold text-white tracking-tight">
+                  {notification.message}
+                </p>
+              </div>
+              <button 
+                onClick={() => setNotification(null)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-        {plans.map((plan, index) => (
+
+      <div className={`grid gap-10 ${plans.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto w-full' : 'grid-cols-1 lg:grid-cols-2'}`}>
+        {plans.map((plan) => (
           <motion.div
             key={plan.id}
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: index * 0.1 }}
-            className={`relative group rounded-[2.5rem] border-2 transition-all duration-500 overflow-hidden ${
-              index === 1 
-                ? 'bg-gradient-to-br from-[#F7931A]/20 via-black to-black border-[#F7931A]/40 hover:border-[#F7931A]' 
-                : 'bg-white/5 border-white/5 hover:border-white/30'
-            }`}
+            whileHover={{ y: -8, scale: 1.01 }}
+            className="relative group p-[2px] rounded-[3.5rem] overflow-hidden"
           >
-            <div className={`absolute top-0 inset-x-0 h-40 opacity-20 blur-3xl pointer-events-none ${
-              index === 1 ? 'bg-[#F7931A]' : 'bg-blue-500'
-            }`} />
+            {/* Animated Gradient Border */}
+            <div className="absolute inset-0 bg-gradient-to-br from-[#8A2BE2] via-white/10 to-[#F7931A] opacity-30 group-hover:opacity-100 transition-opacity duration-700 blur-[1px]" />
+            
+            <div className="relative h-full w-full bg-[#0B0F19] rounded-3xl p-8 flex flex-col z-10 overflow-hidden">
+              {/* Decorative Background Glows */}
+              <div className="absolute top-0 left-0 w-32 h-32 bg-[#8A2BE2]/10 blur-[60px] rounded-full -ml-16 -mt-16 pointer-events-none" />
+              <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#F7931A]/10 blur-[60px] rounded-full -mr-16 -mb-16 pointer-events-none" />
 
-            <div className="p-8 relative z-10">
-              <div className="flex justify-between items-start mb-6">
-                <div>
-                  <h3 className="text-2xl font-black text-white font-outfit uppercase tracking-tighter mb-1">{plan.name}</h3>
-                  <div className="flex items-center gap-2 text-slate-500 font-bold text-xs uppercase tracking-widest">
-                    <Clock className="w-3 h-3" />
-                    {plan.duration / 86400} Days Access
+              <div className="flex justify-between items-start mb-10">
+                <div className="space-y-1">
+                  <h3 className="text-3xl font-black text-white font-outfit uppercase tracking-tighter leading-none group-hover:text-[#F7931A] transition-colors duration-300">
+                    {plan.name}
+                  </h3>
+                  <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5 w-fit">
+                    <Clock className="w-3 h-3 text-[#8A2BE2]" />
+                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{plan.duration / 86400} DAYS ACCESS</span>
                   </div>
                 </div>
-                <div className="text-right">
-                  <div className="flex items-center gap-1 text-3xl font-black text-white font-outfit tracking-tighter">
-                    {plan.price} <MUSDLogo className="w-6 h-6" />
+                <div className="text-right flex flex-col items-end">
+                  <div className="flex items-center gap-2">
+                    <span className="text-4xl font-black text-white font-outfit tracking-tighter">{plan.price}</span>
+                    <div className="relative">
+                        <div className="absolute inset-0 bg-white blur-md opacity-20" />
+                        <div className="relative bg-[#FF0055] p-1.5 rounded-full shadow-[0_0_15px_rgba(255,0,85,0.4)]">
+                            <MUSDLogo className="w-5 h-5" />
+                        </div>
+                    </div>
                   </div>
-                  <div className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-1">Monthly Support</div>
+                  <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-2">Monthly Support</span>
                 </div>
               </div>
 
-              <p className="text-slate-400 text-sm mb-8 line-clamp-2 leading-relaxed">
-                {plan.description || `Support ${creatorName} and unlock exclusive content, perks, and direct interactions.`}
-              </p>
+              <div className="flex-grow flex flex-col justify-between min-h-[380px]">
+                <div className="space-y-8">
+                  <div className="min-h-[120px] flex items-center">
+                    <p className="text-slate-400 leading-relaxed font-medium transition-all duration-300 text-sm">
+                      {plan.description || `Elevate your experience with ${plan.name}—unlocking a universe of premium content and direct creator access.`}
+                    </p>
+                  </div>
 
-              <div className="space-y-4 mb-8">
-                {plan.perks && plan.perks.length > 0 ? (
-                   plan.perks.map((perk, i) => (
-                    <div key={i} className="flex items-center gap-3">
-                      <div className={`w-5 h-5 rounded-full flex items-center justify-center ${
-                        index === 1 ? 'bg-[#F7931A]/20 text-[#F7931A]' : 'bg-white/10 text-white'
-                      }`}>
-                        <Check className="w-3 h-3" />
+                  <div className="space-y-4 pb-8">
+                    {(plan.perks?.length ? plan.perks : ['Exclusive Content Access', 'Direct Messaging', 'VIP Badge']).map((perk, i) => (
+                      <div key={i} className="flex items-center gap-4 group/perk">
+                        <div className="w-6 h-6 rounded-lg bg-[#8A2BE2]/5 flex items-center justify-center text-[#8A2BE2] border border-[#8A2BE2]/10 transition-all duration-300 group-hover/perk:bg-[#8A2BE2] group-hover/perk:text-white">
+                          <Check className="w-3 h-3" />
+                        </div>
+                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest group-hover/perk:text-white transition-colors">
+                          {perk}
+                        </span>
                       </div>
-                      <span className="text-sm font-medium text-slate-300">{perk}</span>
-                    </div>
-                  ))
-                ) : (
-                  <>
-                    <div className="flex items-center gap-3">
-                      <div className="w-5 h-5 rounded-full bg-white/10 flex items-center justify-center text-white">
-                        <Zap className="w-3 h-3" />
-                      </div>
-                      <span className="text-sm font-medium text-slate-300">Exclusive Content Access</span>
-                    </div>
-                  </>
-                )}
+                    ))}
+                  </div>
+                </div>
+
+                <button
+                  onClick={() => setPreviewPlan(plan)}
+                  disabled={status === 'approving' || status === 'subscribing'}
+                  className="relative w-full py-6 rounded-[2.5rem] bg-white text-black overflow-hidden group/btn transition-all duration-500 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] active:scale-[0.97]"
+                >
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+                  <div className="relative flex items-center justify-center gap-3">
+                      {(status === 'subscribing' && selectedPlan?.id === plan.id) ? (
+                      <Loader2 className="w-6 h-6 animate-spin text-[#F7931A]" />
+                      ) : (
+                      <Zap className="w-6 h-6 fill-black" />
+                      )}
+                      <span className="font-black font-outfit uppercase tracking-[0.15em] text-base">
+                      {(status === 'approving' && selectedPlan?.id === plan.id) ? 'Processing...' :
+                      (status === 'subscribing' && selectedPlan?.id === plan.id) ? 'Subscribing...' :
+                      'Join the Circle'}
+                      </span>
+                  </div>
+                </button>
               </div>
-
-              <button
-                onClick={() => setPreviewPlan(plan)}
-                disabled={status === 'approving' || status === 'subscribing'}
-                className={`w-full py-5 rounded-2xl font-black font-outfit uppercase tracking-tighter flex items-center justify-center gap-3 transition-all ${
-                  index === 1 
-                    ? 'bg-[#F7931A] text-white hover:bg-[#FFAB40] shadow-xl shadow-orange-500/20' 
-                    : 'bg-white text-black hover:bg-slate-200'
-                }`}
-              >
-                {(status === 'subscribing' && selectedPlan?.id === plan.id) ? (
-                  <Loader2 className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Zap className="w-5 h-5 fill-current" />
-                )}
-                {(status === 'approving' && selectedPlan?.id === plan.id) ? 'Approving MUSD...' :
-                 (status === 'subscribing' && selectedPlan?.id === plan.id) ? 'Subscribing...' :
-                 'Join Circle'}
-              </button>
             </div>
           </motion.div>
         ))}
@@ -327,47 +366,19 @@ export default function SubscriptionSection({ creatorAddress, creatorName }: Sub
             </motion.div>
           </motion.div>
         )}
-
-        {status === 'success' && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.9 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.9 }}
-            className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-md"
-          >
-            <div className="glass-card max-w-md w-full p-10 text-center relative overflow-hidden">
-               <div className="absolute top-0 inset-x-0 h-1 bg-gradient-to-r from-transparent via-[#F7931A] to-transparent" />
-               
-               <div className="w-24 h-24 bg-[#F7931A] rounded-full flex items-center justify-center mx-auto mb-8 shadow-2xl shadow-orange-500/40">
-                 <Check className="w-12 h-12 text-white stroke-[4px]" />
-               </div>
-               
-               <div className="absolute inset-0 pointer-events-none">
-                 {[...Array(12)].map((_, index) => (
-                   <motion.span
-                    key={index}
-                    initial={{ opacity: 0, scale: 0 }}
-                    animate={{ opacity: [0, 1, 0], scale: [0, 1, 0], x: Math.cos(index) * 150, y: Math.sin(index) * 130 }}
-                    transition={{ duration: 1.5, delay: index * 0.04 }}
-                    className="absolute left-1/2 top-1/2 h-2 w-2 rounded-full bg-[#F7931A]"
-                   />
-                 ))}
-               </div>
-               <h3 className="text-4xl font-black text-white font-outfit uppercase tracking-tighter mb-4">Plan Live!</h3>
-               <p className="text-slate-400 font-medium mb-8">
-                 You are now subscribed to <span className="text-white font-bold">{selectedPlan?.name}</span> with {selectedPlan?.duration ? selectedPlan.duration / 86400 : 0} days access.
-               </p>
-               
-               <button 
-                onClick={() => setStatus('idle')}
-                className="btn-primary w-full py-4 text-lg"
-               >
-                 Close
-               </button>
-            </div>
-          </motion.div>
-        )}
       </AnimatePresence>
+
+      <CelebrationModal 
+        isOpen={status === 'success'}
+        onClose={() => {
+          setStatus('idle');
+          setSelectedPlan(null);
+          if (onSuccess) onSuccess();
+        }}
+        type="subscription"
+        creatorName={creatorName}
+        planName={selectedPlan?.name}
+      />
     </div>
   );
 }

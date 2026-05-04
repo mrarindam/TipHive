@@ -1,0 +1,395 @@
+'use client';
+
+import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
+import { supabase } from '@/lib/supabase';
+import { Heart, ArrowLeft, Share2, MessageCircle, Zap, Lock, Globe2, Users } from 'lucide-react';
+import Link from 'next/link';
+import Image from 'next/image';
+import { useAccount } from 'wagmi';
+import { motion } from 'framer-motion';
+import ShareModal from '@/components/ui/ShareModal';
+
+interface PostComment {
+  id: string;
+  post_id: string;
+  user_address: string;
+  content: string;
+  created_at: string;
+  sender?: {
+    wallet_address: string;
+    username: string;
+    display_name: string;
+    avatar_url: string;
+  } | null;
+}
+
+export default function PostPage() {
+  const { username, slug } = useParams();
+  const { address: userAddress } = useAccount();
+  const router = useRouter();
+  const [post, setPost] = useState<Record<string, unknown> | null>(null);
+  const [creator, setCreator] = useState<Record<string, unknown> | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [likes, setLikes] = useState(0);
+  const [isLiked, setIsLiked] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [comments, setComments] = useState<PostComment[]>([]);
+  const [commentText, setCommentText] = useState('');
+  const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+
+  useEffect(() => {
+    async function fetchData() {
+      if (!username || !slug) return;
+      const title = decodeURIComponent(slug as string);
+
+      const { data: profile } = await supabase
+        .from('user_profiles')
+        .select('*')
+        .eq('username', username)
+        .single();
+
+      if (profile) {
+        setCreator(profile);
+        const { data: postData } = await supabase
+          .from('posts')
+          .select('*')
+          .eq('creator_id', profile.id)
+          .ilike('title', title)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (postData) {
+          setPost(postData);
+
+          // Fetch Likes
+          const { count: likesCount } = await supabase
+            .from('post_likes')
+            .select('*', { count: 'exact', head: true })
+            .eq('post_id', postData.id);
+          setLikes(likesCount || 0);
+
+          if (userAddress) {
+            const { data: userLike } = await supabase
+              .from('post_likes')
+              .select('id')
+              .eq('post_id', postData.id)
+              .eq('user_address', userAddress.toLowerCase())
+              .single();
+            setIsLiked(!!userLike);
+          }
+
+          // Fetch Comments
+          const { data: commentsData } = await supabase
+            .from('post_comments')
+            .select('*')
+            .eq('post_id', postData.id)
+            .order('created_at', { ascending: false });
+
+          if (commentsData && commentsData.length > 0) {
+            // Fetch profiles for commenters
+            const commenterAddrs = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
+            const { data: commenterProfiles } = await supabase
+              .from('user_profiles')
+              .select('wallet_address, username, display_name, avatar_url')
+              .in('wallet_address', commenterAddrs);
+
+            const profileMap = new Map((commenterProfiles || []).map(p => [p.wallet_address.toLowerCase(), p]));
+            setComments(commentsData.map(c => ({
+              ...c,
+              sender: profileMap.get(c.user_address.toLowerCase())
+            })));
+          }
+        }
+
+        // Check subscription if post is exclusive
+        if (userAddress && profile) {
+          const { data: subs } = await supabase
+            .from('subscriptions')
+            .select('id, end_date')
+            .eq('fan_address', userAddress.toLowerCase())
+            .eq('creator_address', profile.wallet_address.toLowerCase())
+            .eq('active', true);
+          
+          if (subs && subs.length > 0) {
+            const now = new Date();
+            const activeSub = subs.find(s => new Date(s.end_date) > now);
+            if (activeSub) setIsSubscribed(true);
+          }
+        }
+      }
+      setLoading(false);
+    }
+    fetchData();
+  }, [username, slug, userAddress]);
+
+  const handleLike = async () => {
+    if (!userAddress || !post) return alert('Please connect your wallet to like posts');
+
+    try {
+      if (isLiked) {
+        await supabase
+          .from('post_likes')
+          .delete()
+          .eq('post_id', post.id)
+          .eq('user_address', userAddress.toLowerCase());
+        setLikes(prev => prev - 1);
+        setIsLiked(false);
+      } else {
+        await supabase
+          .from('post_likes')
+          .insert({
+            post_id: post.id,
+            user_address: userAddress.toLowerCase()
+          });
+        setLikes(prev => prev + 1);
+        setIsLiked(true);
+      }
+    } catch (err) {
+      console.error('Like error:', err);
+    }
+  };
+
+  const handlePostComment = async () => {
+    if (!userAddress || !post) return alert('Please connect your wallet to comment');
+    if (!commentText.trim()) return;
+
+    setIsSubmittingComment(true);
+    try {
+      const { data: newComment, error } = await supabase
+        .from('post_comments')
+        .insert({
+          post_id: post.id,
+          user_address: userAddress.toLowerCase(),
+          content: commentText.trim()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      // Fetch user profile for the new comment
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('wallet_address, username, display_name, avatar_url')
+        .eq('wallet_address', userAddress.toLowerCase())
+        .single();
+
+      setComments(prev => [{
+        ...newComment,
+        sender: userProfile
+      }, ...prev]);
+      setCommentText('');
+    } catch (err) {
+      console.error('Comment error:', err);
+      alert('Failed to post comment');
+    } finally {
+      setIsSubmittingComment(false);
+    }
+  };
+
+  if (loading) return <div className="py-20 flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#F7931A] border-t-transparent rounded-full animate-spin"></div></div>;
+
+  if (!post || !creator) return <div className="py-20 flex flex-col items-center justify-center text-white"><p className="mb-4">Post not found.</p><button onClick={() => router.back()} className="text-[#F7931A] hover:underline font-bold">Go Back</button></div>;
+
+  const isOwner = userAddress?.toLowerCase() === (creator?.wallet_address as string)?.toLowerCase();
+  const isLocked = post.visibility !== 'public' && !isOwner && !isSubscribed;
+  const type = post.video_url ? 'video' : post.image_url ? 'image' : 'text';
+
+  return (
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="max-w-4xl mx-auto pb-10 px-4">
+        <button onClick={() => router.push(`/${creator.username}/posts`)} className="flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors font-bold text-sm">
+          <ArrowLeft className="w-4 h-4" /> Back to Posts
+        </button>
+
+        <div className="bg-[#111827]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl relative">
+          {/* Post Header Info */}
+          <div className="p-6 md:p-8 flex items-center justify-between border-b border-white/5">
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col">
+                <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
+                <div className="flex items-center gap-2 mt-1">
+                  <span className="text-[10px] font-black text-[#8A2BE2] uppercase tracking-widest bg-[#8A2BE2]/10 px-2 py-0.5 rounded-md">{type}</span>
+                  {!!post.category && <span className="text-[10px] font-black text-[#F7931A] uppercase tracking-widest bg-[#F7931A]/10 px-2 py-0.5 rounded-md">{post.category as string}</span>}
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-3">
+              <span className={`text-[10px] font-black uppercase tracking-widest px-3 py-1.5 rounded-full flex items-center gap-2 ${
+                post.visibility === 'public' ? 'text-emerald-400 bg-emerald-400/10 border border-emerald-400/20' :
+                post.visibility === 'followers' ? 'text-blue-400 bg-blue-400/10 border border-blue-400/20' :
+                'text-[#D8B4FE] bg-[#8A2BE2]/10 border border-[#8A2BE2]/30'
+              }`}>
+                {post.visibility === 'public' ? <Globe2 className="w-3.5 h-3.5" /> : post.visibility === 'followers' ? <Users className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
+                {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Followers Only' : 'Supporters Only'}
+              </span>
+              <button onClick={() => setIsShareModalOpen(true)} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-colors text-slate-400 hover:text-white border border-white/5">
+                <Share2 className="w-5 h-5" />
+              </button>
+            </div>
+          </div>
+
+          {/* Post Content Body */}
+          <div className="p-6 md:p-10">
+            <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-8 leading-tight">{post.title as string}</h1>
+
+            {/* Media Rendering */}
+            {!!post.image_url && (
+              <div className="w-full relative rounded-3xl overflow-hidden mb-10 aspect-video bg-black shadow-2xl">
+                {isLocked ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center">
+                    <Lock className="w-16 h-16 text-[#F7931A] mb-4" />
+                    <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">Supporters Only</h3>
+                    <p className="text-slate-400 mb-8 max-w-sm font-medium">This visual content is exclusive for my amazing supporters. Subscribe to unlock full access!</p>
+                    <Link href={`/${creator.username}/subscriptions`} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] flex items-center gap-3 hover:scale-105 transition-all text-sm uppercase tracking-widest">
+                      <Zap className="w-4 h-4 fill-current" /> Unlock Now
+                    </Link>
+                  </div>
+                ) : (
+                  <Image src={post.image_url as string} alt={post.title as string} fill className="object-contain" unoptimized />
+                )}
+              </div>
+            )}
+
+            {!!post.video_url && (
+              <div className="w-full relative rounded-3xl overflow-hidden mb-10 aspect-video bg-black shadow-2xl">
+                {isLocked ? (
+                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center z-10">
+                    <Lock className="w-16 h-16 text-[#F7931A] mb-4" />
+                    <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">Exclusive Video</h3>
+                    <Link href={`/${creator.username}/subscriptions`} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] mt-4 uppercase tracking-widest text-sm flex items-center gap-2">
+                      <Zap className="w-4 h-4 fill-current" /> Subscribe to Watch
+                    </Link>
+                  </div>
+                ) : (
+                  <video src={post.video_url as string} controls className="w-full h-full object-contain" />
+                )}
+              </div>
+            )}
+
+            <div className="prose prose-invert max-w-none">
+              {isLocked ? (
+                <div className="relative">
+                  <div className="space-y-4 opacity-30 select-none">
+                    <p className="text-xl font-medium leading-relaxed">This is a premium post. The creator has restricted this content to their loyal supporters. By subscribing, you&apos;ll get instant access to this post and many more!</p>
+                    <div className="h-4 w-full bg-slate-800 rounded-full animate-pulse" />
+                    <div className="h-4 w-3/4 bg-slate-800 rounded-full animate-pulse" />
+                    <div className="h-4 w-5/6 bg-slate-800 rounded-full animate-pulse" />
+                  </div>
+                  <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#111827] z-10"></div>
+                  <div className="absolute inset-0 flex items-center justify-center z-20">
+                     <div className="bg-[#111827]/90 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl text-center max-w-xs backdrop-blur-xl">
+                        <Lock className="w-12 h-12 text-[#F7931A] mx-auto mb-4" />
+                        <h4 className="font-black uppercase tracking-tight text-white mb-2">Content Locked</h4>
+                        <p className="text-xs text-slate-500 font-bold mb-6 uppercase tracking-widest">Available to Supporters</p>
+                        <Link href={`/${creator.username}/subscriptions`} className="block w-full bg-white text-black font-black py-3 rounded-xl hover:bg-slate-200 transition-colors text-xs uppercase tracking-widest">Unlock Access</Link>
+                     </div>
+                  </div>
+                </div>
+              ) : (
+                <div 
+                  className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-xl prose-h1:text-5xl prose-h1:font-black prose-h2:text-4xl prose-h2:font-extrabold prose-h3:text-3xl prose-h3:font-bold prose-blockquote:border-l-[#8A2BE2] prose-blockquote:text-slate-400 prose-blockquote:bg-white/5 prose-blockquote:p-6 prose-blockquote:rounded-r-2xl prose-a:text-[#8A2BE2] prose-strong:text-white prose-ul:list-disc prose-ol:list-decimal prose-li:text-slate-300 prose-img:rounded-3xl prose-img:shadow-2xl prose-pre:bg-[#011627] prose-pre:border prose-pre:border-white/5"
+                  dangerouslySetInnerHTML={{ __html: post.content as string }} 
+                />
+              )}
+            </div>
+          </div>
+
+          {/* Interactions */}
+          <div className="p-6 md:p-8 border-t border-white/5 bg-white/5 flex items-center gap-8">
+            <button onClick={handleLike} className={`flex items-center gap-3 font-black text-sm uppercase tracking-widest transition-all ${isLiked ? 'text-[#F7931A] scale-110' : 'text-slate-400 hover:text-white hover:scale-105'}`}>
+              <Heart className={`w-7 h-7 ${isLiked ? 'fill-[#F7931A]' : ''}`} /> {likes} Likes
+            </button>
+            <button className="flex items-center gap-3 text-slate-400 hover:text-white font-black text-sm uppercase tracking-widest transition-all hover:scale-105">
+              <MessageCircle className="w-7 h-7" /> {comments.length} Comments
+            </button>
+          </div>
+        </div>
+
+        {/* Comments Section */}
+        <div className="mt-10 bg-[#111827]/50 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 border border-white/5 shadow-xl">
+          <div className="flex items-center justify-between mb-8">
+            <h3 className="text-2xl font-black uppercase tracking-tighter font-outfit">Discussion</h3>
+            <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs font-bold text-slate-500 uppercase tracking-widest">{comments.length} Comments</span>
+          </div>
+          
+          {!isLocked ? (
+            <div className="space-y-10">
+              <div className="flex gap-6 mb-12">
+                <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8A2BE2]/20 to-[#F7931A]/20 border border-white/10 shrink-0 flex items-center justify-center overflow-hidden">
+                   {userAddress ? (
+                     <img 
+                       src={`https://api.dicebear.com/9.x/shapes/svg?seed=${userAddress}`} 
+                       alt="You" 
+                       className="w-full h-full object-cover" 
+                     />
+                   ) : (
+                     <Users className="w-6 h-6 text-slate-600" />
+                   )}
+                </div>
+                <div className="flex-1">
+                  <textarea 
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    placeholder="Share your thoughts..." 
+                    className="w-full bg-[#0B0F19] border border-white/10 rounded-[1.5rem] p-6 text-white resize-none outline-none focus:ring-2 focus:ring-[#8A2BE2] transition-all min-h-[120px] font-medium shadow-inner"
+                  ></textarea>
+                  <div className="flex justify-end mt-4">
+                    <button 
+                      onClick={handlePostComment}
+                      disabled={isSubmittingComment || !commentText.trim()}
+                      className="bg-[#8A2BE2] hover:bg-[#7828c8] text-white font-black py-3 px-8 rounded-xl transition-all shadow-lg shadow-[#8A2BE2]/20 text-xs uppercase tracking-widest disabled:opacity-50"
+                    >
+                      {isSubmittingComment ? 'Posting...' : 'Post Comment'}
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              {/* Comments List */}
+              <div className="space-y-6">
+                {comments.map((comment) => (
+                  <div key={comment.id} className="flex gap-5 p-6 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-[#8A2BE2]/30 transition-all">
+                    <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shrink-0 bg-black">
+                      <img 
+                        src={comment.sender?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${comment.user_address}`} 
+                        alt="" 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-2">
+                          <p className="text-sm font-black text-white">{comment.sender?.display_name || 'Anonymous'}</p>
+                          <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">@{comment.sender?.username || 'user'}</p>
+                        </div>
+                        <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                          {new Date(comment.created_at).toLocaleDateString()}
+                        </p>
+                      </div>
+                      <p className="text-slate-400 leading-relaxed font-medium">{comment.content}</p>
+                    </div>
+                  </div>
+                ))}
+
+                {comments.length === 0 && (
+                  <div className="text-center py-10 bg-white/5 rounded-3xl border border-white/5 border-dashed">
+                    <MessageCircle className="w-10 h-10 text-slate-800 mx-auto mb-4" />
+                    <p className="text-slate-500 font-bold uppercase tracking-widest text-xs italic">No thoughts shared yet. Be the first!</p>
+                  </div>
+                )}
+              </div>
+            </div>
+          ) : (
+            <div className="text-center py-12 bg-white/5 rounded-3xl border border-white/5">
+              <Lock className="w-10 h-10 text-slate-700 mx-auto mb-4" />
+              <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Join the conversation by becoming a supporter!</p>
+            </div>
+          )}
+        </div>
+        <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} url={typeof window !== 'undefined' ? window.location.href : ''} title={`Check out this post: ${post.title as string}`} />
+    </motion.div>
+  );
+}

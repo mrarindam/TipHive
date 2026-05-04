@@ -8,6 +8,7 @@ import { Menu, X, Compass, LayoutDashboard, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WalletProfileMenu from '@/components/wallet/WalletProfileMenu';
 import NotificationBell from './NotificationBell';
+import GlobalSearch from './GlobalSearch';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
@@ -15,10 +16,11 @@ export default function Navbar() {
 
   const navLinks = [
     { name: 'Home', href: '/', icon: <Home className="w-4 h-4" /> },
-    { name: 'Discover', href: '/discover', icon: <Compass className="w-4 h-4" /> },
+    { name: 'Explore creators', href: '/explore', icon: <Compass className="w-4 h-4" /> },
     { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];
 
+  if (pathname?.includes('/dashboard/drops/new')) return null;
   return (
     <nav className="fixed top-0 w-full z-[100] border-b border-white/5 bg-black/60 backdrop-blur-2xl">
       <div className="w-full px-[5%] md:px-[8%]">
@@ -49,6 +51,8 @@ export default function Navbar() {
               </span>
             </Link>
           </div>
+
+          <GlobalSearch />
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center bg-white/5 border border-white/5 p-1.5 rounded-2xl">
@@ -97,6 +101,7 @@ export default function Navbar() {
             className="md:hidden border-t border-white/5 bg-black/95 backdrop-blur-3xl overflow-hidden"
           >
             <div className="px-4 py-8 space-y-3">
+              <GlobalSearch isMobile onSelect={() => setIsOpen(false)} />
               {navLinks.map((link) => {
                 const isActive = pathname === link.href;
                 return (

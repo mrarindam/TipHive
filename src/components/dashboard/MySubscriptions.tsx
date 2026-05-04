@@ -23,6 +23,9 @@ interface Subscription {
     name: string;
     price: number;
     chain_plan_id: number;
+    description?: string;
+    perks?: string[];
+    duration?: number;
   };
   creators: {
     name: string;
@@ -49,7 +52,7 @@ export default function MySubscriptions() {
         .from('subscriptions')
         .select(`
           *,
-          subscription_plans(name, price, chain_plan_id)
+          subscription_plans(name, price, chain_plan_id, description, perks, duration)
         `)
         .eq('fan_address', address.toLowerCase())
         .order('end_date', { ascending: false });
@@ -90,7 +93,6 @@ export default function MySubscriptions() {
   }, [address]);
 
   useEffect(() => {
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchSubscriptions();
   }, [address, fetchSubscriptions]);
 
@@ -192,18 +194,44 @@ export default function MySubscriptions() {
                   </div>
                 </div>
 
-                <div className="bg-white/5 rounded-2xl p-4 mb-6 border border-white/5 group-hover:border-white/5 transition-all">
+                <div className="bg-white/5 rounded-2xl p-4 mb-4 border border-white/5 group-hover:border-white/5 transition-all">
                   <div className="flex justify-between items-center mb-2">
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Selected Plan</span>
                     <span className="text-sm font-black text-white uppercase tracking-tight">{sub.subscription_plans?.name}</span>
                   </div>
-                  <div className="flex justify-between items-center">
+                  <div className="flex justify-between items-center mb-2">
                     <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Rate</span>
                     <span className="text-sm font-black text-[#F7931A] flex items-center gap-1">
                       {sub.subscription_plans?.price} <MUSDLogo className="w-4 h-4" />
                     </span>
                   </div>
+                  {sub.subscription_plans?.duration && (
+                    <div className="flex justify-between items-center">
+                      <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Access</span>
+                      <span className="text-xs font-bold text-slate-300">{sub.subscription_plans.duration / 86400} Days</span>
+                    </div>
+                  )}
                 </div>
+
+                {/* Description */}
+                {sub.subscription_plans?.description && (
+                  <p className="text-sm text-slate-400 mb-4 leading-relaxed">{sub.subscription_plans.description}</p>
+                )}
+
+                {/* Perks */}
+                {sub.subscription_plans?.perks && sub.subscription_plans.perks.length > 0 && (
+                  <div className="mb-4">
+                    <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-2">Included Perks</p>
+                    <div className="space-y-1.5">
+                      {sub.subscription_plans.perks.map((perk, idx) => (
+                        <div key={idx} className="flex items-center gap-2 text-xs text-slate-300">
+                          <Zap className="w-3 h-3 text-[#F7931A] shrink-0" />
+                          {perk}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 <div className="space-y-3 mb-6">
                   <div className="flex items-center gap-2 text-xs font-bold text-slate-400">
