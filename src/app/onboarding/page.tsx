@@ -118,12 +118,12 @@ export default function OnboardingPage() {
     if (!address) return;
     setIsSubmitting(true);
     try {
-      // Build social links array
-      const links: string[] = [];
-      if (twitter) links.push(twitter.startsWith('http') ? twitter : `https://x.com/${twitter.replace('@', '')}`);
-      if (github) links.push(github.startsWith('http') ? github : `https://github.com/${github}`);
-      if (discord) links.push(discord.startsWith('http') ? discord : `https://discord.com/users/${discord}`);
-      if (website) links.push(website.startsWith('http') ? website : `https://${website}`);
+      const links = {
+        twitter: twitter.startsWith('http') ? twitter : (twitter ? `https://x.com/${twitter.replace('@', '')}` : ''),
+        github: github.startsWith('http') ? github : (github ? `https://github.com/${github}` : ''),
+        discord: discord.startsWith('http') ? discord : (discord ? `https://discord.com/users/${discord}` : ''),
+        website: website.startsWith('http') ? website : (website ? `https://${website}` : ''),
+      };
 
       const response = await fetch('/api/profile', {
         method: 'PATCH',
@@ -135,7 +135,7 @@ export default function OnboardingPage() {
           bio,
           avatar_url: avatarUrl,
           social_links: links,
-          enable_creator: true,
+          is_creator: true,
         }),
       });
 

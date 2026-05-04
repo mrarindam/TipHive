@@ -206,7 +206,7 @@ export default function ConnectedProfilePage() {
           avatar_url: avatarUrl,
           banner_url: bannerUrl,
           social_links: formData.social_links.filter(url => url.trim() !== ''),
-          enable_creator: profile?.is_creator,
+          is_creator: profile?.is_creator,
           creator_description: formData.creator_description,
           location: formData.location,
         }),

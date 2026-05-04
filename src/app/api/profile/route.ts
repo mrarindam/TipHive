@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Valid wallet required' }, { status: 400 });
     }
 
-    const socialLinks = Array.isArray(body.social_links) ? body.social_links : [];
+    const socialLinks = body.social_links !== undefined ? body.social_links : undefined;
     const normalizedWallet = wallet.toLowerCase();
     const supabase = createServerSupabase();
     const username = String(body.username || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest) {
       bio?: string;
       avatar_url?: string;
       banner_url?: string;
-      social_links?: string[];
+      social_links?: any;
       is_creator?: boolean;
       creator_category?: string;
       creator_description?: string;
@@ -98,7 +98,9 @@ export async function PATCH(request: NextRequest) {
     if (body.avatar_url !== undefined) updateData.avatar_url = body.avatar_url;
     if (body.banner_url !== undefined) updateData.banner_url = body.banner_url;
     if (body.social_links !== undefined) updateData.social_links = socialLinks;
-    if (body.is_creator !== undefined) updateData.is_creator = Boolean(body.is_creator);
+    if (body.is_creator !== undefined || body.enable_creator !== undefined) {
+      updateData.is_creator = Boolean(body.is_creator ?? body.enable_creator);
+    }
     if (body.creator_category !== undefined) updateData.creator_category = String(body.creator_category).slice(0, 80);
     if (body.creator_description !== undefined) updateData.creator_description = String(body.creator_description).slice(0, 500);
     if (body.location !== undefined) updateData.location = String(body.location).slice(0, 100);

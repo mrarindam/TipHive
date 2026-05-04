@@ -43,7 +43,7 @@ export default function RegisterCreator() {
             discord: formData.discord,
             website: formData.website,
           },
-          enable_creator: true,
+          is_creator: true,
           creator_category: formData.creator_category,
           creator_description: formData.creator_description,
         }),
