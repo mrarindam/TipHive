@@ -2,13 +2,13 @@
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { motion, AnimatePresence, Reorder } from 'framer-motion';
-import { 
-  Plus, 
-  Zap, 
-  Clock, 
-  LayoutGrid, 
-  X, 
-  Loader2, 
+import {
+  Plus,
+  Zap,
+  Clock,
+  LayoutGrid,
+  X,
+  Loader2,
   CheckCircle2,
   Power,
   PowerOff,
@@ -56,9 +56,9 @@ interface Subscriber {
 
 const MUSDLogo = ({ className }: { className?: string }) => (
   <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="50" r="50" fill="#F7931A"/>
-    <path d="M70 50C70 61.0457 61.0457 70 50 70C38.9543 70 30 61.0457 30 50C30 38.9543 38.9543 30 50 30C61.0457 30 70 38.9543 70 50Z" fill="white"/>
-    <path d="M50 35V65M40 45H60M40 55H60" stroke="#F7931A" strokeWidth="6" strokeLinecap="round"/>
+    <circle cx="50" cy="50" r="50" fill="#F7931A" />
+    <path d="M70 50C70 61.0457 61.0457 70 50 70C38.9543 70 30 61.0457 30 50C30 38.9543 38.9543 30 50 30C61.0457 30 70 38.9543 70 50Z" fill="white" />
+    <path d="M50 35V65M40 45H60M40 55H60" stroke="#F7931A" strokeWidth="6" strokeLinecap="round" />
   </svg>
 );
 
@@ -95,13 +95,13 @@ export default function SubscriptionManager() {
   useEffect(() => {
     if (writeError) {
       console.error("Write Contract Error:", writeError);
-      const msg = writeError.message.includes('User rejected') 
-        ? "Transaction rejected by user ❌" 
+      const msg = writeError.message.includes('User rejected')
+        ? "Transaction rejected by user ❌"
         : writeError.message.split('\n')[0] || "Transaction failed";
       setNotification({ message: msg, type: 'error' });
       setCreating(false);
       setActiveActionId(null);
-      
+
       const timer = setTimeout(() => setNotification(null), 5000);
       return () => clearTimeout(timer);
     }
@@ -132,7 +132,7 @@ export default function SubscriptionManager() {
         .select('*')
         .eq('creator_address', address.toLowerCase())
         .order('created_at', { ascending: false });
-      
+
       if (data) setPlans(data as Plan[]);
 
       // Step 2: Fetch subscriptions (simple query, no join)
@@ -149,7 +149,7 @@ export default function SubscriptionManager() {
       if (rawSubs && rawSubs.length > 0) {
         // Step 3: Get unique fan addresses
         const fanAddresses = [...new Set(rawSubs.map((s: Subscriber) => s.fan_address?.toLowerCase()).filter(Boolean))];
-        
+
         // Step 4: Fetch fan profiles separately
         const { data: fanProfiles } = await supabase
           .from('user_profiles')
@@ -196,7 +196,7 @@ export default function SubscriptionManager() {
       setNotification({ message: "Please connect your wallet first! 🔌", type: 'error' });
       return;
     }
-    
+
     if (!formData.price || isNaN(parseFloat(formData.price))) {
       setNotification({ message: "Please enter a valid price. 💰", type: 'error' });
       return;
@@ -259,7 +259,7 @@ export default function SubscriptionManager() {
           const { data: updatedCounter } = await refetchCounter();
           let chainId = 0;
           if (updatedCounter !== undefined) {
-             chainId = Number(updatedCounter) - 1;
+            chainId = Number(updatedCounter) - 1;
           }
 
           await supabase.from('subscription_plans').insert({
@@ -298,7 +298,7 @@ export default function SubscriptionManager() {
     } else if (isConfirmed && hash && activeActionId) {
       if (processedHashes.current.has(hash)) return;
       processedHashes.current.add(hash);
-      
+
       const updateDb = async () => {
         const plan = plans.find(p => p.id === activeActionId);
         if (!plan) return;
@@ -307,7 +307,7 @@ export default function SubscriptionManager() {
           .from('subscription_plans')
           .update({ active: !plan.active })
           .eq('id', plan.id);
-        
+
         setNotification({ message: `Tier ${!plan.active ? 'Activated' : 'Deactivated'}!`, type: 'success' });
         setActiveActionId(null);
         fetchPlans();
@@ -330,16 +330,15 @@ export default function SubscriptionManager() {
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
             className="fixed top-6 right-6 z-[200] flex items-center gap-3 bg-[#1a1a1f] border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-xl"
           >
-            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-              notification.type === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'
-            }`}>
+            <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${notification.type === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'
+              }`}>
               {notification.type === 'error' ? <X className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
             </div>
             <div>
               <p className="text-sm font-black text-white uppercase tracking-tight">{notification.message}</p>
               <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Subscription Manager</p>
             </div>
-            <button 
+            <button
               onClick={() => setNotification(null)}
               className="ml-4 p-1 hover:bg-white/5 rounded-lg transition-colors"
             >
@@ -352,31 +351,28 @@ export default function SubscriptionManager() {
       {/* Tab Navigation */}
       <div className="flex flex-col gap-6">
         <div className="flex items-center gap-3">
-          <button 
+          <button
             onClick={() => setActiveTab('manage')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
-              activeTab === 'manage' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
-            }`}
+            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'manage' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
+              }`}
           >
             Manage Tiers
           </button>
-          <button 
+          <button
             disabled={plans.filter(p => p.active).length >= 3 && activeTab !== 'create'}
             onClick={() => setActiveTab('create')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all relative ${
-              activeTab === 'create' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
-            } ${plans.filter(p => p.active).length >= 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === 'create' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
+              } ${plans.filter(p => p.active).length >= 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Create New Tier
             {plans.filter(p => p.active).length >= 3 && (
               <span className="absolute -top-1 -right-1 w-2 h-2 bg-red-500 rounded-full" title="Limit Reached" />
             )}
           </button>
-          <button 
+          <button
             onClick={() => setActiveTab('members')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${
-              activeTab === 'members' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
-            }`}
+            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'members' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
+              }`}
           >
             Members Zone
           </button>
@@ -397,9 +393,8 @@ export default function SubscriptionManager() {
               return (
                 <div key={plan.id} className="glass-card p-6 border-white/5 bg-white/[0.03] group transition-all hover:bg-white/[0.05] relative overflow-hidden">
                   <div className="flex justify-between items-start mb-6">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                      plan.active ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                    }`}>
+                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${plan.active ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                      }`}>
                       {plan.active ? 'Live' : 'Inactive'}
                     </span>
                     <div className="flex items-center gap-1.5 text-[#F7931A] font-black text-xl">
@@ -423,14 +418,13 @@ export default function SubscriptionManager() {
                   </div>
 
                   <div className="pt-6 border-t border-white/5 flex gap-3">
-                    <button 
+                    <button
                       onClick={() => handleToggleActive(plan)}
                       disabled={isProcessing}
-                      className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${
-                        plan.active 
-                          ? 'bg-white/5 text-slate-300 hover:bg-red-500/10 hover:text-red-500 border border-transparent hover:border-red-500/20' 
+                      className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${plan.active
+                          ? 'bg-white/5 text-slate-300 hover:bg-red-500/10 hover:text-red-500 border border-transparent hover:border-red-500/20'
                           : 'bg-[#F7931A]/10 text-[#F7931A] hover:bg-[#F7931A] hover:text-black'
-                      }`}
+                        }`}
                     >
                       {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : plan.active ? <PowerOff className="w-3 h-3" /> : <Power className="w-3 h-3" />}
                       {plan.active ? 'Deactivate' : 'Activate'}
@@ -445,7 +439,7 @@ export default function SubscriptionManager() {
                 </div>
                 <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">No Tiers Created</h3>
                 <p className="text-slate-500 font-medium mb-10 max-w-sm mx-auto">Create subscription tiers to start earning recurring revenue from your community.</p>
-                <button 
+                <button
                   onClick={() => setActiveTab('create')}
                   className="btn-secondary px-10 py-4 mx-auto"
                 >
@@ -581,11 +575,10 @@ export default function SubscriptionManager() {
                         <button
                           key={i}
                           onClick={() => setMemberPage(i + 1)}
-                          className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${
-                            memberPage === i + 1
+                          className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${memberPage === i + 1
                               ? 'bg-[#F7931A] text-black shadow-[0_0_15px_rgba(247,147,26,0.3)]'
                               : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
-                          }`}
+                            }`}
                         >
                           {i + 1}
                         </button>
@@ -611,43 +604,43 @@ export default function SubscriptionManager() {
                   <h3 className="text-lg font-bold text-white tracking-tight">Tier Details</h3>
                   <p className="text-sm text-slate-500">Define the core identity and pricing of your access tier.</p>
                 </div>
-                
+
                 <div className="space-y-6 pt-2">
                   <div className="space-y-2">
                     <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Tier Name</label>
-                    <input 
+                    <input
                       required
-                      type="text" 
+                      type="text"
                       placeholder="e.g. Diamond Circle"
                       className="w-full bg-black/20 border border-white/5 rounded-xl py-3.5 px-5 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium transition-all"
                       value={formData.name}
-                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Monthly Rate (MUSD)</label>
+                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Price (MUSD)</label>
                       <div className="relative">
-                        <input 
+                        <input
                           required
-                          type="number" 
+                          type="number"
                           placeholder="10"
                           className="w-full bg-black/20 border border-white/5 rounded-xl py-3.5 px-5 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all"
                           value={formData.price}
-                          onChange={(e) => setFormData({...formData, price: e.target.value})}
+                          onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                         />
                         <MUSDLogo className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6" />
                       </div>
                     </div>
                     <div className="space-y-2">
                       <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Tier Duration</label>
-                      <select 
+                      <select
                         className="w-full bg-black/20 border border-white/5 rounded-xl py-3.5 px-5 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none appearance-none font-medium transition-all cursor-pointer"
                         value={formData.durationDays}
-                        onChange={(e) => setFormData({...formData, durationDays: e.target.value})}
+                        onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
                       >
-                        <option value="30" className="bg-[#1a1a1a]">Monthly Access</option>
+                        <option value="30" className="bg-[#1a1a1a]">1 Month Access</option>
                         <option value="90" className="bg-[#1a1a1a]">90 Days Access</option>
                         <option value="365" className="bg-[#1a1a1a]">Annual Access</option>
                       </select>
@@ -657,15 +650,14 @@ export default function SubscriptionManager() {
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Tier Description</label>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${
-                        formData.description.trim().split(/\s+/).filter(Boolean).length >= 40 && formData.description.trim().split(/\s+/).filter(Boolean).length <= 80
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${formData.description.trim().split(/\s+/).filter(Boolean).length >= 40 && formData.description.trim().split(/\s+/).filter(Boolean).length <= 80
                           ? 'bg-green-500/10 text-green-500'
                           : 'bg-yellow-500/10 text-yellow-500'
-                      }`}>
+                        }`}>
                         {formData.description.trim().split(/\s+/).filter(Boolean).length} / 80 Words
                       </span>
                     </div>
-                    <textarea 
+                    <textarea
                       rows={4}
                       placeholder="Describe your tier... (Aim for 40-80 words for best engagement)"
                       className="w-full bg-black/20 border border-white/5 rounded-xl py-3.5 px-5 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none resize-none font-medium transition-all"
@@ -673,7 +665,7 @@ export default function SubscriptionManager() {
                       onChange={(e) => {
                         const words = e.target.value.trim().split(/\s+/).filter(Boolean);
                         if (words.length <= 80) {
-                          setFormData({...formData, description: e.target.value});
+                          setFormData({ ...formData, description: e.target.value });
                         }
                       }}
                     />
@@ -690,20 +682,20 @@ export default function SubscriptionManager() {
                     <p className="text-sm text-slate-500">Add exclusive rewards for your subscribers.</p>
                   </div>
                   {formData.perks.length < 5 && (
-                    <button 
+                    <button
                       type="button"
-                      onClick={() => setFormData({...formData, perks: [...formData.perks, '']})}
+                      onClick={() => setFormData({ ...formData, perks: [...formData.perks, ''] })}
                       className="text-xs font-black text-[#F7931A] uppercase hover:text-white flex items-center gap-1 transition-colors bg-[#F7931A]/10 px-3 py-1.5 rounded-lg border border-[#F7931A]/20"
                     >
                       <Plus className="w-3 h-3" /> Add Perk
                     </button>
                   )}
                 </div>
-                
-                <Reorder.Group 
-                  axis="y" 
-                  values={formData.perks} 
-                  onReorder={(newPerks) => setFormData({...formData, perks: newPerks})} 
+
+                <Reorder.Group
+                  axis="y"
+                  values={formData.perks}
+                  onReorder={(newPerks) => setFormData({ ...formData, perks: newPerks })}
                   className="space-y-3"
                 >
                   {formData.perks.map((perk, index) => (
@@ -720,7 +712,7 @@ export default function SubscriptionManager() {
                           onChange={(e) => {
                             const newPerks = [...formData.perks];
                             newPerks[index] = e.target.value;
-                            setFormData({...formData, perks: newPerks});
+                            setFormData({ ...formData, perks: newPerks });
                           }}
                         />
                       </div>
@@ -728,7 +720,7 @@ export default function SubscriptionManager() {
                         type="button"
                         onClick={() => {
                           const newPerks = formData.perks.filter((_, i) => i !== index);
-                          setFormData({...formData, perks: newPerks});
+                          setFormData({ ...formData, perks: newPerks });
                         }}
                         className="p-3 text-slate-500 hover:text-red-500 transition-colors rounded-xl hover:bg-red-500/10"
                       >
@@ -752,12 +744,12 @@ export default function SubscriptionManager() {
                 </div>
 
                 <div className="bg-black/20 border border-white/5 rounded-xl p-6 space-y-4">
-                  <textarea 
+                  <textarea
                     rows={3}
                     placeholder="Thank you for joining my membership! 🎉"
                     className="w-full bg-transparent text-white resize-none outline-none font-medium text-sm placeholder:text-slate-700 leading-relaxed"
                     value={formData.welcome_note}
-                    onChange={(e) => setFormData({...formData, welcome_note: e.target.value})}
+                    onChange={(e) => setFormData({ ...formData, welcome_note: e.target.value })}
                   />
                   <div className="pt-4 border-t border-white/5 flex items-center justify-between">
                     <p className="text-[10px] text-slate-500 italic">Included in the welcome email.</p>

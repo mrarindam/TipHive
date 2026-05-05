@@ -102,6 +102,27 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
       return;
     }
 
+    // Check for existing active subscription
+    try {
+      const { data: existingSub } = await supabase
+        .from('subscriptions')
+        .select('id, end_date')
+        .eq('fan_address', userAddress.toLowerCase())
+        .eq('plan_id', plan.id)
+        .eq('active', true)
+        .maybeSingle();
+
+      if (existingSub && new Date(existingSub.end_date) > new Date()) {
+        setNotification({ 
+          message: "You are already a member! One plan, one time you can buy. 🛡️", 
+          type: 'error' 
+        });
+        return;
+      }
+    } catch (err) {
+      console.error('Error checking existing sub:', err);
+    }
+
     const amount = parseEther(plan.price.toString());
     
     // Balance check
@@ -272,7 +293,11 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
                         </div>
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-2">Monthly Support</span>
+                  <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-2">
+                    {plan.duration / 86400 === 30 ? '1 Month Support' : 
+                     plan.duration / 86400 === 365 ? 'Annual Support' : 
+                     `${plan.duration / 86400} Days Support`}
+                  </span>
                 </div>
               </div>
 
