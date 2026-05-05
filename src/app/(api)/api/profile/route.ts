@@ -52,7 +52,7 @@ export async function PATCH(request: NextRequest) {
       bio?: string;
       avatar_url?: string;
       banner_url?: string;
-      social_links?: any;
+      social_links?: Record<string, string | number | boolean | null>;
       is_creator?: boolean;
       creator_category?: string;
       creator_description?: string;

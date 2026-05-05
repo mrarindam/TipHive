@@ -26,6 +26,9 @@ export default function NotificationBell() {
     if (!address) return;
     try {
       const res = await fetch(`/api/notifications?wallet=${address}`);
+      if (!res.ok) {
+        throw new Error(`Notifications API failed: ${res.status}`);
+      }
       const data = await res.json();
       if (data.notifications) {
         setNotifications(data.notifications);

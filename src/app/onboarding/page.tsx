@@ -45,6 +45,9 @@ export default function OnboardingPage() {
     const loadProfile = async () => {
       try {
         const res = await fetch(`/api/auth?wallet=${address}`);
+        if (!res.ok) {
+          throw new Error(`Auth API failed: ${res.status}`);
+        }
         const data = await res.json();
         if (data?.user) {
           if (data.user.is_creator === true) {
@@ -80,6 +83,9 @@ export default function OnboardingPage() {
     setIsCheckingUsername(true);
     try {
       const res = await fetch(`/api/profile/check-username?username=${encodeURIComponent(val)}`);
+      if (!res.ok) {
+        throw new Error(`Check username API failed: ${res.status}`);
+      }
       const data = await res.json();
       
       // If the available username is actually our own current username, it's valid

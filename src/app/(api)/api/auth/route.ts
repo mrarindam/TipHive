@@ -32,6 +32,7 @@ async function generateProfileDefaults(supabase: ReturnType<typeof createServerS
 }
 
 export async function GET(request: NextRequest) {
+  console.log('API: GET /api/auth');
   try {
     const wallet = request.nextUrl.searchParams.get('wallet');
 

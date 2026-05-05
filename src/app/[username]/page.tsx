@@ -181,7 +181,7 @@ export default function CreatorHome() {
         
         const senderName = senderProfile?.display_name || (senderProfile?.username ? `@${senderProfile.username}` : `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`);
         
-        await fetch('/api/notifications', {
+        const res = await fetch('/api/notifications', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -191,6 +191,9 @@ export default function CreatorHome() {
             content: `You received a ${finalAmount} MUSD tip from ${senderName}! 💝`
           })
         });
+        if (!res.ok) {
+          console.warn('Failed to send tip notification:', res.status);
+        }
       } catch (nErr) {
         console.error('Failed to send tip notification:', nErr);
       }

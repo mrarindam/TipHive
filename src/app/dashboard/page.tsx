@@ -13,7 +13,7 @@ function shortAddress(address?: string) {
 }
 
 export default function DashboardPage() {
-  const { creatorProfile, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, address } = useDashboard();
+  const { creatorProfile, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, address, totalSent } = useDashboard();
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [origin, setOrigin] = useState('');
@@ -126,7 +126,7 @@ export default function DashboardPage() {
         <DashboardCard 
           icon={<History className="w-5 h-5 text-blue-400" />}
           label="Sent By You" 
-          value="10" 
+          value={totalSent.toString()} 
           subtitle="Your Contributions"
         />
       </div>

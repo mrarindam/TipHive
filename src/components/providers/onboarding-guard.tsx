@@ -18,6 +18,9 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
     const checkProfile = async () => {
       try {
         const res = await fetch(`/api/auth?wallet=${address}`);
+        if (!res.ok) {
+          throw new Error(`Auth API failed: ${res.status}`);
+        }
         const data = await res.json();
         
         if (data?.user) {

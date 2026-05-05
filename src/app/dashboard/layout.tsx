@@ -51,6 +51,7 @@ export interface DashboardContextType {
   handleWithdraw: () => void;
   fetchData: () => void;
   address: string | undefined;
+  totalSent: number;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -79,6 +80,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
+  const [totalSent, setTotalSent] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   // Contract Reads
@@ -114,6 +116,9 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 
     try {
       const authResponse = await fetch(`/api/auth?wallet=${address}`);
+      if (!authResponse.ok) {
+        throw new Error(`Auth API failed with status ${authResponse.status}`);
+      }
       const authData = await authResponse.json();
       setCreatorProfile(authData.user ? {
         address: authData.user.wallet_address,
@@ -134,6 +139,16 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       const { data: sentTips } = await supabase.from('tips').select('*').eq('from_address', userAddr);
       const { data: receivedTips } = await supabase.from('tips').select('*').eq('to_address', userAddr);
       const { data: receivedSubs } = await supabase.from('subscriptions').select('*, subscription_plans(name)').eq('creator_address', userAddr);
+      const { data: sentSubs } = await supabase.from('subscriptions').select('*').eq('fan_address', userAddr);
+
+      let totalSentVal = 0;
+      if (sentTips) {
+        totalSentVal += sentTips.reduce((sum, tip) => sum + (Number(tip.amount) || 0), 0);
+      }
+      if (sentSubs) {
+        totalSentVal += sentSubs.reduce((sum, sub) => sum + (Number(sub.total_paid) || 0), 0);
+      }
+      setTotalSent(totalSentVal);
 
       const combined: Activity[] = [];
       const knownAddresses = Array.from(new Set([
@@ -255,7 +270,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   );
 
   return (
-    <DashboardContext.Provider value={{ creatorProfile, activities, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, fetchData, address }}>
+    <DashboardContext.Provider value={{ creatorProfile, activities, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, fetchData, address, totalSent }}>
       <div className="min-h-screen bg-[#000] flex">
         {/* Unified Top-Left Menu Button */}
         <div className="fixed top-8 left-8 z-[60]">

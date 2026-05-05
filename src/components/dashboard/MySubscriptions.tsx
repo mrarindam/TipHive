@@ -62,9 +62,9 @@ export default function MySubscriptions() {
         const creatorAddresses = Array.from(new Set(data.map((sub) => sub.creator_address).filter(Boolean)));
         const { data: profiles } = creatorAddresses.length
           ? await supabase
-              .from('user_profiles')
-              .select('wallet_address, display_name, username, avatar_url')
-              .in('wallet_address', creatorAddresses)
+            .from('user_profiles')
+            .select('wallet_address, display_name, username, avatar_url')
+            .in('wallet_address', creatorAddresses)
           : { data: [] };
 
         const profileByAddress = new Map((profiles || []).map((profile) => [
@@ -98,10 +98,10 @@ export default function MySubscriptions() {
 
   const handleRenew = async (sub: Subscription) => {
     if (!sub.subscription_plans?.chain_plan_id && sub.subscription_plans?.chain_plan_id !== 0) return;
-    
+
     setActionStatus('processing');
     setActiveSubId(sub.id);
-    
+
     try {
       writeContract({
         address: SUBSCRIPTION_CONTRACT,
@@ -117,10 +117,10 @@ export default function MySubscriptions() {
 
   const handleCancel = async (sub: Subscription) => {
     if (!sub.subscription_plans?.chain_plan_id && sub.subscription_plans?.chain_plan_id !== 0) return;
-    
+
     setActionStatus('processing');
     setActiveSubId(sub.id);
-    
+
     try {
       writeContract({
         address: SUBSCRIPTION_CONTRACT,
@@ -143,7 +143,7 @@ export default function MySubscriptions() {
         // If it was a renewal, update the end_date in DB
         // In a real app, we'd fetch the actual end date from contract or increment by duration
         // For simplicity, let's just refresh data
-        
+
         await fetchSubscriptions();
         setActionStatus('success');
         setTimeout(() => setActionStatus('idle'), 3000);
@@ -178,7 +178,7 @@ export default function MySubscriptions() {
                   />
                   <div>
                     <h3 className="text-lg font-black text-white uppercase tracking-tight font-outfit">{sub.creators?.name}</h3>
-                    <Link 
+                    <Link
                       href={`/profile/${sub.creators?.username || sub.creator_address}`}
                       className="text-xs text-[#F7931A] font-bold hover:underline"
                     >
@@ -186,9 +186,8 @@ export default function MySubscriptions() {
                     </Link>
                   </div>
                   <div className="ml-auto text-right">
-                    <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${
-                      !isExpired ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                    }`}>
+                    <div className={`px-3 py-1 rounded-full text-[8px] font-black uppercase tracking-widest ${!isExpired ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                      }`}>
                       {!isExpired ? 'Active' : 'Expired'}
                     </div>
                   </div>
@@ -238,7 +237,7 @@ export default function MySubscriptions() {
                     <Clock className="w-4 h-4 text-[#F7931A]" />
                     <span>{isExpired ? 'Expired on' : 'Renews on'} {new Date(sub.end_date).toLocaleDateString()}</span>
                   </div>
-                  <a 
+                  <a
                     href={`https://explorer.test.mezo.org/tx/${sub.tx_hash}`}
                     target="_blank"
                     className="flex items-center gap-2 text-[10px] text-slate-600 hover:text-white uppercase tracking-widest font-black transition-colors"
@@ -250,7 +249,7 @@ export default function MySubscriptions() {
 
                 <div className="flex gap-2 relative z-10">
                   {!isExpired && sub.active ? (
-                    <button 
+                    <button
                       disabled
                       className="flex-1 py-3 bg-green-500/10 border border-green-500/20 rounded-xl text-[10px] font-black text-green-400 uppercase tracking-widest flex items-center justify-center gap-2"
                     >
@@ -258,7 +257,7 @@ export default function MySubscriptions() {
                       Current Plan Live
                     </button>
                   ) : (
-                    <button 
+                    <button
                       onClick={() => handleRenew(sub)}
                       disabled={isProcessing}
                       className="flex-1 py-3 bg-white/5 hover:bg-[#F7931A]/10 border border-white/5 hover:border-[#F7931A]/50 rounded-xl text-[10px] font-black text-white transition-all uppercase tracking-widest flex items-center justify-center gap-2"
@@ -267,7 +266,7 @@ export default function MySubscriptions() {
                       Renew
                     </button>
                   )}
-                  <button 
+                  <button
                     onClick={() => handleCancel(sub)}
                     disabled={isProcessing || isExpired}
                     className="py-3 px-4 bg-white/5 hover:bg-red-500/10 border border-white/5 hover:border-red-500/50 rounded-xl text-[10px] font-black text-slate-400 hover:text-red-500 transition-all uppercase tracking-widest"
@@ -280,9 +279,9 @@ export default function MySubscriptions() {
                 {/* Success Overlay */}
                 <AnimatePresence>
                   {actionStatus === 'success' && activeSubId === sub.id && (
-                    <motion.div 
-                      initial={{ opacity: 0 }} 
-                      animate={{ opacity: 1 }} 
+                    <motion.div
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
                       exit={{ opacity: 0 }}
                       className="absolute inset-0 z-20 bg-black/80 backdrop-blur-sm flex flex-col items-center justify-center"
                     >
