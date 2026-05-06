@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Lock, Globe2, Users, Filter, Sparkles, ChevronDown } from 'lucide-react';
+import { Lock, Globe2, Users, Filter, Sparkles, ChevronDown, Video, Music2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -80,16 +80,53 @@ export default function CreatorPosts() {
         <div className="space-y-4">
           {filteredPosts.map(post => {
             const contentImage = extractFirstImage(post.content);
-            const thumb = post.image_url || post.video_url || contentImage;
+            let thumb = post.image_url || post.video_url || contentImage;
+            
+            // Fix: If thumb is a video, use Cloudinary thumbnail logic
+            if (thumb && thumb.includes('/video/upload/') && thumb.includes('cloudinary.com')) {
+              thumb = thumb.replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_500/').replace(/\.[^.]+$/, '.jpg');
+            }
 
             return (
               <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="flex flex-col md:flex-row gap-6 p-4 rounded-3xl bg-[#111827] hover:bg-[#1A2234] transition-colors border border-white/5 hover:border-white/10 group">
                 <div className="w-full md:w-64 h-48 md:h-36 bg-[#1A2234] rounded-2xl relative shrink-0 overflow-hidden">
-                  {thumb ? (
-                    <Image src={thumb as string} alt="" fill className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized />
-                  ) : (
-                    <TextThumbnail title={post.title} size="small" />
-                  )}
+                  {(() => {
+                    const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
+                    const isVideo = !isAudio && (post.video_url?.includes('/video/') || post.video_url?.match(/\.(mp4|webm|mov|m4v)$/i));
+                    let thumbUrl = post.image_url || contentImage;
+
+                    if (!thumbUrl && isVideo && post.video_url?.includes('cloudinary.com')) {
+                      thumbUrl = post.video_url
+                        .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_500/')
+                        .replace(/\.[^.]+$/, '.jpg');
+                    }
+
+                    if (thumbUrl) {
+                      return <Image src={thumbUrl} alt="" fill className="object-cover group-hover:scale-105 transition-transform duration-500" unoptimized />;
+                    }
+
+                    if (isAudio) {
+                      return (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600/20 to-pink-600/20 relative">
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                          <Music2 className="w-10 h-10 text-purple-400 z-10" />
+                          <span className="mt-2 text-[8px] font-black uppercase tracking-[0.2em] text-purple-300/50 z-10">Audio Post</span>
+                        </div>
+                      );
+                    }
+
+                    if (isVideo) {
+                      return (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-600/20 to-indigo-600/20 relative">
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                          <Video className="w-10 h-10 text-blue-400 z-10" />
+                          <span className="mt-2 text-[8px] font-black uppercase tracking-[0.2em] text-blue-300/50 z-10">Video Post</span>
+                        </div>
+                      );
+                    }
+
+                    return <TextThumbnail title={post.title} size="small" />;
+                  })()}
                 </div>
                 <div className="flex-1 py-2 flex flex-col justify-center relative">
                   <h4 className="font-bold text-lg md:text-xl text-white mb-2 line-clamp-2 group-hover:text-[#8A2BE2] transition-colors">{post.title as string}</h4>

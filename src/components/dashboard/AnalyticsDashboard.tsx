@@ -17,6 +17,7 @@ import { Line, Bar } from 'react-chartjs-2';
 import { 
   Calendar, 
   TrendingUp, 
+  TrendingDown,
   BarChart3, 
   LineChart as LineChartIcon,
   PieChart as PieChartIcon,
@@ -111,14 +112,27 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
       }
 
       if (dataMap[key] !== undefined) {
-        dataMap[key] += Number(e.amount);
+        dataMap[key] += Number(e.amount || 0);
       }
     });
 
     const values = Object.values(dataMap);
+    
+    // Calculate Growth Rate dynamically
+    let rate = 0;
+    if (values.length >= 2) {
+      const current = values[values.length - 1];
+      const previous = values[values.length - 2];
+      if (previous > 0) {
+        rate = ((current - previous) / previous) * 100;
+      } else if (current > 0) {
+        rate = 100;
+      }
+    }
 
     return {
       labels,
+      growthRate: (rate >= 0 ? '+' : '') + rate.toFixed(1) + '%',
       datasets: [
         {
           label: isCreator ? 'Earnings (MUSD)' : 'Spending (MUSD)',
@@ -237,8 +251,11 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isCreator ? 'Growth Rate' : 'Activity Status'}</p>
-                  <p className={`text-xl font-black flex items-center justify-end gap-1 font-outfit ${isCreator ? 'text-green-400' : 'text-cyan-400'}`}>
-                    {isCreator ? '+12.4%' : 'Active'} {isCreator ? <TrendingUp className="w-4 h-4" /> : <Heart className="w-4 h-4" />}
+                  <p className={`text-xl font-black flex items-center justify-end gap-1 font-outfit ${isCreator ? (parseFloat(chartData.growthRate) >= 0 ? 'text-green-400' : 'text-red-400') : 'text-cyan-400'}`}>
+                    {isCreator ? chartData.growthRate : 'Active'} 
+                    {isCreator ? (
+                      parseFloat(chartData.growthRate) >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />
+                    ) : <Heart className="w-4 h-4" />}
                   </p>
                 </div>
               </div>

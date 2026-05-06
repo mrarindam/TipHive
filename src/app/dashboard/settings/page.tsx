@@ -105,20 +105,20 @@ export default function VisualToolkitPage() {
   ];
 
   return (
-    <div className="max-w-6xl mx-auto space-y-12">
+    <div className="w-full space-y-12">
       <motion.div 
         initial={{ opacity: 0, x: -20 }}
         animate={{ opacity: 1, x: 0 }}
-        className="space-y-2"
+        className="px-4 md:px-0 mb-12"
       >
-        <div className="flex items-center gap-3 mb-2">
-           <div className="w-12 h-1 bg-[#f7931a] rounded-full" />
-           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#f7931a]">Creator Suite</span>
+        <div className="flex items-center gap-3 mb-4">
+          <div className="h-1.5 w-12 bg-[#F7931A] rounded-full" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#F7931A]">Creator Suite</span>
         </div>
-        <h1 className="text-5xl md:text-6xl font-black text-white uppercase tracking-tighter leading-none">
-          Visual <span className="text-[#f7931a]">Toolkit</span>
+        <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none mb-4 font-outfit">
+          VISUAL <span className="text-[#F7931A]">TOOLKIT</span>
         </h1>
-        <p className="text-slate-500 text-lg max-w-2xl font-medium">
+        <p className="text-slate-500 text-lg md:text-xl font-medium max-w-3xl">
           Professional tools to integrate TipHive into your existing workflow and increase your creator revenue.
         </p>
       </motion.div>

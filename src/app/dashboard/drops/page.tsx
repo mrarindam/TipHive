@@ -3,9 +3,17 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
-import { FileText, Image as ImageIcon, Headphones, Video, Eye, Calendar, Trash2 } from 'lucide-react';
+import { FileText, ImageIcon, Headphones, Video, Eye, Calendar, Trash2, AlertTriangle, Music2 } from 'lucide-react';
+import { AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAccount } from 'wagmi';
+import Pagination from '@/components/ui/Pagination';
+import { Skeleton } from '@/components/ui/Skeleton';
+
+const extractFirstImage = (html: string) => {
+  const match = html.match(/<img[^>]+src="([^">]+)"/);
+  return match ? match[1] : null;
+};
 
 interface Post {
   id: string;
@@ -30,6 +38,10 @@ export default function DropsPage() {
   const { address } = useAccount();
   const [posts, setPosts] = useState<Post[]>([]);
   const [loading, setLoading] = useState(true);
+  const [currentPage, setCurrentPage] = useState(1);
+  const [username, setUsername] = useState<string | null>(null);
+  const [deleteId, setDeleteId] = useState<string | null>(null);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     if (!address) return;
@@ -37,11 +49,12 @@ export default function DropsPage() {
       setLoading(true);
       const { data: profile } = await supabase
         .from('user_profiles')
-        .select('id')
+        .select('id, username')
         .eq('wallet_address', address.toLowerCase())
         .single();
-
+    
       if (profile) {
+        setUsername(profile.username);
         const { data } = await supabase
           .from('posts')
           .select('*')
@@ -54,10 +67,11 @@ export default function DropsPage() {
     fetchPosts();
   }, [address]);
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this post?')) return;
-    await supabase.from('posts').delete().eq('id', id);
-    setPosts(prev => prev.filter(p => p.id !== id));
+  const confirmDelete = async () => {
+    if (!deleteId) return;
+    await supabase.from('posts').delete().eq('id', deleteId);
+    setPosts(prev => prev.filter(p => p.id !== deleteId));
+    setDeleteId(null);
   };
 
   return (
@@ -123,8 +137,14 @@ export default function DropsPage() {
 
         {loading ? (
           <div className="space-y-4">
-            {[1, 2, 3].map(i => (
-              <div key={i} className="h-24 bg-white/5 rounded-2xl animate-pulse" />
+            {[1, 2, 3, 4, 5].map(i => (
+              <div key={i} className="flex items-center gap-4 p-5 bg-[#0f0f14] rounded-2xl border border-white/5">
+                <Skeleton className="w-12 h-12 md:w-16 md:h-16 rounded-xl shrink-0" />
+                <div className="flex-1 space-y-2">
+                  <Skeleton className="h-6 w-1/3" />
+                  <Skeleton className="h-4 w-1/4" />
+                </div>
+              </div>
             ))}
           </div>
         ) : posts.length === 0 ? (
@@ -136,25 +156,68 @@ export default function DropsPage() {
             <p className="text-slate-500 max-w-md text-sm">Post public posts or make them exclusive to your supporters or members. Creators who post exclusively tend to earn more support.</p>
           </div>
         ) : (
-          <div className="space-y-3">
-            {posts.map((post, i) => (
-              <motion.div
-                key={post.id}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className="flex items-center gap-4 p-5 bg-[#0f0f14] rounded-2xl border border-white/5 hover:border-white/10 transition-all group"
-              >
+          <>
+            <div className="space-y-3">
+              {posts.slice((currentPage - 1) * itemsPerPage, currentPage * itemsPerPage).map((post, i) => (
+                <motion.div
+                  key={post.id}
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i * 0.05 }}
+                  onClick={() => username && router.push(`/${username}/posts/${encodeURIComponent(post.title)}`)}
+                  className="flex items-center gap-4 p-5 bg-[#0f0f14] rounded-2xl border border-white/5 hover:border-white/20 hover:bg-white/[0.04] transition-all group cursor-pointer"
+                >
                 {/* Thumbnail */}
-                {post.image_url ? (
-                  <div className="w-16 h-16 rounded-xl overflow-hidden shrink-0 border border-white/10">
-                    <img src={post.image_url} alt="" className="w-full h-full object-cover" />
-                  </div>
-                ) : (
-                  <div className="w-16 h-16 rounded-xl bg-white/5 flex items-center justify-center shrink-0 border border-white/10">
-                    <FileText className="w-6 h-6 text-slate-600" />
-                  </div>
-                )}
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-[#1A2234] flex items-center justify-center relative group">
+                  {(() => {
+                    const contentImage = extractFirstImage(post.content);
+                    const hasImage = post.image_url || contentImage;
+                    
+                    // Case 1: We have a direct image or an image in content
+                    if (hasImage) {
+                      return <img src={hasImage} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />;
+                    }
+                    
+                    // Case 2: No image, but we have a video_url (which could be video or audio)
+                    if (post.video_url) {
+                      const isAudio = post.video_url.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
+                      const isVideo = !isAudio && (post.video_url.includes('/video/') || post.video_url.match(/\.(mp4|webm|mov|m4v)$/i));
+                      
+                      // Try to show a video thumbnail ONLY if it's actually a video and on Cloudinary
+                      if (isVideo && post.video_url.includes('cloudinary.com')) {
+                        const videoThumb = post.video_url
+                          .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_300/')
+                          .replace(/\.[^.]+$/, '.jpg');
+                        return <img src={videoThumb} alt="" className="w-full h-full object-cover transition-transform group-hover:scale-110" />;
+                      }
+
+                      // Fallback placeholders for Video
+                      if (isVideo) {
+                        return (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-600/20 to-indigo-600/20 relative">
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                            <Video className="w-5 h-5 md:w-6 md:h-6 text-blue-400 z-10" />
+                          </div>
+                        );
+                      } else {
+                        // It's audio (either detected by extension or as fallback for video_url)
+                        return (
+                          <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600/20 to-pink-600/20 relative">
+                            <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                            <Music2 className="w-5 h-5 md:w-6 md:h-6 text-purple-400 z-10" />
+                          </div>
+                        );
+                      }
+                    }
+                    
+                    // Case 3: Pure text post, no media at all
+                    return (
+                      <div className="w-full h-full flex items-center justify-center bg-white/5">
+                        <FileText className="w-5 h-5 md:w-6 md:h-6 text-slate-600" />
+                      </div>
+                    );
+                  })()}
+                </div>
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
@@ -172,20 +235,70 @@ export default function DropsPage() {
                 </div>
 
                 {/* Actions */}
-                <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                <div className="flex items-center gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                   <button
-                    onClick={() => handleDelete(post.id)}
-                    className="p-2 rounded-lg text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all"
+                    onClick={(e) => { e.stopPropagation(); setDeleteId(post.id); }}
+                    className="p-3 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all bg-white/5 md:bg-transparent"
                     title="Delete"
                   >
-                    <Trash2 size={16} />
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </motion.div>
             ))}
-          </div>
+            </div>
+            
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={Math.ceil(posts.length / itemsPerPage)}
+              onPageChange={setCurrentPage}
+            />
+          </>
         )}
       </div>
+
+      {/* Delete Confirmation Modal */}
+      <AnimatePresence>
+        {deleteId && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              onClick={() => setDeleteId(null)}
+              className="absolute inset-0 bg-black/80 backdrop-blur-sm" 
+            />
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+              className="relative w-full max-w-sm bg-[#111827] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-center"
+            >
+              <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center text-red-500 mx-auto mb-6">
+                <AlertTriangle size={40} />
+              </div>
+              <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Delete Post?</h3>
+              <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
+                This action cannot be undone. All media and data associated with this drop will be permanently removed.
+              </p>
+              <div className="flex gap-3">
+                <button 
+                  onClick={() => setDeleteId(null)}
+                  className="flex-1 px-6 py-4 rounded-2xl bg-white/5 text-slate-400 font-bold hover:bg-white/10 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={confirmDelete}
+                  className="flex-1 px-6 py-4 rounded-2xl bg-red-500 text-white font-black hover:bg-red-600 transition-all shadow-lg shadow-red-500/20"
+                >
+                  Yes, Delete
+                </button>
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

@@ -2,13 +2,14 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, Sparkles, Calendar } from 'lucide-react';
+import { Search, Sparkles, Calendar, Music2, Video } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
 import TopCreatorsBubbles from '@/components/ui/TopCreatorsBubbles';
 import { extractFirstImage, TextThumbnail } from '../[username]/layout';
 import { useAccount } from 'wagmi';
+import { Skeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
 
 interface Post {
   id: string;
@@ -123,7 +124,6 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4 md:px-0">
         {creator.posts && creator.posts.map((post) => {
           const contentImage = extractFirstImage(post.content);
-          const thumb = post.image_url || post.video_url || contentImage;
           return (
             <Link 
               key={post.id} 
@@ -135,11 +135,43 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
               </div>
               
               <div className="h-80 relative overflow-hidden bg-[#1A2234]">
-                {thumb ? (
-                  <Image src={thumb} alt="" fill className="object-cover group-hover:scale-110 transition-transform duration-700" unoptimized />
-                ) : (
-                  <TextThumbnail title={post.title} size="small" />
-                )}
+                {(() => {
+                  const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
+                  const isVideo = !isAudio && (post.video_url?.includes('/video/') || post.video_url?.match(/\.(mp4|webm|mov|m4v)$/i));
+                  let thumbUrl = post.image_url || contentImage;
+
+                  if (!thumbUrl && isVideo && post.video_url?.includes('cloudinary.com')) {
+                    thumbUrl = post.video_url
+                      .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_500/')
+                      .replace(/\.[^.]+$/, '.jpg');
+                  }
+
+                  if (thumbUrl) {
+                    return <Image src={thumbUrl} alt="" fill className="object-cover group-hover:scale-110 transition-transform duration-700" unoptimized />;
+                  }
+
+                  if (isAudio) {
+                    return (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600/20 to-pink-600/20 relative">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                        <Music2 className="w-12 h-12 text-purple-400 z-10" />
+                        <span className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-purple-300/50 z-10">Audio Track</span>
+                      </div>
+                    );
+                  }
+
+                  if (isVideo) {
+                    return (
+                      <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-600/20 to-indigo-600/20 relative">
+                        <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                        <Video className="w-12 h-12 text-blue-400 z-10" />
+                        <span className="mt-4 text-[10px] font-black uppercase tracking-[0.2em] text-blue-300/50 z-10">Video Clip</span>
+                      </div>
+                    );
+                  }
+
+                  return <TextThumbnail title={post.title} size="small" />;
+                })()}
                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
                   <h4 className="font-black text-xl text-white group-hover:text-[#F7931A] transition-colors line-clamp-2 leading-tight mb-3">
                     {post.title}
@@ -316,15 +348,15 @@ export default function Explore() {
         {loading && (
           <div className="space-y-24 py-10">
             {[1, 2, 3].map(i => (
-              <div key={i} className="animate-pulse">
+              <div key={i}>
                 <div className="flex items-center gap-6 mb-8">
-                  <div className="w-16 h-16 rounded-full bg-white/5" />
-                  <div className="h-10 w-64 bg-white/5 rounded-2xl" />
+                  <Skeleton className="w-16 h-16 rounded-full" />
+                  <Skeleton className="h-10 w-64 rounded-2xl" />
                 </div>
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  <div className="h-64 bg-white/5 rounded-[2.5rem]" />
-                  <div className="h-64 bg-white/5 rounded-[2.5rem]" />
-                  <div className="h-64 bg-white/5 rounded-[2.5rem]" />
+                  <PostCardSkeleton />
+                  <PostCardSkeleton />
+                  <PostCardSkeleton />
                 </div>
               </div>
             ))}

@@ -10,6 +10,7 @@ import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import ShareModal from '@/components/ui/ShareModal';
 import MUSDLogo from '@/components/ui/MUSDLogo';
+import { ProfileHeaderSkeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
 
 
 
@@ -180,7 +181,18 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   };
 
   if (loading) {
-    return <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center pt-24"><div className="w-12 h-12 border-4 border-[#F7931A] border-t-transparent rounded-full animate-spin"></div></div>;
+    return (
+      <div className="min-h-screen bg-[#0B0F19]">
+        <ProfileHeaderSkeleton />
+        <div className="max-w-7xl mx-auto px-6 py-12">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+            <PostCardSkeleton />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (!creator) {

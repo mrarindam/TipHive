@@ -6,6 +6,7 @@ import { Users, Crown, ChevronRight, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useProfile } from '../layout';
+import Pagination from '@/components/ui/Pagination';
 
 interface Member {
   follower_address: string;
@@ -214,15 +215,12 @@ export default function CreatorMembers() {
               );
             })}
 
-            {totalPages > 1 && (
-              <div className="col-span-full flex justify-center items-center gap-2 mt-12">
-                <button onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))} disabled={currentPage === 1} className="px-4 py-2 rounded-xl bg-[#111827] border border-white/5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-xs">Prev</button>
-                {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
-                  <button key={page} onClick={() => setCurrentPage(page)} className={`w-10 h-10 rounded-xl font-bold text-xs transition-all ${currentPage === page ? 'bg-[#8A2BE2] text-white shadow-lg' : 'bg-[#111827] border border-white/5 text-slate-400 hover:text-white hover:bg-white/5'}`}>{page}</button>
-                ))}
-                <button onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))} disabled={currentPage === totalPages} className="px-4 py-2 rounded-xl bg-[#111827] border border-white/5 text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all font-bold text-xs">Next</button>
-              </div>
-            )}
+            <Pagination 
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+              activeColorClass="bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]"
+            />
           </>
         ) : (
           <div className="col-span-full py-32 text-center bg-[#111827] border border-dashed border-white/10 rounded-[3rem]">

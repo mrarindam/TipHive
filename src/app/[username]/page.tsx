@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Heart, ChevronRight, Lock } from 'lucide-react';
+import { Heart, ChevronRight, Lock, Video, Music2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -340,16 +340,47 @@ export default function CreatorHome() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {posts.slice(0, 4).map(post => {
             const isLocked = post.visibility !== 'public' && !isOwner && !isSubscribed;
-            const contentImage = extractFirstImage(post.content);
-            const thumb = post.image_url || post.video_url || contentImage;
             return (
               <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="bg-[#111827] border border-white/5 rounded-[2rem] overflow-hidden group hover:border-[#8A2BE2]/50 transition-all block shadow-xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
                 <div className="h-52 bg-[#1A2234] relative overflow-hidden">
-                  {thumb ? (
-                    <Image src={thumb as string} alt="" fill className="object-cover group-hover:scale-110 transition-transform duration-700" unoptimized />
-                  ) : (
-                    <TextThumbnail title={post.title} />
-                  )}
+                  {(() => {
+                    const contentImage = extractFirstImage(post.content);
+                    const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
+                    const isVideo = !isAudio && (post.video_url?.includes('/video/') || post.video_url?.match(/\.(mp4|webm|mov|m4v)$/i));
+                    let thumbUrl = post.image_url || contentImage;
+
+                    if (!thumbUrl && isVideo && post.video_url?.includes('cloudinary.com')) {
+                      thumbUrl = post.video_url
+                        .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_500/')
+                        .replace(/\.[^.]+$/, '.jpg');
+                    }
+
+                    if (thumbUrl) {
+                      return <Image src={thumbUrl} alt="" fill className="object-cover group-hover:scale-110 transition-transform duration-700" unoptimized />;
+                    }
+
+                    if (isAudio) {
+                      return (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-purple-600/20 to-pink-600/20 relative">
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                          <Music2 className="w-10 h-10 text-purple-400 z-10" />
+                          <span className="mt-2 text-[8px] font-black uppercase tracking-[0.2em] text-purple-300/50 z-10">Audio Post</span>
+                        </div>
+                      );
+                    }
+
+                    if (isVideo) {
+                      return (
+                        <div className="w-full h-full flex flex-col items-center justify-center bg-gradient-to-br from-blue-600/20 to-indigo-600/20 relative">
+                          <div className="absolute inset-0 bg-[url('https://www.transparenttextures.com/patterns/carbon-fibre.png')] opacity-10" />
+                          <Video className="w-10 h-10 text-blue-400 z-10" />
+                          <span className="mt-2 text-[8px] font-black uppercase tracking-[0.2em] text-blue-300/50 z-10">Video Post</span>
+                        </div>
+                      );
+                    }
+
+                    return <TextThumbnail title={post.title} />;
+                  })()}
                   <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/10">Post</div>
                   {isLocked && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">

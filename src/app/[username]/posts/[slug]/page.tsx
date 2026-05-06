@@ -3,6 +3,7 @@
 import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { SinglePostSkeleton } from '@/components/ui/Skeleton';
 import { Heart, ArrowLeft, Share2, MessageCircle, Zap, Lock, Globe2, Users } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -24,11 +25,23 @@ interface PostComment {
   } | null;
 }
 
+interface Post {
+  id: string;
+  creator_id: string;
+  title: string;
+  content: string;
+  image_url: string | null;
+  video_url: string | null;
+  visibility: string;
+  category: string | null;
+  created_at: string;
+}
+
 export default function PostPage() {
   const { username, slug } = useParams();
   const { address: userAddress } = useAccount();
   const router = useRouter();
-  const [post, setPost] = useState<Record<string, unknown> | null>(null);
+  const [post, setPost] = useState<Post | null>(null);
   const [creator, setCreator] = useState<Record<string, unknown> | null>(null);
   const [loading, setLoading] = useState(true);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
@@ -190,7 +203,13 @@ export default function PostPage() {
     }
   };
 
-  if (loading) return <div className="py-20 flex items-center justify-center"><div className="w-12 h-12 border-4 border-[#F7931A] border-t-transparent rounded-full animate-spin"></div></div>;
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#0B0F19] pt-24">
+        <SinglePostSkeleton />
+      </div>
+    );
+  }
 
   if (!post || !creator) return <div className="py-20 flex flex-col items-center justify-center text-white"><p className="mb-4">Post not found.</p><button onClick={() => router.back()} className="text-[#F7931A] hover:underline font-bold">Go Back</button></div>;
 
@@ -253,21 +272,128 @@ export default function PostPage() {
               </div>
             )}
 
-            {!!post.video_url && (
-              <div className="w-full relative rounded-3xl overflow-hidden mb-10 aspect-video bg-black shadow-2xl">
-                {isLocked ? (
-                  <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center z-10">
-                    <Lock className="w-16 h-16 text-[#F7931A] mb-4" />
-                    <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">Exclusive Video</h3>
-                    <Link href={`/${creator.username}/subscriptions`} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] mt-4 uppercase tracking-widest text-sm flex items-center gap-2">
-                      <Zap className="w-4 h-4 fill-current" /> Subscribe to Watch
-                    </Link>
+            {!!post.video_url && (() => {
+              const videoUrl = String(post.video_url);
+              const isAudio = videoUrl.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
+              
+              if (isAudio) {
+                return (
+                  <div className="relative mb-12 group">
+                    {/* Ambient Glow for Audio */}
+                    <div className="absolute inset-0 -m-10 bg-gradient-to-br from-purple-600/30 via-pink-600/10 to-transparent blur-[100px] pointer-events-none opacity-50" />
+                    
+                    <div className="w-full bg-[#111827]/40 backdrop-blur-xl border border-white/10 rounded-[3rem] p-8 md:p-12 shadow-2xl relative overflow-hidden">
+                       {/* Cassette Design */}
+                       <div className="max-w-md mx-auto relative aspect-[1.6/1] bg-gradient-to-br from-[#1A2234] to-[#0B0F19] rounded-[2rem] border-4 border-[#2A3449] shadow-[0_30px_60px_rgba(0,0,0,0.8)] flex flex-col p-6 overflow-hidden">
+                          {/* Cassette Labels/Lines */}
+                          <div className="absolute top-0 left-0 right-0 h-4 bg-[#8A2BE2]/10 border-b border-white/5" />
+                          <div className="flex justify-between items-center mb-auto">
+                            <span className="text-[8px] font-black uppercase tracking-widest text-[#8A2BE2]">Tape A-90</span>
+                            <div className="flex gap-1">
+                              <div className="w-2 h-2 rounded-full bg-white/5" />
+                              <div className="w-2 h-2 rounded-full bg-white/5" />
+                            </div>
+                          </div>
+
+                          {/* Rotating Reels Area */}
+                          <div className="flex justify-center items-center gap-12 my-4">
+                            {[1, 2].map(i => (
+                              <div key={i} className="relative w-24 h-24 md:w-32 md:h-32">
+                                <div className="absolute inset-0 bg-[#0B0F19] rounded-full border-4 border-white/5 shadow-inner" />
+                                <motion.div 
+                                  animate={{ rotate: 360 }}
+                                  transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
+                                  className="absolute inset-2 border-4 border-dashed border-[#8A2BE2]/40 rounded-full flex items-center justify-center"
+                                >
+                                  <div className="w-8 h-8 md:w-12 md:h-12 bg-[#1A2234] rounded-full border-2 border-white/10 flex items-center justify-center">
+                                     <div className="w-2 h-2 bg-white/20 rounded-full" />
+                                  </div>
+                                </motion.div>
+                              </div>
+                            ))}
+                          </div>
+
+                          {/* Tape View Window */}
+                          <div className="mt-auto h-8 bg-black/40 rounded-full border border-white/5 flex items-center justify-center px-6">
+                            <div className="w-full h-1 bg-[#8A2BE2]/20 rounded-full overflow-hidden">
+                               <motion.div 
+                                 animate={{ x: ["-100%", "100%"] }}
+                                 transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
+                                 className="w-1/3 h-full bg-gradient-to-r from-transparent via-[#8A2BE2] to-transparent"
+                               />
+                            </div>
+                          </div>
+                       </div>
+
+                       {/* Audio Player Controls */}
+                       <div className="mt-10 max-w-xl mx-auto">
+                         <audio 
+                           src={videoUrl} 
+                           controls 
+                           className="w-full custom-audio-player h-10" 
+                           controlsList="nodownload"
+                         />
+                       </div>
+                    </div>
+                    
+                    <style jsx global>{`
+                      .custom-audio-player::-webkit-media-controls-enclosure {
+                        background-color: rgba(255, 255, 255, 0.05);
+                        border-radius: 20px;
+                      }
+                      .custom-audio-player::-webkit-media-controls-panel {
+                        padding: 0 20px;
+                      }
+                    `}</style>
                   </div>
-                ) : (
-                  <video src={post.video_url as string} controls className="w-full h-full object-contain" />
-                )}
-              </div>
-            )}
+                );
+              }
+
+              // Standard Video Player for Non-Audio
+              return (
+                <div className="relative mb-12 group">
+                  {/* Ambient Background Glow */}
+                  {!isLocked && videoUrl.includes('cloudinary.com') && (
+                    <div className="absolute inset-0 -m-8 opacity-40 blur-[80px] pointer-events-none transition-opacity duration-1000 group-hover:opacity-60">
+                      <img 
+                        src={videoUrl
+                          .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_800,e_blur:2000/')
+                          .replace(/\.[^.]+$/, '.jpg')} 
+                        alt="" 
+                        className="w-full h-full object-cover" 
+                      />
+                    </div>
+                  )}
+
+                  <div className="w-full relative rounded-[2.5rem] overflow-hidden aspect-video bg-black/40 backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 p-1 md:p-2">
+                    <div className="w-full h-full rounded-[2rem] overflow-hidden relative">
+                      {isLocked ? (
+                        <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl p-6 text-center z-10">
+                          <div className="w-20 h-20 bg-[#F7931A]/10 rounded-full flex items-center justify-center mb-6 border border-[#F7931A]/20">
+                            <Lock className="w-10 h-10 text-[#F7931A]" />
+                          </div>
+                          <h3 className="text-3xl font-black mb-2 uppercase tracking-tight">Exclusive Content</h3>
+                          <p className="text-slate-400 mb-8 max-w-sm font-medium">Unlock this video and support the creator to get full access.</p>
+                          <Link href={`/${creator.username}/subscriptions`} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] uppercase tracking-widest text-sm flex items-center gap-3 hover:scale-105 transition-all">
+                            <Zap className="w-4 h-4 fill-current" /> Subscribe to Watch
+                          </Link>
+                        </div>
+                      ) : (
+                        <video 
+                          src={videoUrl} 
+                          controls 
+                          className="w-full h-full object-contain relative z-10" 
+                          controlsList="nodownload"
+                          poster={videoUrl
+                            .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_1000/')
+                            .replace(/\.[^.]+$/, '.jpg')}
+                        />
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             <div className="prose prose-invert max-w-none">
               {isLocked ? (

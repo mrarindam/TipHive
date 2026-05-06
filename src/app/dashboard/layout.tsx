@@ -4,8 +4,8 @@ import { useState, useEffect, useCallback, ReactNode, createContext, useContext 
 import { supabase } from '@/lib/supabase';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import {
-  Zap, Star, Globe, Users, CreditCard, Edit3,
-  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings
+  Globe, Users, Calendar, Edit3,
+  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings, Heart
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -169,6 +169,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       if (sentTips) sentTips.forEach(s => combined.push({ id: s.id, type: 'sent', source: 'tip', amount: s.amount, to_name: profileByAddress.get(s.to_address?.toLowerCase()) || s.to_address?.slice(0, 10) || 'Anonymous', created_at: s.created_at, tx_hash: s.tx_hash }));
       if (receivedTips) receivedTips.forEach(r => combined.push({ id: r.id, type: 'received', source: 'tip', amount: r.amount, from_address: r.from_address, to_name: profileByAddress.get(r.from_address?.toLowerCase()) || r.from_address?.slice(0, 10) || 'Anonymous', created_at: r.created_at, tx_hash: r.tx_hash }));
       if (receivedSubs) receivedSubs.forEach(sub => combined.push({ id: sub.id, type: 'received', source: 'subscription', amount: sub.total_paid, from_address: sub.fan_address, to_name: profileByAddress.get(sub.fan_address?.toLowerCase()) || sub.fan_address?.slice(0, 10) || 'Anonymous', created_at: sub.created_at, tx_hash: sub.tx_hash, plan_name: sub.subscription_plans?.name }));
+      if (sentSubs) sentSubs.forEach(sub => combined.push({ id: sub.id, type: 'sent', source: 'subscription', amount: sub.total_paid, created_at: sub.created_at, tx_hash: sub.tx_hash }));
 
       setActivities(combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     } catch (err) {
@@ -217,11 +218,11 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       <div className="flex items-center justify-between mb-12">
         <div className="flex items-center gap-4">
           <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,193,7,0.1)] transform hover:rotate-6 transition-transform overflow-hidden border border-white/5 bg-[#0f0f14]">
-            <Image 
-              src="/logo.png" 
-              alt="TipHive Logo" 
-              width={56} 
-              height={56} 
+            <Image
+              src="/logo.png"
+              alt="TipHive Logo"
+              width={56}
+              height={56}
               className="w-full h-full object-cover"
               unoptimized
             />
@@ -241,7 +242,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Earn</div>
         <div className="space-y-1">
           <SidebarItem icon={<Users />} label="Tip Circles" active={pathname === '/dashboard/tipcircle'} href="/dashboard/tipcircle" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<CreditCard />} label="Subscriptions" active={pathname === '/dashboard/subscriptions'} href="/dashboard/subscriptions" onClick={() => setIsSidebarOpen(false)} />
+          <SidebarItem icon={<Calendar size={20} />} label="Subscriptions" active={pathname === '/dashboard/subscriptions'} href="/dashboard/subscriptions" onClick={() => setIsSidebarOpen(false)} />
         </div>
       </div>
       <div className="mb-8">
@@ -252,18 +253,19 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         </div>
       </div>
       <div className="mb-8">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Settings</div>
-        <div className="space-y-1">
-          <SidebarItem icon={<Settings size={18} />} label="Visual Toolkit" active={pathname === '/dashboard/settings'} href="/dashboard/settings" onClick={() => setIsSidebarOpen(false)} />
-        </div>
-      </div>
-      <div className="mt-auto pt-8 border-t border-white/5">
         <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Activity & Logs</div>
         <div className="space-y-1">
           <SidebarItem icon={<History />} label="Activity Feed" active={pathname === '/dashboard/activityfeed'} href="/dashboard/activityfeed" onClick={() => setIsSidebarOpen(false)} />
           <SidebarItem icon={<TrendingUp />} label="Analytics" active={pathname === '/dashboard/earninganalysis'} href="/dashboard/earninganalysis" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<Zap />} label="Sent Support" active={pathname === '/dashboard/sentsupport'} href="/dashboard/sentsupport" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<Star />} label="My Subscriptions" active={pathname === '/dashboard/mysubsriptions'} href="/dashboard/mysubsriptions" onClick={() => setIsSidebarOpen(false)} />
+          <SidebarItem icon={<Heart size={18} />} label="Sent Support" active={pathname === '/dashboard/sentsupport'} href="/dashboard/sentsupport" onClick={() => setIsSidebarOpen(false)} />
+          <SidebarItem icon={<Calendar size={18} />} label="My Subscriptions" active={pathname === '/dashboard/mysubsriptions'} href="/dashboard/mysubsriptions" onClick={() => setIsSidebarOpen(false)} />
+        </div>
+      </div>
+
+      <div className="mt-auto pt-8 border-t border-white/5">
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Settings</div>
+        <div className="space-y-1">
+          <SidebarItem icon={<Settings size={18} />} label="Visual Toolkit" active={pathname === '/dashboard/settings'} href="/dashboard/settings" onClick={() => setIsSidebarOpen(false)} />
         </div>
       </div>
     </div>
@@ -272,32 +274,56 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   return (
     <DashboardContext.Provider value={{ creatorProfile, activities, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, fetchData, address, totalSent }}>
       <div className="min-h-screen bg-[#000] flex">
-        {/* Unified Top-Left Menu Button */}
-        <div className="fixed top-8 left-8 z-[60]">
-          <button 
-            onClick={() => setIsSidebarOpen(true)} 
-            className="w-16 h-16 bg-[#0f0f14] border border-[#FFC107]/20 rounded-[1.75rem] flex items-center justify-center shadow-[0_0_30px_rgba(255,193,7,0.1)] text-[#FFC107] hover:bg-[#1a1a24] hover:border-[#FFC107]/40 transition-all active:scale-90 group"
+        {/* Redesigned Hanging Menu Trigger */}
+        <motion.div
+          className="fixed top-20 left-12 z-[60] flex flex-col items-center pointer-events-none"
+          initial={{ rotate: -4 }}
+          animate={{ rotate: 4 }}
+          transition={{
+            repeat: Infinity,
+            repeatType: "mirror",
+            duration: 2.5,
+            ease: "easeInOut"
+          }}
+          style={{ transformOrigin: "top center" }}
+        >
+          {/* The Rope (Hanging Thread) */}
+          <div className="w-[2px] h-32 bg-gradient-to-b from-[#F7931A] via-white/60 to-[#F7931A] shadow-[0_0_12px_rgba(247,147,26,0.3)]" />
+
+          {/* The Circular Hanging Button */}
+          <motion.button
+            onClick={() => setIsSidebarOpen(true)}
+            whileHover={{ scale: 1.1, rotate: [0, -10, 10, 0] }}
+            whileTap={{ scale: 0.9 }}
+            className="w-16 h-16 bg-[#0f0f14] border-2 border-[#F7931A] rounded-full flex items-center justify-center shadow-[0_20px_40px_rgba(0,0,0,0.8),0_0_25px_rgba(247,147,26,0.2)] text-[#F7931A] hover:text-white hover:bg-[#F7931A] transition-all pointer-events-auto group relative -mt-1"
+            title="Open Dashboard Menu"
           >
-            <Menu className="w-8 h-8 group-hover:scale-110 transition-transform" />
-          </button>
-        </div>
+            <Menu className="w-8 h-8 transition-transform" />
+
+            {/* Decorative Hanging Ring/Hook */}
+            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 border-2 border-[#F7931A] rounded-full bg-[#0f0f14]" />
+
+            {/* Glow effect */}
+            <div className="absolute inset-0 rounded-full bg-[#F7931A]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
+          </motion.button>
+        </motion.div>
 
         {/* Sidebar Overlay & Blur Effect */}
         <AnimatePresence>
           {isSidebarOpen && (
-            <motion.div 
-              initial={{ opacity: 0 }} 
-              animate={{ opacity: 1 }} 
-              exit={{ opacity: 0 }} 
-              className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-xl" 
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
+              className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-xl"
               onClick={() => setIsSidebarOpen(false)}
             >
-              <motion.aside 
-                initial={{ x: '-100%' }} 
-                animate={{ x: 0 }} 
-                exit={{ x: '-100%' }} 
-                transition={{ type: 'spring', bounce: 0, duration: 0.4 }} 
-                className="w-80 h-full bg-[#050507] border-r border-white/5 p-10 overflow-y-auto" 
+              <motion.aside
+                initial={{ x: '-100%' }}
+                animate={{ x: 0 }}
+                exit={{ x: '-100%' }}
+                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
+                className="w-80 h-full bg-[#050507] border-r border-white/5 p-10 overflow-y-auto"
                 onClick={e => e.stopPropagation()}
               >
                 {SidebarContent()}
@@ -324,7 +350,7 @@ function SidebarItem({ icon, label, active, href, external, onClick, disabled }:
       <div className={`w-6 h-6 transition-colors ${active ? 'text-[#f7931a]' : 'text-slate-500 group-hover:text-slate-300'}`}>
         {icon}
       </div>
-      <span className={`text-lg font-black tracking-tight transition-colors ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
+      <span className={`text-base font-black tracking-tight whitespace-nowrap transition-colors ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
         {label}
       </span>
       {active && <div className="absolute inset-0 bg-gradient-to-r from-[#f7931a]/10 to-transparent rounded-2xl pointer-events-none" />}

@@ -5,13 +5,14 @@ import { useState } from 'react';
 import { Zap, Loader2, X, Settings2, Heart, CheckCircle2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MUSDLogo from '@/components/ui/MUSDLogo';
+import Pagination from '@/components/ui/Pagination';
 
 export default function TipCirclePage() {
   const { activities, creatorProfile, fetchData, loading } = useDashboard();
   const [activeTab, setActiveTab] = useState<'stats' | 'settings'>('stats');
   const [showSuccess, setShowSuccess] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 5;
+  const itemsPerPage = 10;
   
   // Only show the full page loader on the very first load
   // If we are just refreshing data (loading is true but we already have data), we don't unmount everything
@@ -78,36 +79,11 @@ export default function TipCirclePage() {
                     <>
                       {paginatedTips.map(t => <ActivityRow key={t.id} activity={t} />)}
                       
-                      {/* Pagination Controls */}
-                      {totalPages > 1 && (
-                        <div className="flex items-center justify-center gap-2 pt-8">
-                          <button 
-                            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
-                            disabled={currentPage === 1}
-                            className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                          >
-                            &lt;
-                          </button>
-                          
-                          {[...Array(totalPages)].map((_, i) => (
-                            <button
-                              key={i}
-                              onClick={() => setCurrentPage(i + 1)}
-                              className={`w-10 h-10 rounded-xl font-black text-xs transition-all ${currentPage === i + 1 ? 'bg-[#f7931a] text-black shadow-[0_0_20px_rgba(247,147,26,0.3)]' : 'bg-white/5 border border-white/10 text-slate-500 hover:bg-white/10'}`}
-                            >
-                              {i + 1}
-                            </button>
-                          ))}
-
-                          <button 
-                            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
-                            disabled={currentPage === totalPages}
-                            className="w-10 h-10 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-white disabled:opacity-30 disabled:cursor-not-allowed transition-all"
-                          >
-                            &gt;
-                          </button>
-                        </div>
-                      )}
+                      <Pagination 
+                        currentPage={currentPage}
+                        totalPages={totalPages}
+                        onPageChange={setCurrentPage}
+                      />
                     </>
                   ) : (
                     <div className="text-center py-20 bg-white/[0.02] rounded-3xl border border-dashed border-white/5">

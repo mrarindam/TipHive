@@ -30,20 +30,20 @@ export async function POST(request: NextRequest) {
     const body = await request.json();
     console.log('Notification POST body:', body);
     const { wallet, action, type, content } = body;
-    
+
     if (!wallet || !action) {
       return NextResponse.json({ error: 'Wallet and action required' }, { status: 400 });
     }
 
     const supabase = createServerSupabase();
-    
+
     if (action === 'markAllRead') {
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
         .eq('user_address', wallet.toLowerCase())
         .eq('is_read', false);
-      
+
       if (error) {
         console.error('Error marking notifications as read:', error);
         throw error;
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
           content,
           is_read: false
         });
-      
+
       if (error) {
         console.error('Error creating notification:', error);
         throw error;

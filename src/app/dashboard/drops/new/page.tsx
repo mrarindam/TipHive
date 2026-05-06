@@ -24,6 +24,7 @@ import {
   X, Globe, Plus, UploadCloud, Loader2, Send, ChevronDown,
   Globe2, Users, Lock, Music2, FileAudio, Clapperboard
 } from 'lucide-react';
+import FileUploadProgress from '@/components/ui/FileUploadProgress';
 
 const lowlight = createLowlight(common);
 
@@ -41,6 +42,8 @@ function EditorInner() {
   const [modalType, setModalType] = useState<'link' | 'image' | 'embed' | 'color' | null>(null);
   const [modalValue, setModalValue] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const [uploadFileName, setUploadFileName] = useState('');
   const [showVisibility, setShowVisibility] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const mediaInputRef = useRef<HTMLInputElement>(null);
@@ -114,8 +117,7 @@ function EditorInner() {
       };
 
       if (postType === 'album') postData.image_url = mediaUrl;
-      if (postType === 'video') postData.video_url = mediaUrl;
-      if (postType === 'audio') postData.audio_url = mediaUrl;
+      if (postType === 'video' || postType === 'audio') postData.video_url = mediaUrl;
 
       const { error } = await supabase.from('posts').insert(postData);
       if (error) throw error;
@@ -131,17 +133,79 @@ function EditorInner() {
   const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
+
+    // 100MB Limit Check
+    const MAX_SIZE = 100 * 1024 * 1024; // 100MB
+    if (file.size > MAX_SIZE) {
+      alert('Reach limit max 100MB. Please upload a smaller file.');
+      return;
+    }
+
     setIsUploading(true);
+    setUploadProgress(0);
+    setUploadFileName(file.name);
+    
     try {
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+
+      // 1. Get Signature from our backend
+      const signFormData = new FormData();
+      signFormData.append('action', 'sign');
+      signFormData.append('upload_preset', uploadPreset);
+      
+      const signRes = await fetch('/api/upload', { method: 'POST', body: signFormData });
+      const signData = await signRes.json();
+      
+      if (!signRes.ok) throw new Error(signData.error || 'Failed to get upload signature');
+
+      const { signature, timestamp, apiKey, cloudName } = signData;
+
+      // 2. Upload directly to Cloudinary using the signature
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.url) {
-        setMediaUrl(data.url);
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp.toString());
+      formData.append('signature', signature);
+      formData.append('upload_preset', uploadPreset);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setUploadProgress(percentComplete);
+        }
+      };
+
+      const result = await new Promise((resolve, reject) => {
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            const errorData = JSON.parse(xhr.responseText);
+            reject(new Error(errorData.error?.message || 'Upload failed'));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(formData);
+      });
+
+      const data = result as { secure_url: string };
+      if (data.secure_url) {
+        // Apply optimizations from Cloudinary URL (q_auto, f_auto)
+        const optimizedUrl = data.secure_url.replace('/upload/', '/upload/q_auto,f_auto/');
+        setMediaUrl(optimizedUrl);
       }
-    } catch (err) { console.error(err); }
-    finally { setIsUploading(false); }
+    } catch (err) { 
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Upload failed.');
+    } finally { 
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 500);
+    }
   };
 
   const handleModalSubmit = () => {
@@ -162,18 +226,78 @@ function EditorInner() {
   const handleInlineImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file || !editor) return;
+
+    // 10MB limit for inline images
+    if (file.size > 10 * 1024 * 1024) {
+      alert('Inline images must be under 10MB.');
+      return;
+    }
+
     setIsUploading(true);
+    setUploadProgress(0);
+    setUploadFileName(file.name);
+
     try {
+      const uploadPreset = process.env.NEXT_PUBLIC_CLOUDINARY_UPLOAD_PRESET || 'ml_default';
+
+      // 1. Get Signature
+      const signFormData = new FormData();
+      signFormData.append('action', 'sign');
+      signFormData.append('upload_preset', uploadPreset);
+      
+      const signRes = await fetch('/api/upload', { method: 'POST', body: signFormData });
+      const signData = await signRes.json();
+      if (!signRes.ok) throw new Error(signData.error || 'Failed to get signature');
+
+      const { signature, timestamp, apiKey, cloudName } = signData;
+
+      // 2. Direct Upload
       const formData = new FormData();
       formData.append('file', file);
-      const res = await fetch('/api/upload', { method: 'POST', body: formData });
-      const data = await res.json();
-      if (data.url) {
-        editor.chain().focus().setImage({ src: data.url.replace('/upload/', '/upload/q_auto,f_auto,w_1200/') }).run();
+      formData.append('api_key', apiKey);
+      formData.append('timestamp', timestamp.toString());
+      formData.append('signature', signature);
+      formData.append('upload_preset', uploadPreset);
+
+      const xhr = new XMLHttpRequest();
+      xhr.open('POST', `https://api.cloudinary.com/v1_1/${cloudName}/auto/upload`, true);
+
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const percentComplete = (event.loaded / event.total) * 100;
+          setUploadProgress(percentComplete);
+        }
+      };
+
+      const result = await new Promise((resolve, reject) => {
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            const errorData = JSON.parse(xhr.responseText);
+            reject(new Error(errorData.error?.message || 'Upload failed'));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(formData);
+      });
+
+      const data = result as { secure_url: string };
+      if (data.secure_url) {
+        // Apply optimizations (q_auto, f_auto, w_1200)
+        const optimizedUrl = data.secure_url.replace('/upload/', '/upload/q_auto,f_auto,w_1200/');
+        editor.chain().focus().setImage({ src: optimizedUrl }).run();
         setModalType(null);
       }
-    } catch (err) { console.error(err); }
-    finally { setIsUploading(false); }
+    } catch (err) { 
+      console.error(err);
+      alert(err instanceof Error ? err.message : 'Upload failed.');
+    } finally { 
+      setTimeout(() => {
+        setIsUploading(false);
+        setUploadProgress(0);
+      }, 500);
+    }
   };
 
   if (!editor) return null;
@@ -310,14 +434,29 @@ function EditorInner() {
               {mediaUrl ? (
                 <div className="relative rounded-3xl overflow-hidden bg-white/5 border border-white/10 group">
                   {postType === 'album' && <img src={mediaUrl} alt="Cover" className="w-full aspect-video object-cover" />}
-                  {postType === 'video' && <video src={mediaUrl} controls className="w-full aspect-video" />}
+                  {postType === 'video' && (
+                    <video 
+                      src={mediaUrl} 
+                      controls 
+                      className="w-full aspect-video"
+                      controlsList="nodownload"
+                    />
+                  )}
                   {postType === 'audio' && (
-                    <div className="p-10 flex flex-col items-center gap-4 bg-gradient-to-br from-blue-600/20 to-purple-600/20">
-                      <div className="w-20 h-20 rounded-full bg-white/10 flex items-center justify-center animate-pulse">
-                        <Music2 className="text-blue-400 w-10 h-10" />
+                    <div className="p-10 flex flex-col items-center gap-6 bg-gradient-to-br from-blue-600/20 to-purple-600/20 relative">
+                      <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center relative">
+                        <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
+                        <Music2 className="text-blue-400 w-12 h-12 relative z-10" />
                       </div>
-                      <p className="text-white font-bold">Audio Track Uploaded</p>
-                      <audio src={mediaUrl} controls className="w-full h-10 mt-4" />
+                      <div className="text-center">
+                        <p className="text-white font-black text-xl mb-1">Audio Track Uploaded</p>
+                        <p className="text-slate-400 text-xs font-medium uppercase tracking-[0.2em]">{uploadFileName || 'Track 01'}</p>
+                      </div>
+                      <audio 
+                        src={mediaUrl} 
+                        controls 
+                        className="w-full h-12 mt-2 opacity-90 hover:opacity-100 transition-opacity" 
+                      />
                     </div>
                   )}
                   <button 
@@ -349,11 +488,12 @@ function EditorInner() {
                     accept={postType === 'album' ? 'image/*' : postType === 'audio' ? 'audio/*' : 'video/*'} 
                   />
                   {isUploading && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center rounded-3xl z-10">
-                      <div className="flex flex-col items-center gap-3">
-                        <Loader2 className="w-10 h-10 text-[#F7931A] animate-spin" />
-                        <p className="text-white font-bold animate-pulse uppercase tracking-widest text-xs">Uploading Media...</p>
-                      </div>
+                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center rounded-3xl z-10 p-6">
+                      <FileUploadProgress 
+                        progress={uploadProgress} 
+                        fileName={uploadFileName} 
+                        status={uploadProgress === 100 ? 'success' : 'uploading'} 
+                      />
                     </div>
                   )}
                 </button>
@@ -403,9 +543,21 @@ function EditorInner() {
               <div className="space-y-6">
                 {modalType === 'image' && (
                   <>
-                    <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex items-center justify-center gap-3 w-full p-6 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 hover:bg-white/10 transition-all text-slate-400 hover:text-white">
-                      {isUploading ? <Loader2 className="animate-spin" /> : <UploadCloud />}
-                      <span className="font-bold text-sm uppercase tracking-wide">Upload from gallery</span>
+                    <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex flex-col items-center justify-center gap-3 w-full p-6 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 hover:bg-white/10 transition-all text-slate-400 hover:text-white overflow-hidden relative">
+                      {isUploading ? (
+                        <div className="w-full px-2 py-4">
+                           <FileUploadProgress 
+                            progress={uploadProgress} 
+                            fileName={uploadFileName} 
+                            status={uploadProgress === 100 ? 'success' : 'uploading'} 
+                          />
+                        </div>
+                      ) : (
+                        <>
+                          <UploadCloud size={32} />
+                          <span className="font-bold text-sm uppercase tracking-wide">Upload from gallery</span>
+                        </>
+                      )}
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleInlineImageUpload} className="hidden" accept="image/*" />
                     <div className="relative">
