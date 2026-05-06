@@ -26,7 +26,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`} suppressHydrationWarning>
+      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased bg-[#050505] text-white`} suppressHydrationWarning>
         <Web3Provider>
           <SmoothScroll>
             <OnboardingGuard>
