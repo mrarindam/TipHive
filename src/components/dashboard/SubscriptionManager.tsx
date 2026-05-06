@@ -12,7 +12,8 @@ import {
   CheckCircle2,
   Power,
   PowerOff,
-  Users as UsersIcon
+  Users as UsersIcon,
+  ExternalLink
 } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther } from 'viem';
@@ -558,9 +559,21 @@ export default function SubscriptionManager() {
                             </span>
                             <p className="text-white font-black text-sm">+{sub.total_paid || 0} MUSD</p>
                           </div>
-                          <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
-                            Joined {new Date(sub.created_at).toLocaleDateString()}
-                          </p>
+                          <div className="flex items-center justify-end gap-3 mt-1.5">
+                            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                              Joined {new Date(sub.created_at).toLocaleDateString()}
+                            </p>
+                            {sub.tx_hash && (
+                              <a 
+                                href={`https://explorer.test.mezo.org/tx/${sub.tx_hash}`} 
+                                target="_blank" 
+                                rel="noopener noreferrer"
+                                className="text-[#F7931A] text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline"
+                              >
+                                Explorer <ExternalLink size={10} />
+                              </a>
+                            )}
+                          </div>
                         </div>
                       </div>
                     )) : (

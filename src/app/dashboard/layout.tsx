@@ -82,6 +82,14 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [totalSent, setTotalSent] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Contract Reads
   const { data: tipBalance, refetch: refetchTipBalance } = useReadContract({
@@ -276,11 +284,11 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       <div className="min-h-screen bg-[#000] flex">
         {/* Redesigned Hanging Menu Trigger */}
         <motion.div
-          className="fixed top-20 left-12 z-[60] flex flex-col items-center pointer-events-none"
-          initial={{ rotate: -4 }}
-          animate={{ rotate: 4 }}
+          className="fixed md:top-20 md:left-12 top-24 left-0 z-[60] flex flex-col items-center pointer-events-none"
+          initial={isMobile ? { rotate: 0 } : { rotate: -4 }}
+          animate={isMobile ? { rotate: 0 } : { rotate: 4 }}
           transition={{
-            repeat: Infinity,
+            repeat: isMobile ? 0 : Infinity,
             repeatType: "mirror",
             duration: 2.5,
             ease: "easeInOut"
@@ -288,20 +296,20 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
           style={{ transformOrigin: "top center" }}
         >
           {/* The Rope (Hanging Thread) */}
-          <div className="w-[2px] h-32 bg-gradient-to-b from-[#F7931A] via-white/60 to-[#F7931A] shadow-[0_0_12px_rgba(247,147,26,0.3)]" />
+          <div className="hidden md:block w-[2px] h-32 bg-gradient-to-b from-[#F7931A] via-white/60 to-[#F7931A] shadow-[0_0_12px_rgba(247,147,26,0.3)]" />
 
           {/* The Circular Hanging Button */}
           <motion.button
             onClick={() => setIsSidebarOpen(true)}
             whileHover={{ scale: 1.1, rotate: [0, -10, 10, 0] }}
             whileTap={{ scale: 0.9 }}
-            className="w-16 h-16 bg-[#0f0f14] border-2 border-[#F7931A] rounded-full flex items-center justify-center shadow-[0_20px_40px_rgba(0,0,0,0.8),0_0_25px_rgba(247,147,26,0.2)] text-[#F7931A] hover:text-white hover:bg-[#F7931A] transition-all pointer-events-auto group relative -mt-1"
+            className="md:w-16 md:h-16 w-12 h-12 bg-[#0f0f14] border-2 border-[#F7931A] md:rounded-full rounded-r-2xl rounded-l-none flex items-center justify-center shadow-[0_20px_40px_rgba(0,0,0,0.8),0_0_25px_rgba(247,147,26,0.2)] text-[#F7931A] hover:text-white hover:bg-[#F7931A] transition-all pointer-events-auto group relative -mt-1"
             title="Open Dashboard Menu"
           >
-            <Menu className="w-8 h-8 transition-transform" />
+            <Menu className="md:w-8 md:h-8 w-6 h-6 transition-transform" />
 
             {/* Decorative Hanging Ring/Hook */}
-            <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 border-2 border-[#F7931A] rounded-full bg-[#0f0f14]" />
+            <div className="hidden md:block absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 border-2 border-[#F7931A] rounded-full bg-[#0f0f14]" />
 
             {/* Glow effect */}
             <div className="absolute inset-0 rounded-full bg-[#F7931A]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />

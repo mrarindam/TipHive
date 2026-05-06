@@ -212,15 +212,15 @@ export default function OnboardingPage() {
                 </div>
 
                 <div className="bg-white/[0.03] border border-white/[0.08] p-8 rounded-3xl backdrop-blur-sm">
-                  <div className="relative group">
-                    <div className="absolute inset-y-0 left-5 flex items-center pointer-events-none">
+                  <div className="flex items-center w-full bg-black/40 border border-white/10 rounded-2xl focus-within:ring-2 focus-within:ring-[#f7931a] focus-within:border-[#f7931a] transition-all overflow-hidden group">
+                    <div className="pl-6 pr-1 flex items-center bg-white/[0.02] h-[76px] self-stretch border-r border-white/5 whitespace-nowrap">
                       <span className="text-slate-500 font-medium text-lg">{origin.replace(/^https?:\/\//, '')}/</span>
                     </div>
                     <input
                       type="text"
                       value={username}
                       onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      className="w-full bg-black/40 border border-white/10 rounded-2xl py-6 pl-[calc(1.25rem+10ch)] pr-6 text-xl text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a] focus:border-[#f7931a] transition-all font-bold placeholder:text-slate-700"
+                      className="flex-1 bg-transparent py-6 px-4 text-xl text-white focus:outline-none font-bold placeholder:text-slate-700 h-[76px]"
                       placeholder="username"
                     />
                   </div>

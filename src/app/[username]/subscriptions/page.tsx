@@ -24,7 +24,7 @@ export default function CreatorSubscriptions() {
         <div className="absolute -top-24 -left-24 w-64 h-64 bg-[#8A2BE2]/10 blur-[100px] rounded-full pointer-events-none" />
         <div className="absolute -bottom-24 -right-24 w-64 h-64 bg-[#F7931A]/10 blur-[100px] rounded-full pointer-events-none" />
         
-        <div className="bg-[#111827]/60 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 shadow-2xl relative z-10">
+        <div className="bg-[#0a0a0c]/60 backdrop-blur-3xl border border-white/5 rounded-[3rem] p-8 md:p-12 shadow-2xl relative z-10">
           <div className="grid grid-cols-1 gap-12">
             <div>
               <div className="flex items-center gap-3 mb-8">

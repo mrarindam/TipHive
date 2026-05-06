@@ -142,7 +142,7 @@ export default function CreatorMembers() {
           <h2 className="text-3xl font-black uppercase tracking-tighter font-outfit">Audience Insight</h2>
           <p className="text-slate-500 text-sm font-medium mt-1">Detailed view of your growing community</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 bg-[#0B0F19]/60 backdrop-blur-xl p-2 rounded-[1.5rem] border border-white/5 shadow-2xl">
+        <div className="flex flex-wrap items-center gap-3 bg-[#0a0a0c]/60 backdrop-blur-xl p-2 rounded-[1.5rem] border border-white/5 shadow-2xl">
           <button onClick={() => { setMemberFilter('supporters'); setCurrentPage(1); }} className={`px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${memberFilter === 'supporters' ? 'bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <Crown className="w-3.5 h-3.5" /> Supporters <span className="opacity-50 text-[10px] bg-black/30 px-2 py-0.5 rounded-full">{supporters.length}</span>
           </button>
@@ -166,7 +166,7 @@ export default function CreatorMembers() {
                 <motion.div 
                   initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
                   key={i} 
-                  className="bg-[#111827] border border-white/5 rounded-[2.5rem] p-6 flex flex-col items-center group hover:border-[#8A2BE2]/40 hover:bg-[#1A2234] transition-all duration-500 shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                  className="bg-[#0a0a0c] border border-white/5 rounded-[2.5rem] p-6 flex flex-col items-center group hover:border-[#8A2BE2]/40 hover:bg-[#111113] transition-all duration-500 shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                 >
                   <div className="mb-6">
                     {memberFilter === 'following' ? (
@@ -184,7 +184,7 @@ export default function CreatorMembers() {
 
                   <div className="relative mb-6">
                     <div className="absolute -inset-1 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full blur-[2px] opacity-0 group-hover:opacity-40 transition-opacity"></div>
-                    <div className="w-24 h-24 rounded-full border-4 border-[#111827] overflow-hidden relative shadow-2xl bg-black">
+                    <div className="w-24 h-24 rounded-full border-4 border-[#0a0a0c] overflow-hidden relative shadow-2xl bg-black">
                       <Image
                         src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.display_name || 'User')}`}
                         alt="Member" fill className="rounded-full object-cover group-hover:scale-110 transition-transform duration-500" unoptimized
@@ -223,7 +223,7 @@ export default function CreatorMembers() {
             />
           </>
         ) : (
-          <div className="col-span-full py-32 text-center bg-[#111827] border border-dashed border-white/10 rounded-[3rem]">
+          <div className="col-span-full py-32 text-center bg-[#0a0a0c] border border-dashed border-white/10 rounded-[3rem]">
             <Users className="w-16 h-16 text-slate-700 mx-auto mb-4 opacity-20" />
             <p className="text-slate-500 font-black uppercase tracking-widest text-sm">No members found in this category</p>
           </div>

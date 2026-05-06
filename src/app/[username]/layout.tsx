@@ -220,26 +220,26 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   return (
     <ProfileContext.Provider value={{ creator, loading, followersCount, postsCount, isFollowing, isOwner, handleFollow, fetchData }}>
-      <div className="min-h-screen bg-[#0B0F19] text-white selection:bg-[#F7931A]/30 pb-20 pt-28">
+      <div className="min-h-screen bg-[#000] text-white selection:bg-[#F7931A]/30 pb-20 pt-28">
         <div className="w-full space-y-8 px-4 md:px-6 lg:px-8">
 
           {/* Main Creator Card */}
           <motion.div
             layout
-            className={`bg-[#111827] border border-white/5 md:rounded-3xl transition-all duration-500 ${!isHome ? 'sticky top-4 z-50 backdrop-blur-xl bg-[#111827]/80 border-b border-[#8A2BE2]/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' : 'relative'}`}
+            className={`bg-[#0a0a0c] border border-white/5 md:rounded-3xl transition-all duration-500 ${!isHome ? 'sticky top-4 z-50 backdrop-blur-xl bg-[#0a0a0c]/80 border-b border-[#8A2BE2]/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' : 'relative'}`}
           >
             <div className="relative">
               <motion.div
                 animate={{ height: isHome ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 225 : 500) : 0, opacity: isHome ? 1 : 0 }}
                 transition={{ duration: 0.4, ease: "easeInOut" }}
-                className="w-full relative bg-[#1A2234] overflow-hidden aspect-[16/9] md:aspect-[3/1] md:rounded-t-3xl"
+                className="w-full relative bg-[#111113] overflow-hidden aspect-[16/9] md:aspect-[3/1] md:rounded-t-3xl"
               >
                 {creator.banner_url ? (
                   <Image src={creator.banner_url as string} alt="Banner" fill className="object-cover object-center" unoptimized />
                 ) : (
                   <Image src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000" alt="Banner" fill className="object-cover opacity-80" unoptimized />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#111827] via-transparent to-transparent opacity-80"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-transparent to-transparent opacity-80"></div>
               </motion.div>
 
               {isHome && (
@@ -250,7 +250,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                 >
                   <div className="relative w-24 h-24 md:w-32 md:h-32 group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full blur opacity-40 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative w-full h-full rounded-full border-4 border-[#111827] overflow-hidden shadow-2xl bg-black">
+                    <div className="relative w-full h-full rounded-full border-4 border-[#0a0a0c] overflow-hidden shadow-2xl bg-black">
                       <Image
                         src={(creator.avatar_url as string) || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.display_name as string)}`}
                         alt={creator.display_name as string}
@@ -319,13 +319,13 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap items-center gap-3 pt-2">
                         {creator.social_links && (Array.isArray(creator.social_links) ?
                           creator.social_links.map((url, i) => (
-                            <a key={i} href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-[#1A2234] hover:bg-[#8A2BE2]/20 border border-white/5 rounded-2xl transition-all text-slate-400 hover:text-white hover:scale-110 shadow-lg">
+                            <a key={i} href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-[#111113] hover:bg-[#8A2BE2]/20 border border-white/5 rounded-2xl transition-all text-slate-400 hover:text-white hover:scale-110 shadow-lg">
                               {getSocialIcon(url)}
                             </a>
                           )) :
                           Object.entries(creator.social_links).map(([, url], i) => (
                             url && (
-                              <a key={i} href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-[#1A2234] hover:bg-[#8A2BE2]/20 border border-white/5 rounded-2xl transition-all text-slate-400 hover:text-white hover:scale-110 shadow-lg">
+                              <a key={i} href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-[#111113] hover:bg-[#8A2BE2]/20 border border-white/5 rounded-2xl transition-all text-slate-400 hover:text-white hover:scale-110 shadow-lg">
                                 {getSocialIcon(url)}
                               </a>
                             )

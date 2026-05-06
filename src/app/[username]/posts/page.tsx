@@ -61,15 +61,15 @@ export default function CreatorPosts() {
             <p className="text-slate-400 text-sm">{filteredPosts.length} posts</p>
           </div>
           <div className="flex items-center gap-3 relative group">
-            <div className="flex items-center gap-2 bg-[#111827] border border-white/10 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg">
+            <div className="flex items-center gap-2 bg-[#0a0a0c] border border-white/10 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg">
               <span className="text-slate-400 uppercase text-[10px] tracking-widest mr-1">Sort:</span>
               <select
                 value={postSortOrder}
                 onChange={(e) => setPostSortOrder(e.target.value as 'latest' | 'oldest')}
                 className="bg-transparent outline-none cursor-pointer appearance-none pr-6 relative z-10"
               >
-                <option value="latest" className="bg-[#111827]">Latest</option>
-                <option value="oldest" className="bg-[#111827]">Oldest</option>
+                <option value="latest" className="bg-[#0a0a0c]">Latest</option>
+                <option value="oldest" className="bg-[#0a0a0c]">Oldest</option>
               </select>
               <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 pointer-events-none" />
             </div>
@@ -88,8 +88,8 @@ export default function CreatorPosts() {
             }
 
             return (
-              <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="flex flex-col md:flex-row gap-6 p-4 rounded-3xl bg-[#111827] hover:bg-[#1A2234] transition-colors border border-white/5 hover:border-white/10 group">
-                <div className="w-full md:w-64 h-48 md:h-36 bg-[#1A2234] rounded-2xl relative shrink-0 overflow-hidden">
+              <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="flex flex-col md:flex-row gap-6 p-4 rounded-3xl bg-[#0a0a0c] hover:bg-[#111113] transition-colors border border-white/5 hover:border-white/10 group">
+                <div className="w-full md:w-64 h-48 md:h-36 bg-[#111113] rounded-2xl relative shrink-0 overflow-hidden">
                   {(() => {
                     const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
                     const isVideo = !isAudio && (post.video_url?.includes('/video/') || post.video_url?.match(/\.(mp4|webm|mov|m4v)$/i));
@@ -138,7 +138,7 @@ export default function CreatorPosts() {
                           'text-[#D8B4FE] bg-[#8A2BE2]/10 border border-[#8A2BE2]/30'
                       }`}>
                       {post.visibility === 'public' ? <Globe2 className="w-3 h-3" /> : post.visibility === 'followers' ? <Users className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                      {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Followers' : 'Supporters'}
+                      {post.visibility === 'public' ? 'Public' : 'Members Only'}
                     </div>
                   </div>
                 </div>
@@ -149,7 +149,7 @@ export default function CreatorPosts() {
       </div>
 
       <div className="xl:col-span-4">
-        <div className="bg-[#111827]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 sticky top-24 shadow-2xl">
+        <div className="bg-[#0a0a0c]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 sticky top-24 shadow-2xl">
           <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
             <Filter className="w-5 h-5 text-[#8A2BE2]" />
             <h3 className="font-black uppercase tracking-tighter text-xl italic">Filter Posts</h3>

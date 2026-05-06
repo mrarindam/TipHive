@@ -214,12 +214,12 @@ export default function CreatorHome() {
     <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-12">
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <div className="xl:col-span-4 space-y-8">
-          <div className="bg-[#111827] border border-white/5 rounded-3xl p-8">
+          <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-8">
             <h3 className="text-sm font-black uppercase tracking-widest mb-4">About Creator</h3>
             <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">{creator!.bio as string || 'This creator hasn\'t written a bio yet.'}</p>
           </div>
 
-          <div className="bg-[#111827] border border-white/5 rounded-3xl p-8">
+          <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-8">
             <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2">
               <Heart className="w-4 h-4 text-red-500" /> Recent Tips
             </h3>
@@ -256,7 +256,7 @@ export default function CreatorHome() {
 
         <div className="xl:col-span-8 space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <div className="bg-[#111827] border border-white/5 rounded-3xl p-5 md:p-8 shadow-xl flex flex-col">
+            <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-5 md:p-8 shadow-xl flex flex-col">
               <div className="mb-6">
                 <h3 className="text-xl font-black uppercase tracking-tighter text-white font-outfit">SUBSCRIPTIONS</h3>
                 <p className="text-slate-500 text-[10px] font-medium mt-1 uppercase tracking-widest">Exclusive Access</p>
@@ -269,7 +269,7 @@ export default function CreatorHome() {
               />
             </div>
 
-            <div className="bg-gradient-to-b from-[#111827] to-[#1A2234] border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-b from-[#0a0a0c] to-[#111113] border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
               <div className="absolute top-0 right-0 w-48 h-48 bg-[#F7931A]/10 blur-[60px] rounded-full pointer-events-none" />
               <div className="relative z-10 flex flex-col">
                 <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 font-outfit text-white/70">
@@ -332,7 +332,7 @@ export default function CreatorHome() {
             <h3 className="text-2xl font-black uppercase tracking-tighter text-white font-outfit">Recent Feed</h3>
             <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.2em]">Latest updates from {creator!.display_name}</p>
           </div>
-          <Link href={`/${creator!.username}/posts`} className="p-3 bg-[#111827] border border-white/5 rounded-2xl text-[#8A2BE2] text-xs font-bold hover:bg-[#8A2BE2] hover:text-white transition-all flex items-center gap-2 shadow-lg group">
+          <Link href={`/${creator!.username}/posts`} className="p-3 bg-[#0a0a0c] border border-white/5 rounded-2xl text-[#8A2BE2] text-xs font-bold hover:bg-[#8A2BE2] hover:text-white transition-all flex items-center gap-2 shadow-lg group">
             Explore All <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -341,8 +341,8 @@ export default function CreatorHome() {
           {posts.slice(0, 4).map(post => {
             const isLocked = post.visibility !== 'public' && !isOwner && !isSubscribed;
             return (
-              <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="bg-[#111827] border border-white/5 rounded-[2rem] overflow-hidden group hover:border-[#8A2BE2]/50 transition-all block shadow-xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
-                <div className="h-52 bg-[#1A2234] relative overflow-hidden">
+              <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="bg-[#0a0a0c] border border-white/5 rounded-[2rem] overflow-hidden group hover:border-[#8A2BE2]/50 transition-all block shadow-xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+                <div className="h-52 bg-[#111113] relative overflow-hidden">
                   {(() => {
                     const contentImage = extractFirstImage(post.content);
                     const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
@@ -384,7 +384,7 @@ export default function CreatorHome() {
                   <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/10">Post</div>
                   {isLocked && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                      <div className="bg-[#111827]/90 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-white shadow-2xl">
+                      <div className="bg-[#0a0a0c]/90 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-white shadow-2xl">
                         <Lock className="w-3.5 h-3.5 text-[#F7931A]" /> 
                         <span className="uppercase tracking-widest">Locked</span>
                       </div>
@@ -399,7 +399,7 @@ export default function CreatorHome() {
                         post.visibility === 'public' ? 'text-emerald-500 bg-emerald-500/10' : 
                         (post.visibility === 'followers' ? 'text-blue-400 bg-blue-400/10' : 'text-orange-500 bg-orange-500/10')
                       }`}>
-                        {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Followers' : 'Supporters'}
+                        {post.visibility === 'public' ? 'Public' : 'Members Only'}
                     </div>
                   </div>
                 </div>

@@ -2,7 +2,7 @@
 
 import { useDashboard, Activity, CreatorProfile } from '../layout';
 import { useState } from 'react';
-import { Zap, Loader2, X, Settings2, Heart, CheckCircle2 } from 'lucide-react';
+import { Zap, Loader2, X, Settings2, Heart, CheckCircle2, ExternalLink } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import Pagination from '@/components/ui/Pagination';
@@ -140,6 +140,16 @@ function ActivityRow({ activity }: { activity: Activity }) {
         <div>
           <h4 className="text-white font-bold text-lg">Tip Received</h4>
           <p className="text-slate-500 text-sm">From {activity.to_name || 'Anonymous'} • {new Date(activity.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</p>
+          {activity.tx_hash && (
+            <a 
+              href={`https://explorer.test.mezo.org/tx/${activity.tx_hash}`} 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="text-[#f7931a] text-[10px] font-black uppercase tracking-widest mt-1.5 flex items-center gap-1 hover:underline"
+            >
+              View on Explorer <ExternalLink size={10} />
+            </a>
+          )}
         </div>
       </div>
       <div className="text-right">
