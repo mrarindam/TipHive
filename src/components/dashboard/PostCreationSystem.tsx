@@ -123,7 +123,7 @@ export default function PostCreationSystem({ onSuccess }: PostCreationSystemProp
             <div>
               <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 block">Media Upload</label>
               {!mediaUrl ? (
-                <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-100 bg-white/[0.02] hover:bg-white/[0.04] transition-colors relative">
+                <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center bg-white/[0.02] hover:bg-white/[0.04] transition-colors relative">
                   <input type="file" accept={postType === 'video' ? 'video/*' : 'image/*'} onChange={handleMediaUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                   <UploadCloud className="w-10 h-10 text-slate-500 mb-3" />
                   <p className="text-white font-bold mb-1">{isUploading ? 'Uploading to Cloudinary...' : 'Drag & Drop or Click to Upload'}</p>

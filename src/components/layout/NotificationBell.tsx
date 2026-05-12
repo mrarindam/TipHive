@@ -101,7 +101,7 @@ export default function NotificationBell() {
             exit={{ opacity: 0, y: -20 }}
             className="fixed left-1/2 top-20 z-[150] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-white/5 bg-[#070707] text-white shadow-2xl shadow-black/60 backdrop-blur-3xl md:absolute md:left-auto md:right-0 md:top-full md:mt-3 md:w-[380px] md:translate-x-0 md:rounded-[2rem]"
           >
-            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-slate-100 bg-white/[0.02]">
+            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
               <div>
                 <h3 className="text-sm font-black text-white uppercase tracking-widest">Notifications</h3>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
@@ -164,7 +164,7 @@ export default function NotificationBell() {
             </div>
 
             {notifications.length > 0 && (
-              <div className="p-4 bg-slate-100 bg-white/[0.02] border-t border-white/5 text-center">
+              <div className="p-4 bg-white/[0.02] border-t border-white/5 text-center">
                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">End of feed</p>
               </div>
             )}

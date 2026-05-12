@@ -275,7 +275,7 @@ export default function Home() {
                 </ul>
               </div>
               <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-slate-100 to-slate-50 from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
+                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-[#F7931A]/20 blur-[100px] rounded-full" />
@@ -298,9 +298,9 @@ export default function Home() {
                     <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="w-full py-4 bg-slate-900 bg-white text-white text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-4 bg-[#F7931A] text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all hover:shadow-[0_0_20px_rgba(247,147,26,0.3)]"
                     >
-                      <Zap className="w-5 h-5" /> Send Tip Now
+                      <Zap className="w-5 h-5 fill-black" /> Send Tip Now
                     </motion.div>
                   </div>
 
@@ -362,7 +362,7 @@ export default function Home() {
                 </ul>
               </div>
               <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-slate-100 to-slate-50 from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
+                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-purple-600/20 blur-[100px] rounded-full" />
@@ -392,7 +392,7 @@ export default function Home() {
                       <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="w-full py-4 bg-purple-600 hover:bg-purple-500 transition-colors text-white text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2"
+                        className="w-full py-4 bg-purple-600 hover:bg-purple-500 transition-colors text-white font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2 shadow-lg shadow-purple-500/20"
                       >
                         Subscribe
                       </motion.div>
@@ -457,7 +457,7 @@ export default function Home() {
                 </ul>
               </div>
               <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-slate-100 to-slate-50 from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
+                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-emerald-600/20 blur-[100px] rounded-full" />
@@ -658,7 +658,7 @@ export default function Home() {
 
 function PainPointCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
   return (
-    <div className="p-8 bg-white/50 bg-slate-100 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-red-500/30 transition-all duration-500">
+    <div className="p-8 bg-white/50 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-red-500/30 transition-all duration-500">
       <div className="mb-6 p-4 bg-white/5 rounded-2xl inline-block group-hover:scale-110 transition-transform duration-500">
         {icon}
       </div>

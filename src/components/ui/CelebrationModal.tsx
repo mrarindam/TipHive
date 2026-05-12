@@ -66,8 +66,8 @@ export default function CelebrationModal({
                 }}
                 className={`absolute left-1/2 top-1/2 h-3 w-3 rounded-full ${
                   index % 3 === 0 ? 'bg-[#F7931A]' : 
-                  index % 3 === 1 ? 'bg-[#8A2BE2]' : 'bg-white'
-                } shadow-[0_0_15px_rgba(255,255,255,0.5)]`}
+                  index % 3 === 1 ? 'bg-[#8A2BE2]' : 'bg-blue-400'
+                } shadow-[0_0_15px_rgba(255,255,255,0.2)]`}
               />
             ))}
           </div>

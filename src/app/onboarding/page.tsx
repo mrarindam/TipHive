@@ -230,14 +230,14 @@ export default function OnboardingPage() {
 
 
                 <div className="space-y-6">
-                  <div className={`bg-slate-100 bg-white/[0.02] border border-white/[0.06] p-10 rounded-[2.5rem] backdrop-blur-md transition-all duration-300 ${usernameAvailable === false ? 'border-red-500/30' : ''}`}>
+                  <div className={`bg-white/[0.02] border border-white/[0.06] p-10 rounded-[2.5rem] backdrop-blur-md transition-all duration-300 ${usernameAvailable === false ? 'border-red-500/30' : ''}`}>
                     <div className={`flex items-center w-full bg-black/60 border rounded-2xl focus-within:ring-4 transition-all overflow-hidden group ${usernameAvailable === false
                       ? 'border-red-500/50 focus-within:ring-red-500/10 animate-shake'
                       : usernameAvailable === true
                         ? 'border-green-500/50 focus-within:ring-green-500/10'
                         : 'border-white/10 focus-within:ring-[#f7931a]/20 focus-within:border-[#f7931a]'
                       }`}>
-                      <div className="pl-6 pr-2 flex items-center bg-slate-100 bg-white/[0.02] h-[80px] self-stretch border-r border-white/5 whitespace-nowrap">
+                      <div className="pl-6 pr-2 flex items-center bg-white/[0.02] h-[80px] self-stretch border-r border-white/5 whitespace-nowrap">
                         <span className="text-slate-500 font-bold text-lg">{origin.replace(/^https?:\/\//, '')}/</span>
                       </div>
                       <input
@@ -359,7 +359,7 @@ export default function OnboardingPage() {
                 </div>
 
 
-                <div className="bg-slate-100 bg-white/[0.02] border border-white/[0.06] p-6 md:p-10 rounded-[2.5rem] backdrop-blur-md space-y-8">
+                <div className="bg-white/[0.02] border border-white/[0.06] p-6 md:p-10 rounded-[2.5rem] backdrop-blur-md space-y-8">
 
                   {/* Avatar Upload */}
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-8">

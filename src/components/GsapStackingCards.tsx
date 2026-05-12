@@ -19,8 +19,9 @@ const stackingCardsData = [
   {
     id: 1,
     title: "Tipping Model",
-    color: "bg-gradient-to-br from-blue-300 to-cyan-200",
-    icon: <Globe className="w-8 h-8 text-blue-600" />,
+    color: "bg-[#0a0a0a] border border-white/5",
+    glow: "bg-blue-500/10",
+    icon: <Globe className="w-8 h-8 text-blue-400" />,
     images: [
       "/images/Elements/tips.webp",
       "/images/Elements/createTIP.webp",
@@ -30,8 +31,9 @@ const stackingCardsData = [
   {
     id: 2,
     title: "Subscription Model",
-    color: "bg-gradient-to-br from-emerald-300 to-teal-200",
-    icon: <Zap className="w-8 h-8 text-emerald-600" />,
+    color: "bg-[#0a0a0a] border border-white/5",
+    glow: "bg-emerald-500/10",
+    icon: <Zap className="w-8 h-8 text-emerald-400" />,
     images: [
       "/images/Elements/createSUB.webp",
       "/images/Elements/profileSUB.webp",
@@ -41,8 +43,9 @@ const stackingCardsData = [
   {
     id: 3,
     title: "Posting Model",
-    color: "bg-gradient-to-br from-purple-300 to-fuchsia-200",
-    icon: <Rocket className="w-8 h-8 text-purple-600" />,
+    color: "bg-[#0a0a0a] border border-white/5",
+    glow: "bg-purple-500/10",
+    icon: <Rocket className="w-8 h-8 text-purple-400" />,
     images: [
       "/images/Elements/myPost.webp",
       "/images/Elements/postTOEarn.webp",
@@ -52,8 +55,9 @@ const stackingCardsData = [
   {
     id: 4,
     title: "Earning Model",
-    color: "bg-gradient-to-br from-yellow-300 to-orange-200",
-    icon: <Bitcoin className="w-8 h-8 text-orange-600" />,
+    color: "bg-[#0a0a0a] border border-white/5",
+    glow: "bg-[#F7931A]/10",
+    icon: <Bitcoin className="w-8 h-8 text-[#F7931A]" />,
     images: [
       "/images/Elements/earnALLTime.webp",
       "/images/Elements/realTimeEarnTrack.webp"
@@ -62,8 +66,9 @@ const stackingCardsData = [
   {
     id: 5,
     title: "Profile Model",
-    color: "bg-gradient-to-br from-rose-300 to-pink-200",
-    icon: <Sparkles className="w-8 h-8 text-rose-600" />,
+    color: "bg-[#0a0a0a] border border-white/5",
+    glow: "bg-rose-500/10",
+    icon: <Sparkles className="w-8 h-8 text-rose-400" />,
     images: [
       "/images/Elements/profile.webp",
       "/images/Elements/watchFollowers.webp",
@@ -73,8 +78,9 @@ const stackingCardsData = [
   {
     id: 6,
     title: "Tooling",
-    color: "bg-gradient-to-br from-indigo-300 to-blue-200",
-    icon: <Gem className="w-8 h-8 text-indigo-600" />,
+    color: "bg-[#0a0a0a] border border-white/5",
+    glow: "bg-indigo-500/10",
+    icon: <Gem className="w-8 h-8 text-indigo-400" />,
     images: [
       "/images/Elements/tools.webp",
       "/images/Elements/getNotified.webp"
@@ -157,7 +163,6 @@ export default function GsapStackingCards() {
       ref={containerRef}
       className="relative w-full h-screen bg-[#050505] overflow-hidden text-white flex flex-col pt-20 pb-10"
     >
-
       {/* Cards Area */}
       <div
         ref={cardsWrapperRef}
@@ -169,11 +174,14 @@ export default function GsapStackingCards() {
             <div
               key={card.id}
               ref={(el) => { cardsRef.current[i] = el; }}
-              className={`absolute top-0 w-full h-full rounded-[2.5rem] ${card.color} shadow-[0_30px_60px_rgba(0,0,0,0.4)] overflow-hidden flex flex-col`}
+              className={`absolute top-0 w-full h-full rounded-[2.5rem] ${card.color} shadow-[0_30px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border border-white/10`}
               style={{ zIndex: i }}
             >
+              {/* Background Glow */}
+              <div className={`absolute top-0 right-0 w-96 h-96 ${card.glow} blur-[120px] rounded-full -mr-48 -mt-48 opacity-50`} />
+              
               {/* SVG Noise Overlay */}
-              <svg className="absolute inset-0 w-full h-full opacity-[0.15] pointer-events-none mix-blend-overlay z-0">
+              <svg className="absolute inset-0 w-full h-full opacity-[0.05] pointer-events-none mix-blend-overlay z-0">
                 <filter id={`noiseFilter-${i}`}>
                   <feTurbulence type="fractalNoise" baseFrequency="0.6" stitchTiles="stitch" />
                 </filter>
@@ -183,14 +191,14 @@ export default function GsapStackingCards() {
               <div className="relative z-10 flex flex-col h-full p-6 md:p-12">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white flex items-center justify-center shadow-lg flex-shrink-0">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-lg flex-shrink-0">
                     {card.icon}
                   </div>
                   <div className="flex flex-col">
-                    <span className="bg-white text-slate-900 text-[10px] md:text-xs font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full w-fit mb-1 md:mb-2 shadow-sm flex items-center justify-center">
+                    <span className="bg-white/10 text-white text-[10px] md:text-xs font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full w-fit mb-1 md:mb-2 border border-white/10 shadow-sm">
                       {i + 1} / {stackingCardsData.length}
                     </span>
-                    <h3 className="text-3xl md:text-4xl lg:text-5xl font-medium tracking-tight text-slate-900">
+                    <h3 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white uppercase font-outfit">
                       {card.title}
                     </h3>
                   </div>
@@ -201,13 +209,16 @@ export default function GsapStackingCards() {
                   {card.images.map((imgSrc, imgIdx) => (
                     <div
                       key={imgIdx}
-                      className="h-[85%] md:h-full w-[85%] md:w-auto flex-shrink-0 flex items-center justify-center overflow-hidden snap-center"
+                      className="h-[85%] md:h-full w-[85%] md:w-auto flex-shrink-0 flex items-center justify-center snap-center"
                     >
-                      <img
-                        src={imgSrc}
-                        alt={`${card.title} screenshot ${imgIdx + 1}`}
-                        className="h-full w-full md:w-auto object-contain drop-shadow-2xl hover:scale-[1.02] transition-transform duration-500 rounded-3xl"
-                      />
+                      <div className="relative h-full w-full flex items-center justify-center p-4">
+                        <div className="absolute inset-0 bg-white/[0.02] rounded-3xl blur-xl" />
+                        <img
+                          src={imgSrc}
+                          alt={`${card.title} screenshot ${imgIdx + 1}`}
+                          className="h-full w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:scale-[1.02] transition-transform duration-500 rounded-2xl"
+                        />
+                      </div>
                     </div>
                   ))}
                 </div>

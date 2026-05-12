@@ -133,7 +133,7 @@ export default function QRCodeGeneratorModal({ isOpen, onClose, username }: QRCo
                   <button
                     key={type}
                     onClick={() => setQrType(type)}
-                    className={`py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${qrType === type ? 'bg-white text-black border-white shadow-xl' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}
+                    className={`py-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border transition-all ${qrType === type ? 'bg-[#f7931a] text-black border-[#f7931a] shadow-xl shadow-orange-500/20' : 'bg-white/5 text-slate-500 border-white/5 hover:bg-white/10'}`}
                   >
                     {type}
                   </button>
@@ -155,7 +155,7 @@ export default function QRCodeGeneratorModal({ isOpen, onClose, username }: QRCo
                     </button>
                     <button 
                         onClick={() => downloadQR('svg')}
-                        className="py-4 bg-white hover:bg-slate-100 text-black font-black text-[10px] uppercase tracking-widest rounded-2xl transition-all flex items-center justify-center gap-2 shadow-lg shadow-white/5"
+                        className="py-4 bg-white/5 hover:bg-white/10 text-white font-black text-[10px] uppercase tracking-widest rounded-2xl border border-white/10 transition-all flex items-center justify-center gap-2 shadow-lg shadow-black/5"
                     >
                         SVG Vector
                     </button>

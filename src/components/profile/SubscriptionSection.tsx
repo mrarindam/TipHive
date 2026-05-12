@@ -332,12 +332,12 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
                 <button
                   onClick={() => setPreviewPlan(plan)}
                   disabled={status === 'approving' || status === 'subscribing'}
-                  className="relative w-full py-6 rounded-[2.5rem] bg-white text-black overflow-hidden group/btn transition-all duration-500 hover:shadow-[0_0_30px_rgba(255,255,255,0.2)] active:scale-[0.97]"
+                  className="relative w-full py-6 rounded-[2.5rem] bg-[#F7931A] text-black overflow-hidden group/btn transition-all duration-500 hover:shadow-[0_0_30px_rgba(247,147,26,0.3)] active:scale-[0.97]"
                 >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
                   <div className="relative flex items-center justify-center gap-3">
                     {(status === 'subscribing' && selectedPlan?.id === plan.id) ? (
-                      <Loader2 className="w-6 h-6 animate-spin text-[#F7931A]" />
+                      <Loader2 className="w-6 h-6 animate-spin text-black" />
                     ) : (
                       <Zap className="w-6 h-6 fill-black" />
                     )}
