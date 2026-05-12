@@ -300,7 +300,7 @@ export default function Explore() {
               <span>Discover</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F7931A] to-[#8A2BE2]">Creators</span>
             </h1>
-            <p className="text-slate-400 text-lg font-medium">Support the brilliant minds of the Mezo Network.</p>
+            <p className="text-lg font-medium text-slate-400">Support the brilliant minds of the Mezo Network.</p>
           </div>
           
           <div className="relative w-full md:w-[400px] group">

@@ -68,7 +68,7 @@ export default function GlobalSearch({ isMobile, onSelect }: GlobalSearchProps) 
   };
 
   return (
-    <div className={`relative ${isMobile ? 'w-full mb-6' : 'flex-1 max-w-md mx-8 hidden lg:block'}`} ref={searchRef}>
+    <div className={`relative ${isMobile ? 'w-full' : 'flex-1 max-w-md mx-8 hidden lg:block'}`} ref={searchRef}>
       <div className="relative group">
         <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 group-focus-within:text-[#F7931A] transition-colors" />
         <input

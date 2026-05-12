@@ -2,17 +2,17 @@
 
 import { useState, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  ArrowRight, 
-  Bitcoin, 
-  ShieldCheck, 
-  Zap, 
-  Rocket, 
-  Globe, 
-  Star, 
-  CheckCircle2, 
-  Wallet, 
-  Plus, 
+import {
+  ArrowRight,
+  Bitcoin,
+  ShieldCheck,
+  Zap,
+  Rocket,
+  Globe,
+  Star,
+  CheckCircle2,
+  Wallet,
+  Plus,
   ChevronDown,
   LayoutDashboard,
   Coins,
@@ -21,6 +21,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import MUSDLogo from '@/components/ui/MUSDLogo';
+import GsapStackingCards from '@/components/GsapStackingCards';
 
 export default function Home() {
   const containerRef = useRef(null);
@@ -129,7 +130,7 @@ export default function Home() {
       <section className="relative w-full py-24 md:py-40 bg-black/50 overflow-hidden">
         <div className="w-full px-[5%] md:px-[8%]">
           {/* Header matching image */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false, margin: "-10%" }}
@@ -137,7 +138,7 @@ export default function Home() {
             className="flex items-center gap-6 mb-24 w-full"
           >
             <h2 className="text-3xl md:text-4xl text-slate-300 font-medium whitespace-nowrap tracking-wide">The Problem</h2>
-            <motion.div 
+            <motion.div
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: false, margin: "-10%" }}
@@ -155,37 +156,37 @@ export default function Home() {
               className="space-y-6 md:space-y-8"
             >
               <h2 className="text-4xl md:text-7xl font-black text-white font-outfit leading-tight tracking-tighter uppercase">
-                Traditional <br /> Tipping is <br /> <span className="text-slate-600 line-through">Broken.</span>
+                Traditional <br /> Tipping is <br /> <span className="text-slate-400 text-slate-600 line-through">Broken.</span>
               </h2>
-              <div className="space-y-4 md:space-y-6 text-base md:text-lg text-slate-400 font-medium">
+              <div className="space-y-4 md:space-y-6 text-base md:text-lg text-slate-400 text-slate-400 text-slate-400 font-medium">
                 <p>Hidden fees, 30% platform cuts, and delayed payouts are strangling the creator economy.</p>
                 <p>Creators deserve better than centralized gatekeepers taking their hard-earned support.</p>
               </div>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 40 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, margin: "-10%" }}
               transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
               className="grid grid-cols-1 md:grid-cols-2 gap-6"
             >
-              <PainPointCard 
+              <PainPointCard
                 icon={<Coins className="w-8 h-8 text-red-400" />}
                 title="Insane Fees"
                 desc="Up to 40% of every tip is lost to processing and platform fees."
               />
-              <PainPointCard 
+              <PainPointCard
                 icon={<Clock className="w-8 h-8 text-orange-400" />}
                 title="Slow Payouts"
                 desc="Wait weeks to access your funds through complex banking systems."
               />
-              <PainPointCard 
+              <PainPointCard
                 icon={<ShieldCheck className="w-8 h-8 text-yellow-400" />}
                 title="Censorship"
                 desc="Platforms can freeze your assets or ban you without warning."
               />
-              <PainPointCard 
+              <PainPointCard
                 icon={<Globe className="w-8 h-8 text-blue-400" />}
                 title="Bordered"
                 desc="Global fans struggle with local payment restrictions."
@@ -199,9 +200,9 @@ export default function Home() {
       <section className="relative w-full py-24 md:py-40 overflow-hidden">
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(247,147,26,0.05),transparent_70%)]" />
         <div className="w-full px-[5%] md:px-[8%] relative z-10">
-          
+
           {/* Header matching image */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: -30 }}
             whileInView={{ opacity: 1, x: 0 }}
             viewport={{ once: false, margin: "-10%" }}
@@ -209,7 +210,7 @@ export default function Home() {
             className="flex items-center gap-6 mb-24 w-full"
           >
             <h2 className="text-3xl md:text-4xl text-slate-300 font-medium whitespace-nowrap tracking-wide">The Solutions</h2>
-            <motion.div 
+            <motion.div
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: false, margin: "-10%" }}
@@ -228,7 +229,7 @@ export default function Home() {
             <h2 className="text-5xl md:text-7xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
               Welcome to the <br /> <span className="text-glow">TipHive Revolution.</span>
             </h2>
-            <p className="text-xl text-slate-400 font-medium leading-relaxed">
+            <p className="text-xl text-slate-400 text-slate-400 text-slate-400 font-medium leading-relaxed">
               We leverage the power of Mezo Bitcoin L2 to create a borderless, permissionless, and fee-less economy for everyone.
             </p>
           </motion.div>
@@ -236,7 +237,7 @@ export default function Home() {
           {/* Graphic Features - Tipping & Subscribing */}
           <div className="space-y-32">
             {/* Tipping Feature */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 80 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, margin: "-10%" }}
@@ -250,7 +251,7 @@ export default function Home() {
                 <h3 className="text-5xl md:text-6xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
                   Tip Creators <br /> Instantly
                 </h3>
-                <p className="text-xl text-slate-400 leading-relaxed max-w-lg">
+                <p className="text-xl text-slate-400 text-slate-400 text-slate-400 leading-relaxed max-w-lg">
                   Send value directly to your favorite creators. No middlemen, no waiting periods. 100% of your tip goes straight into the creator&apos;s wallet in real-time using Bitcoin-backed stablecoins.
                 </p>
                 <ul className="space-y-4">
@@ -259,7 +260,7 @@ export default function Home() {
                     "Instant cross-border settlement",
                     "Complete privacy and control"
                   ].map((item, i) => (
-                    <motion.li 
+                    <motion.li
                       key={i}
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -274,11 +275,11 @@ export default function Home() {
                 </ul>
               </div>
               <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
+                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-slate-100 to-slate-50 from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-[#F7931A]/20 blur-[100px] rounded-full" />
-                  
+
                   {/* Animated Tipping UI */}
                   <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl p-6 shadow-2xl flex flex-col gap-6">
                     <div className="flex items-center gap-4 border-b border-white/5 pb-4">
@@ -294,15 +295,15 @@ export default function Home() {
                       <div className="text-5xl font-black text-white tracking-tighter mb-2">50.00</div>
                       <div className="text-[#F7931A] font-bold text-sm tracking-widest uppercase">MUSD Tip</div>
                     </div>
-                    <motion.div 
+                    <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="w-full py-4 bg-white text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-4 bg-slate-900 bg-white text-white text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
                     >
                       <Zap className="w-5 h-5" /> Send Tip Now
                     </motion.div>
                   </div>
-                  
+
                   {/* Floating Elements */}
                   <motion.div
                     animate={{ y: [-15, 15, -15], rotate: [-5, 5, -5] }}
@@ -323,7 +324,7 @@ export default function Home() {
             </motion.div>
 
             {/* Subscribing Feature */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 80 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, margin: "-10%" }}
@@ -337,7 +338,7 @@ export default function Home() {
                 <h3 className="text-5xl md:text-6xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
                   Subscribe & <br /> Unlock
                 </h3>
-                <p className="text-xl text-slate-400 leading-relaxed max-w-lg">
+                <p className="text-xl text-slate-400 text-slate-400 text-slate-400 leading-relaxed max-w-lg">
                   Join a creator&apos;s inner circle. Subscriptions are powered by immutable smart contracts, giving you total transparency and ensuring creators retain full ownership of their audience.
                 </p>
                 <ul className="space-y-4">
@@ -346,7 +347,7 @@ export default function Home() {
                     "Exclusive content access",
                     "Direct creator-to-fan relationship"
                   ].map((item, i) => (
-                    <motion.li 
+                    <motion.li
                       key={i}
                       initial={{ opacity: 0, x: 20 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -361,11 +362,11 @@ export default function Home() {
                 </ul>
               </div>
               <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
+                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-slate-100 to-slate-50 from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-purple-600/20 blur-[100px] rounded-full" />
-                  
+
                   {/* Animated Subscription UI */}
                   <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
                     <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 flex items-center justify-between">
@@ -375,7 +376,7 @@ export default function Home() {
                     <div className="p-6 flex flex-col gap-6">
                       <div className="flex items-end gap-2">
                         <div className="text-5xl font-black text-white tracking-tighter">10.00</div>
-                        <div className="text-slate-400 font-medium mb-1">MUSD / mo</div>
+                        <div className="text-slate-400 text-slate-400 text-slate-400 font-medium mb-1">MUSD / mo</div>
                       </div>
                       <div className="space-y-3">
                         <div className="flex items-center gap-3 text-sm text-slate-300">
@@ -388,16 +389,16 @@ export default function Home() {
                           <CheckCircle2 className="w-4 h-4 text-purple-400" /> Monthly Q&A
                         </div>
                       </div>
-                      <motion.div 
+                      <motion.div
                         whileHover={{ scale: 1.05 }}
                         whileTap={{ scale: 0.95 }}
-                        className="w-full py-4 bg-purple-600 hover:bg-purple-500 transition-colors text-white font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2"
+                        className="w-full py-4 bg-purple-600 hover:bg-purple-500 transition-colors text-white text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2"
                       >
                         Subscribe
                       </motion.div>
                     </div>
                   </div>
-                  
+
                   {/* Floating Elements */}
                   <motion.div
                     animate={{ y: [-10, 10, -10], rotate: [0, 10, 0] }}
@@ -418,7 +419,7 @@ export default function Home() {
             </motion.div>
 
             {/* Posting to Earn Feature */}
-            <motion.div 
+            <motion.div
               initial={{ opacity: 0, y: 80 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: false, margin: "-10%" }}
@@ -432,7 +433,7 @@ export default function Home() {
                 <h3 className="text-5xl md:text-6xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
                   Post to <br /> Earn
                 </h3>
-                <p className="text-xl text-slate-400 leading-relaxed max-w-lg">
+                <p className="text-xl text-slate-400 text-slate-400 text-slate-400 leading-relaxed max-w-lg">
                   Share exclusive &quot;Drops&quot; with your inner circle. Whether it&apos;s art, music, or updates, your followers and subscribers can support you directly for every piece of content you create.
                 </p>
                 <ul className="space-y-4">
@@ -441,7 +442,7 @@ export default function Home() {
                     "Public feeds for discovery",
                     "Direct fan-to-creator engagement"
                   ].map((item, i) => (
-                    <motion.li 
+                    <motion.li
                       key={i}
                       initial={{ opacity: 0, x: -20 }}
                       whileInView={{ opacity: 1, x: 0 }}
@@ -456,11 +457,11 @@ export default function Home() {
                 </ul>
               </div>
               <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
+                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-slate-100 to-slate-50 from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
                   <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-emerald-600/20 blur-[100px] rounded-full" />
-                  
+
                   {/* Animated Posting UI */}
                   <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl p-6 shadow-2xl flex flex-col gap-6">
                     <div className="flex items-center justify-between">
@@ -479,15 +480,15 @@ export default function Home() {
                       <div className="w-1/2 h-2 bg-white/10 rounded-full" />
                       <div className="w-2/3 h-2 bg-white/10 rounded-full" />
                     </div>
-                    <motion.div 
+                    <motion.div
                       whileHover={{ scale: 1.05 }}
                       whileTap={{ scale: 0.95 }}
-                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 transition-colors text-white font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
+                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 transition-colors text-white text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
                     >
                       Share with Fans
                     </motion.div>
                   </div>
-                  
+
                   {/* Floating Elements */}
                   <motion.div
                     animate={{ y: [-15, 15, -15], scale: [1, 1.1, 1] }}
@@ -522,40 +523,68 @@ export default function Home() {
               <h2 className="text-6xl font-black text-white uppercase tracking-tighter font-outfit">How it works</h2>
               <p className="text-xl text-slate-500 font-medium">Three steps to join the future of the creator economy.</p>
             </div>
-            <motion.div 
+            <motion.div
               initial={{ scaleX: 0 }}
               whileInView={{ scaleX: 1 }}
               viewport={{ once: false, margin: "-10%" }}
               transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-              className="hidden lg:block h-px flex-1 bg-gradient-to-r from-[#F7931A]/40 to-transparent mx-10 mb-6 origin-left" 
+              className="hidden lg:block h-px flex-1 bg-gradient-to-r from-[#F7931A]/40 to-transparent mx-10 mb-6 origin-left"
             />
           </div>
 
           <div className="grid md:grid-cols-3 gap-12">
-            <StepItem 
-              number="01" 
+            <StepItem
+              number="01"
               index={0}
               icon={<Wallet className="w-10 h-10" />}
-              title="Connect Identity" 
+              title="Connect Identity"
               desc="Link your Mezo wallet. Your address is your unique profile across the Hive."
             />
-            <StepItem 
-              number="02" 
+            <StepItem
+              number="02"
               index={1}
               icon={<LayoutDashboard className="w-10 h-10" />}
-              title="Set Up Page" 
+              title="Set Up Page"
               desc="Customize your creator dashboard and share your tipping link with your fans."
             />
-            <StepItem 
-              number="03" 
+            <StepItem
+              number="03"
               index={2}
               icon={<Gem className="w-10 h-10" />}
-              title="Earn in MUSD" 
+              title="Earn in MUSD"
               desc="Receive Bitcoin-backed stablecoin tips instantly and withdraw anytime."
             />
           </div>
         </div>
       </section>
+
+      {/* Trusted Platform Section */}
+      <section className="relative w-full py-24 md:py-40 px-4 overflow-hidden">
+        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(247,147,26,0.05),transparent_70%)]" />
+        <div className="w-full px-[5%] md:px-[8%] text-center space-y-12 relative z-10">
+          <motion.h2
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, margin: "-10%" }}
+            transition={{ duration: 0.8, ease: "easeOut" }}
+            className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white uppercase tracking-tighter font-outfit leading-tight"
+          >
+            Why is TipHive the Trusted Platform for <br className="hidden lg:block" /> <span className="text-[#F7931A]">Modern Creators?</span>
+          </motion.h2>
+          <motion.p
+            initial={{ opacity: 0, y: 30 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: false, margin: "-10%" }}
+            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
+            className="text-xl md:text-2xl text-slate-400 text-slate-400 text-slate-400 font-medium leading-relaxed max-w-4xl mx-auto"
+          >
+            We&apos;re more than a creator platform. Built on Mezo, TipHive helps creators turn their audience into thriving communities through memberships, exclusive content and seamless supporter experiences.
+          </motion.p>
+        </div>
+      </section>
+
+      {/* Scroll Stacking Cards */}
+      <GsapStackingCards />
 
       {/* FAQ Section */}
       <section className="relative w-full py-24 md:py-40 px-4 bg-black/30">
@@ -600,7 +629,7 @@ export default function Home() {
         <div className="w-full px-[5%] md:px-[8%]">
           <div className="glass-card p-16 md:p-32 text-center relative overflow-hidden group">
             <div className="absolute inset-0 bg-gradient-to-br from-[#F7931A]/10 via-transparent to-blue-500/10 opacity-50" />
-            
+
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}
               whileInView={{ opacity: 1, scale: 1 }}
@@ -629,7 +658,7 @@ export default function Home() {
 
 function PainPointCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
   return (
-    <div className="p-8 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-red-500/30 transition-all duration-500">
+    <div className="p-8 bg-white/50 bg-slate-100 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-red-500/30 transition-all duration-500">
       <div className="mb-6 p-4 bg-white/5 rounded-2xl inline-block group-hover:scale-110 transition-transform duration-500">
         {icon}
       </div>
@@ -643,7 +672,7 @@ function PainPointCard({ icon, title, desc }: { icon: React.ReactNode, title: st
 function StepItem({ number, icon, title, desc, index }: { number: string, icon: React.ReactNode, title: string, desc: string, index: number }) {
   return (
     <div className="relative group">
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.8, x: -20 }}
         whileInView={{ opacity: 1, scale: 1, x: 0 }}
         viewport={{ once: false }}
@@ -653,15 +682,15 @@ function StepItem({ number, icon, title, desc, index }: { number: string, icon: 
         {number}
       </motion.div>
       <div className="relative z-10 pt-10">
-        <motion.div 
+        <motion.div
           initial={{ rotate: 12, scale: 0.8, opacity: 0 }}
           whileInView={{ rotate: 0, scale: 1, opacity: 1 }}
           viewport={{ once: false }}
-          transition={{ 
-            type: "spring", 
-            stiffness: 100, 
-            damping: 15, 
-            delay: (index * 0.1) + 0.3 
+          transition={{
+            type: "spring",
+            stiffness: 100,
+            damping: 15,
+            delay: (index * 0.1) + 0.3
           }}
           className="mb-8 p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] inline-block group-hover:border-[#F7931A]/40 transition-all duration-500 group-hover:-rotate-6"
         >
@@ -682,10 +711,10 @@ function FAQItem({ question, answer, delay }: { question: string, answer: string
       initial={{ opacity: 0, y: 40 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true, margin: "-5%" }}
-      transition={{ 
-        duration: 0.8, 
-        delay, 
-        ease: [0.16, 1, 0.3, 1] 
+      transition={{
+        duration: 0.8,
+        delay,
+        ease: [0.16, 1, 0.3, 1]
       }}
       className="border-b border-white/5"
     >
@@ -708,7 +737,7 @@ function FAQItem({ question, answer, delay }: { question: string, answer: string
             exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden"
           >
-            <div className="pb-8 text-slate-400 text-lg leading-relaxed font-medium">
+            <div className="pb-8 text-slate-400 text-slate-400 text-slate-400 text-lg leading-relaxed font-medium">
               {answer}
             </div>
           </motion.div>
@@ -717,3 +746,4 @@ function FAQItem({ question, answer, delay }: { question: string, answer: string
     </motion.div>
   );
 }
+

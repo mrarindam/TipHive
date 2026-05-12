@@ -165,6 +165,7 @@ html.lenis body {
 @utility no-scrollbar {
   -ms-overflow-style: none;
   scrollbar-width: none;
+
   &::-webkit-scrollbar {
     display: none;
   }
@@ -172,4 +173,28 @@ html.lenis body {
 
 @utility perspective-1000 {
   perspective: 1000px;
+}
+
+@keyframes shake {
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(-5px);
+  }
+
+  50% {
+    transform: translateX(5px);
+  }
+
+  75% {
+    transform: translateX(-5px);
+  }
+}
+
+@utility animate-shake {
+  animation: shake 0.3s ease-in-out;
 }

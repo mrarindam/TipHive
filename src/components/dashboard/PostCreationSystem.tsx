@@ -96,7 +96,7 @@ export default function PostCreationSystem({ onSuccess }: PostCreationSystemProp
   return (
     <div className="bg-[#0f0f14] border border-white/5 rounded-3xl p-6 md:p-8 relative">
       <div className="flex items-center gap-4 mb-8 border-b border-white/5 pb-4">
-        <h2 className="text-2xl font-black uppercase tracking-tight text-white flex-1">Create New Drop</h2>
+        <h2 className="text-2xl font-black uppercase tracking-tight text-white flex-1">Create New Post</h2>
         <div className="flex items-center gap-2 bg-white/5 p-1 rounded-xl">
           <button onClick={() => setPostType('text')} className={`p-2 rounded-lg flex items-center gap-2 text-sm font-bold transition-all ${postType === 'text' ? 'bg-[#F7931A] text-black shadow-lg' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <FileText className="w-4 h-4" /> <span className="hidden sm:inline">Post</span>
@@ -123,7 +123,7 @@ export default function PostCreationSystem({ onSuccess }: PostCreationSystemProp
             <div>
               <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-2 block">Media Upload</label>
               {!mediaUrl ? (
-                <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center bg-white/[0.02] hover:bg-white/[0.04] transition-colors relative">
+                <div className="border-2 border-dashed border-white/10 rounded-2xl p-8 flex flex-col items-center justify-center bg-slate-100 bg-white/[0.02] hover:bg-white/[0.04] transition-colors relative">
                   <input type="file" accept={postType === 'video' ? 'video/*' : 'image/*'} onChange={handleMediaUpload} className="absolute inset-0 opacity-0 cursor-pointer" />
                   <UploadCloud className="w-10 h-10 text-slate-500 mb-3" />
                   <p className="text-white font-bold mb-1">{isUploading ? 'Uploading to Cloudinary...' : 'Drag & Drop or Click to Upload'}</p>
@@ -186,7 +186,7 @@ export default function PostCreationSystem({ onSuccess }: PostCreationSystemProp
 
       {status === 'success' && (
         <motion.div initial={{ opacity: 0, y: 50 }} animate={{ opacity: 1, y: 0 }} className="absolute bottom-6 right-6 bg-green-500/20 border border-green-500/30 text-green-400 px-6 py-3 rounded-xl flex items-center gap-2 font-bold backdrop-blur-md">
-          <CheckCircle2 className="w-5 h-5" /> Drop Published Successfully!
+          <CheckCircle2 className="w-5 h-5" /> Post Published Successfully!
         </motion.div>
       )}
     </div>

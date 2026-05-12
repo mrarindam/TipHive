@@ -139,6 +139,11 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     fetchData();
   }, [fetchData]);
 
+  // Always scroll to top when navigation happens within profile pages
+  useEffect(() => {
+    window.scrollTo(0, 0);
+  }, [pathname]);
+
   const handleFollow = async () => {
     if (!isConnected || !userAddress) return alert('Please connect your wallet');
     if (!creator) return;

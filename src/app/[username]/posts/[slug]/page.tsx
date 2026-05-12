@@ -476,7 +476,7 @@ export default function PostPage() {
             {/* Comments List */}
             <div className="space-y-6">
               {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-5 p-6 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-[#8A2BE2]/30 transition-all">
+                <div key={comment.id} className="flex gap-5 p-6 bg-slate-100 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-[#8A2BE2]/30 transition-all">
                   <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shrink-0 bg-black">
                     <img
                       src={comment.sender?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${comment.user_address}`}

@@ -7,7 +7,7 @@ import { Heart, Check } from 'lucide-react';
 interface CelebrationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  type?: 'tip' | 'subscription';
+  type?: 'tip' | 'subscription' | 'tier_created';
   amount?: string;
   creatorName?: string;
   planName?: string;
@@ -98,13 +98,15 @@ export default function CelebrationModal({
               </motion.div>
 
               <h3 className="font-outfit text-5xl font-black uppercase tracking-tighter text-white mb-4">
-                {type === 'tip' ? 'Awesome!' : 'Circle Joined!'}
+                {type === 'tip' ? 'Awesome!' : type === 'tier_created' ? 'Tier Live!' : 'Circle Joined!'}
               </h3>
               
               <div className="bg-white/5 border border-white/10 rounded-2xl p-6 mb-8">
                 <p className="text-slate-300 text-lg leading-relaxed font-medium italic">
                   {type === 'tip' ? (
                     message || `Thank you so much for the ${amount} MUSD support! It means the world to me.`
+                  ) : type === 'tier_created' ? (
+                    <>Success! You created a new subscription tier <span className="text-white font-bold">{planName}</span>. Your fans can now join your circle! 🎉</>
                   ) : (
                     <>You are now subscribed to <span className="text-white font-bold">{planName}</span>. Thank you for supporting <span className="text-white font-bold">{creatorName}</span>!</>
                   )}
@@ -115,7 +117,7 @@ export default function CelebrationModal({
                 onClick={onClose}
                 className="w-full btn-primary py-5 text-xl font-black uppercase tracking-widest hover:scale-[1.02] active:scale-[0.98] transition-all"
               >
-                {type === 'tip' ? "You're Welcome! 🥂" : "Start Exploring 🚀"}
+                {type === 'tip' ? "You're Welcome! 🥂" : type === 'tier_created' ? "Back to Dashboard 🚀" : "Start Exploring 🚀"}
               </button>
             </div>
           </motion.div>

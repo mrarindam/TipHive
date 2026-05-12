@@ -66,7 +66,7 @@ export default function DashboardLayoutWrapper({ children }: { children: ReactNo
   const pathname = usePathname();
 
   // Full-screen editor: bypass entire dashboard layout — no hooks called conditionally
-  if (pathname?.includes('/dashboard/drops/new')) {
+  if (pathname?.includes('/dashboard/createposts')) {
     return <>{children}</>;
   }
 
@@ -256,7 +256,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       <div className="mb-8">
         <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Content</div>
         <div className="space-y-1">
-          <SidebarItem icon={<Edit3 />} label="Drops" active={pathname === '/dashboard/drops'} href="/dashboard/drops" onClick={() => setIsSidebarOpen(false)} />
+          <SidebarItem icon={<Edit3 />} label="Posting" active={pathname === '/dashboard/posts'} href="/dashboard/posts" onClick={() => setIsSidebarOpen(false)} />
           <SidebarItem icon={<Inbox />} label="Inbox" onClick={() => setIsSidebarOpen(false)} disabled />
         </div>
       </div>

@@ -66,20 +66,21 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
   });
 
   useEffect(() => {
-      async function fetchPlans() {
-        setLoading(true);
-        let query = supabase
-          .from('subscription_plans')
-          .select('*')
-          .eq('creator_address', creatorAddress.toLowerCase())
-          .eq('active', true)
-          .order('created_at', { ascending: false });
+    async function fetchPlans() {
+      setLoading(true);
 
-        if (limit) {
-          query = query.limit(limit);
-        }
+      let query = supabase
+        .from('subscription_plans')
+        .select('*')
+        .eq('creator_address', creatorAddress.toLowerCase())
+        .eq('active', true)
+        .order('duration', { ascending: true });
 
-        const { data, error } = await query;
+      if (limit) {
+        query = query.limit(limit);
+      }
+
+      const { data, error } = await query;
 
       if (!error && data) {
         setPlans(data as Plan[]);
@@ -113,9 +114,9 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
         .maybeSingle();
 
       if (existingSub && new Date(existingSub.end_date) > new Date()) {
-        setNotification({ 
-          message: "You are already a member! One plan, one time you can buy. 🛡️", 
-          type: 'error' 
+        setNotification({
+          message: "You are already a member! One plan, one time you can buy. 🛡️",
+          type: 'error'
         });
         return;
       }
@@ -124,7 +125,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
     }
 
     const amount = parseEther(plan.price.toString());
-    
+
     // Balance check
     if (balance && BigInt(balance.toString()) < amount) {
       setNotification({ message: `Insufficient MUSD. This plan costs ${plan.price} MUSD. 💰`, type: 'error' });
@@ -172,7 +173,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
         active: true,
         total_paid: plan.price,
         tx_hash: subHash,
-        subscription_hash: subHash 
+        subscription_hash: subHash
       });
 
       await supabase.rpc('increment_creator_earned', {
@@ -229,7 +230,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
     <div className="space-y-8 relative">
       <AnimatePresence>
         {notification && (
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
@@ -246,7 +247,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
                   {notification.message}
                 </p>
               </div>
-              <button 
+              <button
                 onClick={() => setNotification(null)}
                 className="p-1 hover:bg-white/10 rounded-lg transition-colors"
               >
@@ -258,7 +259,10 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
       </AnimatePresence>
 
 
-      <div className={`grid gap-10 ${plans.length === 1 ? 'grid-cols-1 max-w-2xl mx-auto w-full' : 'grid-cols-1 lg:grid-cols-2'}`}>
+      <div className={`grid gap-4 w-full mx-auto ${plans.length === 1 ? 'max-w-md grid-cols-1' :
+        plans.length === 2 ? 'max-w-4xl grid-cols-1 md:grid-cols-2' :
+          'max-w-[1300px] grid-cols-1 md:grid-cols-2 xl:grid-cols-3'
+        }`}>
         {plans.map((plan) => (
           <motion.div
             key={plan.id}
@@ -267,13 +271,13 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
           >
             {/* Animated Gradient Border */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#8A2BE2] via-white/10 to-[#F7931A] opacity-30 group-hover:opacity-100 transition-opacity duration-700 blur-[1px]" />
-            
-            <div className="relative h-full w-full bg-[#0B0F19] rounded-3xl p-8 flex flex-col z-10 overflow-hidden">
+
+            <div className="relative h-full w-full bg-[#0B0F19] rounded-3xl p-6 flex flex-col z-10 overflow-hidden">
               {/* Decorative Background Glows */}
               <div className="absolute top-0 left-0 w-32 h-32 bg-[#8A2BE2]/10 blur-[60px] rounded-full -ml-16 -mt-16 pointer-events-none" />
               <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#F7931A]/10 blur-[60px] rounded-full -mr-16 -mb-16 pointer-events-none" />
 
-              <div className="flex justify-between items-start mb-10">
+              <div className="flex justify-between items-start mb-6">
                 <div className="space-y-1">
                   <h3 className="text-3xl font-black text-white font-outfit uppercase tracking-tighter leading-none group-hover:text-[#F7931A] transition-colors duration-300">
                     {plan.name}
@@ -287,35 +291,37 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
                   <div className="flex items-center gap-2">
                     <span className="text-4xl font-black text-white font-outfit tracking-tighter">{plan.price}</span>
                     <div className="relative">
-                        <div className="absolute inset-0 bg-white blur-md opacity-20" />
-                        <div className="relative bg-[#FF0055] p-1.5 rounded-full shadow-[0_0_15px_rgba(255,0,85,0.4)]">
-                            <MUSDLogo className="w-5 h-5" />
-                        </div>
+                      <div className="absolute inset-0 bg-white blur-md opacity-20" />
+                      <div className="relative bg-[#FF0055] p-1.5 rounded-full shadow-[0_0_15px_rgba(255,0,85,0.4)]">
+                        <MUSDLogo className="w-5 h-5" />
+                      </div>
                     </div>
                   </div>
                   <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-2">
-                    {plan.duration / 86400 === 30 ? '1 Month Support' : 
-                     plan.duration / 86400 === 365 ? 'Annual Support' : 
-                     `${plan.duration / 86400} Days Support`}
+                    {plan.duration / 86400 === 30 ? '1 Month Membership' :
+                      plan.duration / 86400 === 365 ? 'Annual Membership' :
+                        `${plan.duration / 86400} Days Membership`}
                   </span>
                 </div>
               </div>
 
-              <div className="flex-grow flex flex-col justify-between min-h-[380px]">
-                <div className="space-y-8">
-                  <div className="min-h-[120px] flex items-center">
-                    <p className="text-slate-400 leading-relaxed font-medium transition-all duration-300 text-sm">
+              <div className="flex-grow flex flex-col justify-between">
+                <div className="space-y-6">
+                  <div className="min-h-[80px] flex items-center">
+                    <p className="text-slate-400 leading-relaxed font-medium transition-all duration-300 text-[13px]">
                       {plan.description || `Elevate your experience with ${plan.name}—unlocking a universe of premium content and direct creator access.`}
                     </p>
                   </div>
 
-                  <div className="space-y-4 pb-8">
+                  <div className={`${plans.length === 1 ? 'space-y-3' : 'flex flex-wrap gap-2'} pb-8`}>
                     {(plan.perks?.length ? plan.perks : ['Exclusive Content Access', 'Direct Messaging', 'VIP Badge']).map((perk, i) => (
-                      <div key={i} className="flex items-center gap-4 group/perk">
-                        <div className="w-6 h-6 rounded-lg bg-[#8A2BE2]/5 flex items-center justify-center text-[#8A2BE2] border border-[#8A2BE2]/10 transition-all duration-300 group-hover/perk:bg-[#8A2BE2] group-hover/perk:text-white">
-                          <Check className="w-3 h-3" />
+                      <div key={i} className={`flex items-center gap-3 transition-all duration-300 group/perk ${plans.length === 1 ? '' : 'px-3 py-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10'
+                        }`}>
+                        <div className={`flex items-center justify-center text-[#8A2BE2] ${plans.length === 1 ? 'w-6 h-6 rounded-lg bg-[#8A2BE2]/10 border border-[#8A2BE2]/20' : ''
+                          }`}>
+                          <Check className={plans.length === 1 ? 'w-3.5 h-3.5' : 'w-3 h-3'} />
                         </div>
-                        <span className="text-xs font-bold text-slate-300 uppercase tracking-widest group-hover/perk:text-white transition-colors">
+                        <span className={`${plans.length === 1 ? 'text-xs' : 'text-[10px]'} font-bold text-slate-400 uppercase tracking-widest group-hover/perk:text-white transition-colors`}>
                           {perk}
                         </span>
                       </div>
@@ -330,16 +336,16 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
                 >
                   <div className="absolute inset-0 bg-gradient-to-r from-transparent via-black/5 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
                   <div className="relative flex items-center justify-center gap-3">
-                      {(status === 'subscribing' && selectedPlan?.id === plan.id) ? (
+                    {(status === 'subscribing' && selectedPlan?.id === plan.id) ? (
                       <Loader2 className="w-6 h-6 animate-spin text-[#F7931A]" />
-                      ) : (
+                    ) : (
                       <Zap className="w-6 h-6 fill-black" />
-                      )}
-                      <span className="font-black font-outfit uppercase tracking-[0.15em] text-base">
+                    )}
+                    <span className="font-black font-outfit uppercase tracking-[0.15em] text-base">
                       {(status === 'approving' && selectedPlan?.id === plan.id) ? 'Processing...' :
-                      (status === 'subscribing' && selectedPlan?.id === plan.id) ? 'Subscribing...' :
-                      'Join the Circle'}
-                      </span>
+                        (status === 'subscribing' && selectedPlan?.id === plan.id) ? 'Subscribing...' :
+                          'Join the Circle'}
+                    </span>
                   </div>
                 </button>
               </div>
@@ -393,7 +399,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
         )}
       </AnimatePresence>
 
-      <CelebrationModal 
+      <CelebrationModal
         isOpen={status === 'success'}
         onClose={() => {
           setStatus('idle');

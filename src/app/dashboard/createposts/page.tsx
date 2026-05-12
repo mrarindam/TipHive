@@ -122,7 +122,7 @@ function EditorInner() {
       const { error } = await supabase.from('posts').insert(postData);
       if (error) throw error;
       setStatus('success');
-      setTimeout(() => router.push('/dashboard/drops'), 1500);
+      setTimeout(() => router.push('/dashboard/posts'), 1500);
     } catch (err) {
       console.error(err);
       setStatus('error');
@@ -317,7 +317,7 @@ function EditorInner() {
         <div className="max-w-5xl mx-auto flex items-center justify-between h-14">
           <div className="flex items-center gap-4">
             <button
-              onClick={() => router.push('/dashboard/drops')}
+              onClick={() => router.push('/dashboard/posts')}
               className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-semibold text-sm"
             >
               <ArrowLeft size={18} />

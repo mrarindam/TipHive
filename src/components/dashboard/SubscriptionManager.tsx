@@ -13,12 +13,15 @@ import {
   Power,
   PowerOff,
   Users as UsersIcon,
-  ExternalLink
+  ExternalLink,
+  SlidersHorizontal
 } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther } from 'viem';
 import { SUBSCRIPTION_ABI, SUBSCRIPTION_CONTRACT } from '@/lib/contracts';
 import { supabase } from '@/lib/supabase';
+import CelebrationModal from '@/components/ui/CelebrationModal';
+import MUSDLogo from '@/components/ui/MUSDLogo';
 
 type ViewMode = 'manage' | 'create' | 'members';
 
@@ -55,13 +58,7 @@ interface Subscriber {
   plan?: Plan | null;
 }
 
-const MUSDLogo = ({ className }: { className?: string }) => (
-  <svg className={className} viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
-    <circle cx="50" cy="50" r="50" fill="#F7931A" />
-    <path d="M70 50C70 61.0457 61.0457 70 50 70C38.9543 70 30 61.0457 30 50C30 38.9543 38.9543 30 50 30C61.0457 30 70 38.9543 70 50Z" fill="white" />
-    <path d="M50 35V65M40 45H60M40 55H60" stroke="#F7931A" strokeWidth="6" strokeLinecap="round" />
-  </svg>
-);
+
 
 export default function SubscriptionManager() {
   const { address } = useAccount();
@@ -72,7 +69,10 @@ export default function SubscriptionManager() {
   const [subscribers, setSubscribers] = useState<Subscriber[]>([]);
   const [memberPage, setMemberPage] = useState(1);
   const [activeActionId, setActiveActionId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<'all' | 'active' | 'inactive'>('active');
   const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+  const [showCelebration, setShowCelebration] = useState(false);
+  const [lastCreatedTier, setLastCreatedTier] = useState<string>('');
 
   // Form State
   const [formData, setFormData] = useState({
@@ -81,9 +81,9 @@ export default function SubscriptionManager() {
     durationDays: '30',
     description: '',
     perks: [
-      'Unlock exclusive posts & updates',
-      'Access members-only content',
-      'Get early access to new posts'
+      { id: '1', text: 'Unlock exclusive posts & updates' },
+      { id: '2', text: 'Access members-only content' },
+      { id: '3', text: 'Get early access to new posts' }
     ],
     welcome_note: 'Thank you for joining my membership! 🎉'
   });
@@ -269,13 +269,15 @@ export default function SubscriptionManager() {
             price: parseFloat(formData.price),
             duration: parseInt(formData.durationDays) * 86400,
             description: formData.description,
-            perks: formData.perks,
+            perks: formData.perks.map(p => p.text),
             welcome_note: formData.welcome_note,
             active: true,
             chain_plan_id: chainId >= 0 ? chainId : 0
           });
 
           setNotification({ message: "Subscription Tier Live! 🎉", type: 'success' });
+          setLastCreatedTier(formData.name);
+          setShowCelebration(true);
           setCreating(false);
           setActiveTab('manage');
           fetchPlans();
@@ -285,9 +287,9 @@ export default function SubscriptionManager() {
             durationDays: '30',
             description: '',
             perks: [
-              'Unlock exclusive posts & updates',
-              'Access members-only content',
-              'Get early access to new posts'
+              { id: '1', text: 'Unlock exclusive posts & updates' },
+              { id: '2', text: 'Access members-only content' },
+              { id: '3', text: 'Get early access to new posts' }
             ],
             welcome_note: 'Thank you for joining my membership! 🎉'
           });
@@ -309,7 +311,10 @@ export default function SubscriptionManager() {
           .update({ active: !plan.active })
           .eq('id', plan.id);
 
-        setNotification({ message: `Tier ${!plan.active ? 'Activated' : 'Deactivated'}!`, type: 'success' });
+        setNotification({
+          message: `Tier "${plan.name}" ${!plan.active ? 'is now Live! 🚀' : 'has been Deactivated. 🛡️'}`,
+          type: 'success'
+        });
         setActiveActionId(null);
         fetchPlans();
         refetchCounter();
@@ -387,67 +392,125 @@ export default function SubscriptionManager() {
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
-            className="grid grid-cols-1 md:grid-cols-2 gap-6"
+            className="space-y-6"
           >
-            {plans.length > 0 ? plans.map((plan) => {
-              const isProcessing = activeActionId === plan.id;
-              return (
-                <div key={plan.id} className="glass-card p-6 border-white/5 bg-white/[0.03] group transition-all hover:bg-white/[0.05] relative overflow-hidden">
-                  <div className="flex justify-between items-start mb-6">
-                    <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${plan.active ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                      }`}>
-                      {plan.active ? 'Live' : 'Inactive'}
-                    </span>
-                    <div className="flex items-center gap-1.5 text-[#F7931A] font-black text-xl">
-                      <span>{plan.price}</span>
-                      <MUSDLogo className="w-5 h-5" />
-                    </div>
-                  </div>
-
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2 leading-none">{plan.name}</h3>
-                  <p className="text-slate-500 text-sm font-medium mb-6 line-clamp-2">{plan.description}</p>
-
-                  <div className="space-y-3 mb-8">
-                    <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
-                      <Clock className="w-3.5 h-3.5 text-[#F7931A]" />
-                      {plan.duration / 86400} Days Access
-                    </div>
-                    <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
-                      <Zap className="w-3.5 h-3.5 text-[#F7931A]" />
-                      {plan.perks?.length || 0} Exclusive Perks
-                    </div>
-                  </div>
-
-                  <div className="pt-6 border-t border-white/5 flex gap-3">
-                    <button
-                      onClick={() => handleToggleActive(plan)}
-                      disabled={isProcessing}
-                      className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${plan.active
-                          ? 'bg-white/5 text-slate-300 hover:bg-red-500/10 hover:text-red-500 border border-transparent hover:border-red-500/20'
-                          : 'bg-[#F7931A]/10 text-[#F7931A] hover:bg-[#F7931A] hover:text-black'
-                        }`}
-                    >
-                      {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : plan.active ? <PowerOff className="w-3 h-3" /> : <Power className="w-3 h-3" />}
-                      {plan.active ? 'Deactivate' : 'Activate'}
-                    </button>
-                  </div>
-                </div>
-              );
-            }) : (
-              <div className="col-span-full py-24 text-center glass-card border-dashed border-white/5">
-                <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6">
-                  <Zap className="w-10 h-10 text-slate-700" />
-                </div>
-                <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">No Tiers Created</h3>
-                <p className="text-slate-500 font-medium mb-10 max-w-sm mx-auto">Create subscription tiers to start earning recurring revenue from your community.</p>
+            {/* Filter UI */}
+            <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 p-2 rounded-2xl">
+              <div className="flex items-center gap-1.5 p-1">
                 <button
-                  onClick={() => setActiveTab('create')}
-                  className="btn-secondary px-10 py-4 mx-auto"
+                  onClick={() => setFilter('active')}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${filter === 'active' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
+                    }`}
                 >
-                  Set Up Your First Tier
+                  <div className={`w-1.5 h-1.5 rounded-full ${filter === 'active' ? 'bg-black' : 'bg-green-500'}`} />
+                  Live Tiers
+                </button>
+                <button
+                  onClick={() => setFilter('inactive')}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${filter === 'inactive' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
+                    }`}
+                >
+                  <div className={`w-1.5 h-1.5 rounded-full ${filter === 'inactive' ? 'bg-black' : 'bg-red-500'}`} />
+                  Inactive
+                </button>
+                <button
+                  onClick={() => setFilter('all')}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${filter === 'all' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
+                    }`}
+                >
+                  <SlidersHorizontal className="w-3 h-3" />
+                  All Tiers
                 </button>
               </div>
-            )}
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {plans
+                .filter(p => {
+                  if (filter === 'active') return p.active;
+                  if (filter === 'inactive') return !p.active;
+                  return true;
+                })
+                .length > 0 ? plans
+                  .filter(p => {
+                    if (filter === 'active') return p.active;
+                    if (filter === 'inactive') return !p.active;
+                    return true;
+                  })
+                  .map((plan) => {
+                    const isProcessing = activeActionId === plan.id;
+                    return (
+                      <div key={plan.id} className="glass-card p-6 border-white/5 bg-white/[0.03] group transition-all hover:bg-white/[0.05] relative overflow-hidden">
+                        <div className="flex justify-between items-start mb-6">
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${plan.active ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                            }`}>
+                            {plan.active ? 'Live' : 'Inactive'}
+                          </span>
+                          <div className="flex items-center gap-1.5 text-[#F7931A] font-black text-xl">
+                            <span>{plan.price}</span>
+                            <MUSDLogo className="w-5 h-5" />
+                          </div>
+                        </div>
+
+                        <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2 leading-none">{plan.name}</h3>
+                        <p className="text-slate-500 text-sm font-medium mb-6 line-clamp-2">{plan.description}</p>
+
+                        <div className="space-y-3 mb-8">
+                          <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+                            <Clock className="w-3.5 h-3.5 text-[#F7931A]" />
+                            {plan.duration / 86400} Days Access
+                          </div>
+                          <div className="space-y-2 mt-4">
+                            {plan.perks?.slice(0, 5).map((perk, i) => (
+                              <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
+                                <div className="w-4 h-4 rounded bg-[#F7931A]/10 flex items-center justify-center text-[#F7931A]">
+                                  <Zap size={10} />
+                                </div>
+                                <span className="truncate">{perk}</span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+
+                        <div className="pt-6 border-t border-white/5 flex gap-3">
+                          <button
+                            onClick={() => handleToggleActive(plan)}
+                            disabled={isProcessing}
+                            className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${plan.active
+                              ? 'bg-white/5 text-slate-300 hover:bg-red-500/10 hover:text-red-500 border border-transparent hover:border-red-500/20'
+                              : 'bg-[#F7931A]/10 text-[#F7931A] hover:bg-[#F7931A] hover:text-black'
+                              }`}
+                          >
+                            {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : plan.active ? <PowerOff className="w-3 h-3" /> : <Power className="w-3 h-3" />}
+                            {plan.active ? 'Deactivate' : 'Activate'}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  }) : (
+                <div className="col-span-full py-24 text-center glass-card border-dashed border-white/5">
+                  <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                    {filter === 'active' ? <Zap className="w-10 h-10 text-green-500/30" /> : <PowerOff className="w-10 h-10 text-red-500/30" />}
+                  </div>
+                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">
+                    {filter === 'active' ? 'No Live Tiers' : filter === 'inactive' ? 'No Inactive Tiers' : 'No Tiers Found'}
+                  </h3>
+                  <p className="text-slate-500 font-medium mb-10 max-w-sm mx-auto">
+                    {filter === 'active'
+                      ? 'All your subscription tiers are currently hidden or you haven\'t created any yet.'
+                      : 'You don\'t have any deactivated tiers at the moment.'}
+                  </p>
+                  {filter === 'active' && (
+                    <button
+                      onClick={() => setActiveTab('create')}
+                      className="btn-secondary px-10 py-4 mx-auto"
+                    >
+                      Set Up Your First Tier
+                    </button>
+                  )}
+                </div>
+              )}
+            </div>
           </motion.div>
         ) : activeTab === 'members' ? (
           <motion.div
@@ -468,7 +531,7 @@ export default function SubscriptionManager() {
                   {new Set(subscribers.map(s => s.fan_address.toLowerCase())).size}
                 </h3>
                 <p className="text-[10px] text-slate-500 font-bold mt-2 flex items-center gap-1 uppercase tracking-widest">
-                  Unique Supporters
+                  Unique Members
                 </p>
               </div>
 
@@ -534,7 +597,7 @@ export default function SubscriptionManager() {
                   </div>
                   <div className="divide-y divide-white/5">
                     {pagedSubs.length > 0 ? pagedSubs.map((sub, i) => (
-                      <div key={i} className="px-8 py-5 flex items-center justify-between hover:bg-white/[0.02] transition-colors group">
+                      <div key={i} className="px-8 py-5 flex items-center justify-between hover:bg-white/[0.05] bg-white/[0.02] transition-colors group">
                         <div className="flex items-center gap-4">
                           <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 overflow-hidden relative">
                             {sub.fan?.avatar_url ? (
@@ -564,9 +627,9 @@ export default function SubscriptionManager() {
                               Joined {new Date(sub.created_at).toLocaleDateString()}
                             </p>
                             {sub.tx_hash && (
-                              <a 
-                                href={`https://explorer.test.mezo.org/tx/${sub.tx_hash}`} 
-                                target="_blank" 
+                              <a
+                                href={`https://explorer.test.mezo.org/tx/${sub.tx_hash}`}
+                                target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[#F7931A] text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline"
                               >
@@ -589,8 +652,8 @@ export default function SubscriptionManager() {
                           key={i}
                           onClick={() => setMemberPage(i + 1)}
                           className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${memberPage === i + 1
-                              ? 'bg-[#F7931A] text-black shadow-[0_0_15px_rgba(247,147,26,0.3)]'
-                              : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                            ? 'bg-[#F7931A] text-black shadow-[0_0_15px_rgba(247,147,26,0.3)]'
+                            : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
                             }`}
                         >
                           {i + 1}
@@ -664,8 +727,8 @@ export default function SubscriptionManager() {
                     <div className="flex items-center justify-between">
                       <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Tier Description</label>
                       <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${formData.description.trim().split(/\s+/).filter(Boolean).length >= 40 && formData.description.trim().split(/\s+/).filter(Boolean).length <= 80
-                          ? 'bg-green-500/10 text-green-500'
-                          : 'bg-yellow-500/10 text-yellow-500'
+                        ? 'bg-green-500/10 text-green-500'
+                        : 'bg-yellow-500/10 text-yellow-500'
                         }`}>
                         {formData.description.trim().split(/\s+/).filter(Boolean).length} / 80 Words
                       </span>
@@ -697,7 +760,7 @@ export default function SubscriptionManager() {
                   {formData.perks.length < 5 && (
                     <button
                       type="button"
-                      onClick={() => setFormData({ ...formData, perks: [...formData.perks, ''] })}
+                      onClick={() => setFormData({ ...formData, perks: [...formData.perks, { id: Math.random().toString(36).substr(2, 9), text: '' }] })}
                       className="text-xs font-black text-[#F7931A] uppercase hover:text-white flex items-center gap-1 transition-colors bg-[#F7931A]/10 px-3 py-1.5 rounded-lg border border-[#F7931A]/20"
                     >
                       <Plus className="w-3 h-3" /> Add Perk
@@ -712,7 +775,7 @@ export default function SubscriptionManager() {
                   className="space-y-3"
                 >
                   {formData.perks.map((perk, index) => (
-                    <Reorder.Item key={perk || index} value={perk} className="flex items-center gap-3 group/perk">
+                    <Reorder.Item key={perk.id} value={perk} className="flex items-center gap-3 group/perk">
                       <div className="w-10 h-12 rounded-xl bg-black/20 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing hover:bg-black/40 transition-colors border border-white/5">
                         <LayoutGrid className="w-4 h-4 text-[#F7931A]/40" />
                       </div>
@@ -721,10 +784,10 @@ export default function SubscriptionManager() {
                           type="text"
                           placeholder="e.g. Early access to videos"
                           className="w-full bg-black/20 border border-white/5 rounded-xl py-3 px-4 text-sm text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none transition-all"
-                          value={perk}
+                          value={perk.text}
                           onChange={(e) => {
                             const newPerks = [...formData.perks];
-                            newPerks[index] = e.target.value;
+                            newPerks[index] = { ...newPerks[index], text: e.target.value };
                             setFormData({ ...formData, perks: newPerks });
                           }}
                         />
@@ -787,6 +850,12 @@ export default function SubscriptionManager() {
           </motion.div>
         )}
       </AnimatePresence>
+      <CelebrationModal
+        isOpen={showCelebration}
+        onClose={() => setShowCelebration(false)}
+        type="tier_created"
+        planName={lastCreatedTier}
+      />
     </div>
   );
 }

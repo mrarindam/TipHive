@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
@@ -18,9 +18,11 @@ import {
   Save,
   Settings,
   ShieldCheck,
+  User,
+  UserPen,
   Wallet,
 } from 'lucide-react';
-import { BTC_TOKEN_ADDRESS, ERC20_ABI, MEZO_TOKEN_ADDRESS, MUSD_ADDRESS, SUBSCRIPTION_ABI, SUBSCRIPTION_CONTRACT, TIPPING_ABI, TIPPING_CONTRACT } from '@/lib/contracts';
+import { BTC_TOKEN_ADDRESS, ERC20_ABI, MUSD_ADDRESS } from '@/lib/contracts';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 
 const ZERO = BigInt(0);
@@ -52,7 +54,7 @@ export default function WalletProfileMenu() {
   const [email, setEmail] = useState('');
   const [isSaving, setIsSaving] = useState(false);
   const [btcUsd, setBtcUsd] = useState(0);
-  const [mezoUsd] = useState(Number(process.env.NEXT_PUBLIC_MEZO_USD_PRICE || 0));
+  // const [mezoUsd] = useState(Number(process.env.NEXT_PUBLIC_MEZO_USD_PRICE || 0));
 
   const { data: btcBalance } = useReadContract({
     address: BTC_TOKEN_ADDRESS,
@@ -70,6 +72,7 @@ export default function WalletProfileMenu() {
     query: { enabled: Boolean(isConnected && address && MUSD_ADDRESS) },
   });
 
+  /*
   const { data: mezoBalance } = useReadContract({
     address: MEZO_TOKEN_ADDRESS,
     abi: ERC20_ABI,
@@ -77,7 +80,9 @@ export default function WalletProfileMenu() {
     args: [address as `0x${string}`],
     query: { enabled: Boolean(isConnected && address && MEZO_TOKEN_ADDRESS) },
   });
+  */
 
+  /*
   const { data: tipBalance } = useReadContract({
     address: TIPPING_CONTRACT,
     abi: TIPPING_ABI,
@@ -85,7 +90,9 @@ export default function WalletProfileMenu() {
     args: [address as `0x${string}`],
     query: { enabled: Boolean(isConnected && address && TIPPING_CONTRACT) },
   });
+  */
 
+  /*
   const { data: subBalance } = useReadContract({
     address: SUBSCRIPTION_CONTRACT,
     abi: SUBSCRIPTION_ABI,
@@ -93,6 +100,7 @@ export default function WalletProfileMenu() {
     args: [address as `0x${string}`],
     query: { enabled: Boolean(isConnected && address && SUBSCRIPTION_CONTRACT) },
   });
+  */
 
   useEffect(() => {
     if (!address) {
@@ -177,19 +185,21 @@ export default function WalletProfileMenu() {
     };
   }, []);
 
+  /*
   const claimable = useMemo(() => {
     const tipValue = typeof tipBalance === 'bigint' ? tipBalance : ZERO;
     const subValue = typeof subBalance === 'bigint' ? subBalance : ZERO;
     return tipValue + subValue;
   }, [tipBalance, subBalance]);
+  */
 
   const displayName = profile?.display_name || 'Wallet profile';
   const username = profile?.username ? `@${profile.username}` : shortAddress(address);
   const avatar = profile?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${address}`;
   const btcAmount = Number(formatEther((typeof btcBalance === 'bigint' ? btcBalance : ZERO)));
   const musdAmount = Number(formatEther((typeof musdBalance === 'bigint' ? musdBalance : ZERO)));
-  const mezoAmount = Number(formatEther((typeof mezoBalance === 'bigint' ? mezoBalance : ZERO)));
-  const totalAssets = (btcAmount * btcUsd) + musdAmount + (mezoAmount * mezoUsd) + Number(formatEther(claimable));
+  // const mezoAmount = Number(formatEther((typeof mezoBalance === 'bigint' ? mezoBalance : ZERO)));
+  // const totalAssets = (btcAmount * btcUsd) + musdAmount + (mezoAmount * mezoUsd) + Number(formatEther(claimable));
 
   const handleSaveEmail = async () => {
     if (!address || !email) return;
@@ -300,6 +310,30 @@ export default function WalletProfileMenu() {
                               />
                             </div>
 
+                            <div className="relative mt-6 space-y-2">
+                              <Link 
+                                href="/profile"
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-3 w-full p-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] transition-all border border-white/5 group"
+                              >
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 group-hover:scale-110 transition-transform">
+                                  <UserPen className="h-5 w-5" />
+                                </div>
+                                <span className="font-black text-white">Edit Profile</span>
+                              </Link>
+                              
+                              <Link 
+                                href={profile?.username ? `/${profile.username}` : '#'}
+                                onClick={() => setIsOpen(false)}
+                                className="flex items-center gap-3 w-full p-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] transition-all border border-white/5 group"
+                              >
+                                <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
+                                  <User className="h-5 w-5" />
+                                </div>
+                                <span className="font-black text-white">My Page</span>
+                              </Link>
+                            </div>
+
                             <div className="relative mt-6 border-y border-white/5 bg-white/[0.03] -mx-5 px-5 py-4">
                               <div className="flex items-center justify-between gap-4">
                                 <div className="flex items-center gap-3">
@@ -317,13 +351,6 @@ export default function WalletProfileMenu() {
 
                             <div className="relative pt-4">
                               <AssetRow
-                                icon={<Coins className="h-5 w-5" />}
-                                title="Total assets"
-                                subtitle="Wallet + claimable"
-                                value={`$${totalAssets.toFixed(2)}`}
-                                strong
-                              />
-                              <AssetRow
                                 icon={<Bitcoin className="h-5 w-5" />}
                                 title="Bitcoin"
                                 subtitle={`${btcAmount.toFixed(5)} BTC`}
@@ -335,12 +362,6 @@ export default function WalletProfileMenu() {
                                 title="MUSD"
                                 subtitle="Wallet balance"
                                 value={`$${musdAmount.toFixed(2)}`}
-                              />
-                              <AssetRow
-                                icon={<Coins className="h-5 w-5" />}
-                                title="MEZO"
-                                subtitle={`${mezoAmount.toFixed(4)} MEZO`}
-                                value={`$${(mezoAmount * mezoUsd).toFixed(2)}`}
                               />
                             </div>
 

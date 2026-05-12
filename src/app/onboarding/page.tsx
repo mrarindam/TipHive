@@ -4,18 +4,19 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { useRouter } from 'next/navigation';
-import { Camera, CheckCircle2, ChevronRight, Loader2, Rocket, XCircle } from 'lucide-react';
+import { Camera, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Rocket, XCircle, Globe, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 
 export default function OnboardingPage() {
   const { address, isConnected } = useAccount();
   const router = useRouter();
-  
+
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [origin, setOrigin] = useState('');
-  
+  const [copied, setCopied] = useState(false);
+
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const [profile, setProfile] = useState<any>(null);
 
@@ -23,7 +24,7 @@ export default function OnboardingPage() {
   const [username, setUsername] = useState('');
   const [usernameAvailable, setUsernameAvailable] = useState<boolean | null>(null);
   const [isCheckingUsername, setIsCheckingUsername] = useState(false);
-  
+
   const [displayName, setDisplayName] = useState('');
   const [bio, setBio] = useState('');
   const [website, setWebsite] = useState('');
@@ -31,12 +32,12 @@ export default function OnboardingPage() {
   const [github, setGithub] = useState('');
   const [discord, setDiscord] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
-  
+
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setOrigin(window.location.origin);
-    
+
     if (!isConnected || !address) {
       router.replace('/');
       return;
@@ -71,7 +72,7 @@ export default function OnboardingPage() {
         setLoading(false);
       }
     };
-    
+
     loadProfile();
   }, [address, isConnected, router]);
 
@@ -87,7 +88,7 @@ export default function OnboardingPage() {
         throw new Error(`Check username API failed: ${res.status}`);
       }
       const data = await res.json();
-      
+
       // If the available username is actually our own current username, it's valid
       if (!data.available && profile?.username === val) {
         setUsernameAvailable(true);
@@ -165,137 +166,201 @@ export default function OnboardingPage() {
   }
 
   return (
-    <div className="fixed inset-0 z-[100] bg-[#0b0b0f] overflow-y-auto">
-      {/* Ambient glowing backgrounds */}
-      <div className="fixed inset-0 pointer-events-none opacity-40">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-[#f7931a]/20 blur-[120px]" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-[#8b5cf6]/20 blur-[120px]" />
-      </div>
+    <div className="fixed inset-0 z-[100] bg-[#0b0b0f] overflow-y-auto overflow-x-hidden">
 
-      <div className="relative min-h-screen flex flex-col items-center justify-center py-12 px-6">
-        
-        {/* Progress Indicator */}
-        {step < 3 && (
-          <div className="absolute top-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-2">
-            <div className="flex items-center gap-2 text-slate-500">
-              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${step >= 1 ? 'bg-[#f7931a] shadow-[0_0_10px_#f7931a]' : 'bg-white/20'}`} />
-              <div className="w-12 h-px bg-white/20 relative">
-                <div 
-                  className="absolute top-0 left-0 h-full bg-[#f7931a] transition-all duration-500" 
-                  style={{ width: step >= 2 ? '100%' : '0%' }}
+
+      <AnimatePresence mode="wait">
+
+        {/* STEP 1: SPLIT SCREEN LAYOUT */}
+        {step === 1 && (
+          <motion.div
+            key="step1"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col lg:flex-row min-h-screen w-full"
+          >
+            {/* Left Side: Full Screen Image Content */}
+            <div className="hidden lg:block w-1/2 bg-black overflow-hidden h-screen sticky top-0">
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1 }}
+                className="w-full h-full"
+              >
+                <img
+                  src="/images/username.webp"
+                  alt="Onboarding"
+                  className="w-full h-full object-cover"
                 />
-              </div>
-              <div className={`w-3 h-3 rounded-full transition-colors duration-300 ${step >= 2 ? 'bg-[#f7931a] shadow-[0_0_10px_#f7931a]' : 'bg-white/20'}`} />
+              </motion.div>
             </div>
-            <span className="text-xs font-bold tracking-widest uppercase text-slate-400">Step {step} of 2</span>
-          </div>
+
+
+            {/* Mobile Background: Fullscreen with blur and overlay */}
+            <div className="lg:hidden absolute inset-0 z-0">
+              <img
+                src="/images/username.webp"
+                alt="Background"
+                className="w-full h-full object-cover object-center blur-[3px] scale-110"
+              />
+              <div className="absolute inset-0 bg-black/70" />
+            </div>
+
+            {/* Right Side: Form Content */}
+            <div className="flex-1 flex flex-col items-center justify-center p-8 md:p-12 lg:p-20 relative z-10">
+
+              {/* Progress for Step 1 */}
+              <div className="absolute top-10 right-10 lg:top-12 lg:right-12 flex items-center gap-3">
+                <span className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-500">Step 1 of 2</span>
+                <div className="flex gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#f7931a] shadow-[0_0_10px_#f7931a]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-white/10" />
+                </div>
+              </div>
+
+              <div className="w-full max-w-[540px] space-y-12">
+                <div className="space-y-6 text-center lg:text-left">
+                  <h1 className="text-4xl md:text-5xl lg:text-6xl font-black text-white tracking-tighter leading-none uppercase">
+                    Create Your<span className="text-[#f7931a]"> USERNAME</span>
+                  </h1>
+                  <p className="text-slate-400 text-lg lg:text-xl font-medium">This will be your public creator page.</p>
+                </div>
+
+
+                <div className="space-y-6">
+                  <div className={`bg-slate-100 bg-white/[0.02] border border-white/[0.06] p-10 rounded-[2.5rem] backdrop-blur-md transition-all duration-300 ${usernameAvailable === false ? 'border-red-500/30' : ''}`}>
+                    <div className={`flex items-center w-full bg-black/60 border rounded-2xl focus-within:ring-4 transition-all overflow-hidden group ${usernameAvailable === false
+                      ? 'border-red-500/50 focus-within:ring-red-500/10 animate-shake'
+                      : usernameAvailable === true
+                        ? 'border-green-500/50 focus-within:ring-green-500/10'
+                        : 'border-white/10 focus-within:ring-[#f7931a]/20 focus-within:border-[#f7931a]'
+                      }`}>
+                      <div className="pl-6 pr-2 flex items-center bg-slate-100 bg-white/[0.02] h-[80px] self-stretch border-r border-white/5 whitespace-nowrap">
+                        <span className="text-slate-500 font-bold text-lg">{origin.replace(/^https?:\/\//, '')}/</span>
+                      </div>
+                      <input
+                        type="text"
+                        value={username}
+                        onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        className="flex-1 bg-transparent py-6 px-5 text-2xl text-white focus:outline-none font-black placeholder:text-slate-800 h-[80px]"
+                        placeholder="username"
+                      />
+                    </div>
+
+                    <div className="mt-5 h-6 flex items-center px-2">
+                      {isCheckingUsername ? (
+                        <div className="flex items-center gap-2 text-slate-400 text-sm font-bold">
+                          <Loader2 className="w-4 h-4 animate-spin text-[#f7931a]" />
+                          Verifying...
+                        </div>
+                      ) : username.length < 3 ? (
+                        <div className="text-slate-600 text-sm font-bold uppercase tracking-widest">
+                          Minimum 3 characters
+                        </div>
+                      ) : usernameAvailable === true ? (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-green-500 text-sm font-black uppercase tracking-widest">
+                          <CheckCircle2 className="w-4 h-4" /> Available
+                        </motion.div>
+                      ) : usernameAvailable === false ? (
+                        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-red-500 text-sm font-black uppercase tracking-widest">
+                          <XCircle className="w-4 h-4" /> Already taken
+                        </motion.div>
+                      ) : null}
+                    </div>
+
+                    {usernameAvailable && username.length >= 3 && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 15 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-10 pt-8 border-t border-white/5"
+                      >
+                        <p className="text-xs text-slate-500 mb-3 font-black uppercase tracking-[0.2em]">Your public URL</p>
+                        <div className="bg-[#f7931a]/5 border border-[#f7931a]/20 rounded-2xl p-5 flex items-center justify-between">
+                          <span className="text-[#f7931a] text-lg font-black truncate">
+                            {origin.replace(/^https?:\/\//, '')}/{username}
+                          </span>
+                          <div className="w-2.5 h-2.5 rounded-full bg-green-500 shadow-[0_0_15px_#22c55e]" />
+                        </div>
+                      </motion.div>
+                    )}
+                  </div>
+
+                  <div className="flex justify-end pt-2">
+                    <button
+                      onClick={() => setStep(2)}
+                      disabled={!usernameAvailable || username.length < 3 || isCheckingUsername}
+                      className="group relative flex items-center gap-3 bg-[#f7931a] text-black px-10 py-5 rounded-full font-black text-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed shadow-[0_20px_40px_rgba(247,147,26,0.2)]"
+                    >
+                      Next Step
+                      <ChevronRight className="w-6 h-6 group-hover:translate-x-1 transition-transform" />
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </motion.div>
         )}
 
-        <div className="w-full max-w-[540px] relative z-10">
-          <AnimatePresence mode="wait">
-            
-            {/* STEP 1: USERNAME */}
-            {step === 1 && (
+        {/* STEP 2: PROFILE SETUP SPLIT LAYOUT (35/65) */}
+        {step === 2 && (
+          <motion.div
+            key="step2"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0, x: -50 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col lg:flex-row min-h-screen w-full relative"
+          >
+            {/* Left Side: 35% Full Screen Image Content */}
+            <div className="hidden lg:block lg:w-[35%] bg-black overflow-hidden h-screen sticky top-0 border-r border-white/5">
               <motion.div
-                key="step1"
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4 }}
-                className="space-y-8"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 1 }}
+                className="w-full h-full"
               >
-                <div className="text-center space-y-3">
-                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
-                    Choose your username
-                  </h1>
-                  <p className="text-slate-400 text-lg">This will be your public creator page.</p>
-                </div>
-
-                <div className="bg-white/[0.03] border border-white/[0.08] p-8 rounded-3xl backdrop-blur-sm">
-                  <div className="flex items-center w-full bg-black/40 border border-white/10 rounded-2xl focus-within:ring-2 focus-within:ring-[#f7931a] focus-within:border-[#f7931a] transition-all overflow-hidden group">
-                    <div className="pl-6 pr-1 flex items-center bg-white/[0.02] h-[76px] self-stretch border-r border-white/5 whitespace-nowrap">
-                      <span className="text-slate-500 font-medium text-lg">{origin.replace(/^https?:\/\//, '')}/</span>
-                    </div>
-                    <input
-                      type="text"
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
-                      className="flex-1 bg-transparent py-6 px-4 text-xl text-white focus:outline-none font-bold placeholder:text-slate-700 h-[76px]"
-                      placeholder="username"
-                    />
-                  </div>
-
-                  <div className="mt-4 h-6 flex items-center px-2">
-                    {isCheckingUsername ? (
-                      <div className="flex items-center gap-2 text-slate-400 text-sm font-medium">
-                        <Loader2 className="w-4 h-4 animate-spin" />
-                        Checking availability...
-                      </div>
-                    ) : username.length < 3 ? (
-                      <div className="text-slate-500 text-sm font-medium">
-                        Minimum 3 characters
-                      </div>
-                    ) : usernameAvailable === true ? (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-green-500 text-sm font-bold">
-                        <CheckCircle2 className="w-4 h-4" /> Available
-                      </motion.div>
-                    ) : usernameAvailable === false ? (
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex items-center gap-2 text-red-500 text-sm font-bold">
-                        <XCircle className="w-4 h-4" /> Already taken
-                      </motion.div>
-                    ) : null}
-                  </div>
-
-                  {usernameAvailable && username.length >= 3 && (
-                    <motion.div 
-                      initial={{ opacity: 0, y: 10 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      className="mt-8 pt-6 border-t border-white/5"
-                    >
-                      <p className="text-sm text-slate-400 mb-2 font-medium">Your page will be live at:</p>
-                      <div className="bg-[#f7931a]/10 border border-[#f7931a]/30 rounded-xl p-4 flex items-center justify-between shadow-[0_0_20px_rgba(247,147,26,0.1)]">
-                        <span className="text-[#f7931a] font-bold truncate">
-                          {origin}/{username}
-                        </span>
-                        <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse" />
-                      </div>
-                    </motion.div>
-                  )}
-                </div>
-
-                <div className="flex justify-end pt-4">
-                  <button
-                    onClick={() => setStep(2)}
-                    disabled={!usernameAvailable || username.length < 3 || isCheckingUsername}
-                    className="group relative flex items-center gap-2 bg-[#f7931a] text-black px-8 py-4 rounded-full font-black text-lg transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
-                  >
-                    Next Step
-                    <ChevronRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-                    <div className="absolute inset-0 rounded-full shadow-[0_0_20px_#f7931a] opacity-50 group-hover:opacity-100 transition-opacity" />
-                  </button>
-                </div>
+                <img
+                  src="/images/newUserprofile.webp"
+                  alt="Profile Setup"
+                  className="w-full h-full object-cover"
+                />
               </motion.div>
-            )}
+            </div>
 
-            {/* STEP 2: PROFILE SETUP */}
-            {step === 2 && (
-              <motion.div
-                key="step2"
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: -20 }}
-                transition={{ duration: 0.4 }}
-                className="space-y-8"
-              >
-                <div className="text-center space-y-3">
-                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
-                    Complete your page
+            {/* Mobile Background for Step 2 */}
+            <div className="lg:hidden absolute inset-0 z-0">
+              <img
+                src="/images/newUserprofile.webp"
+                alt="Background"
+                className="w-full h-full object-cover object-center blur-[3px] scale-110"
+              />
+              <div className="absolute inset-0 bg-black/70" />
+            </div>
+
+            {/* Right Side: 65% Form Content */}
+            <div className="flex-1 lg:w-[65%] flex flex-col items-center justify-center p-6 md:p-12 lg:p-16 relative z-10">
+              {/* Progress for Step 2 */}
+              <div className="absolute top-6 right-6 lg:top-12 lg:right-12 flex items-center gap-3">
+                <span className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-500">Step 2 of 2</span>
+                <div className="flex gap-1.5">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#f7931a] shadow-[0_0_10px_#f7931a]" />
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#f7931a] shadow-[0_0_10px_#f7931a]" />
+                </div>
+              </div>
+
+              <div className="w-full max-w-[640px] space-y-8 pt-12 lg:pt-0">
+                <div className="text-center lg:text-left space-y-3">
+                  <h1 className="text-3xl md:text-5xl font-black text-white tracking-tight uppercase">
+                    Complete Your <span className="text-[#f7931a]">Profile</span>
                   </h1>
-                  <p className="text-slate-400 text-lg">Add details to help supporters know you better.</p>
+                  <p className="text-slate-400 text-base md:text-lg font-medium">Add details to help supporters know you better.</p>
                 </div>
 
-                <div className="bg-white/[0.03] border border-white/[0.08] p-6 md:p-8 rounded-3xl backdrop-blur-sm space-y-8">
-                  
+
+                <div className="bg-slate-100 bg-white/[0.02] border border-white/[0.06] p-6 md:p-10 rounded-[2.5rem] backdrop-blur-md space-y-8">
+
                   {/* Avatar Upload */}
                   <div className="flex flex-col md:flex-row items-center md:items-start gap-8">
                     <div className="relative group cursor-pointer" onClick={() => fileInputRef.current?.click()}>
@@ -309,36 +374,36 @@ export default function OnboardingPage() {
                           <Camera className="w-6 h-6 text-white" />
                         </div>
                       </div>
-                      <div className="text-center mt-4 text-sm font-medium text-slate-400 group-hover:text-white transition-colors">
+                      <div className="text-center mt-4 text-sm font-bold text-slate-400 group-hover:text-white transition-colors">
                         Upload photo
                       </div>
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        onChange={handleAvatarUpload} 
-                        accept="image/*" 
-                        className="hidden" 
+                      <input
+                        type="file"
+                        ref={fileInputRef}
+                        onChange={handleAvatarUpload}
+                        accept="image/*"
+                        className="hidden"
                       />
                     </div>
-                    
+
                     <div className="flex-1 w-full space-y-6">
                       <div>
-                        <label className="text-xs font-bold tracking-widest uppercase text-slate-500 ml-1 mb-2 block">Display Name <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-500 ml-1 mb-2 block">Display Name <span className="text-red-500">*</span></label>
                         <input
                           type="text"
                           value={displayName}
                           onChange={(e) => setDisplayName(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl py-4 px-5 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a] focus:border-[#f7931a] transition-all text-lg"
+                          className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-5 text-white focus:outline-none focus:ring-4 focus:ring-[#f7931a]/20 focus:border-[#f7931a] transition-all text-lg font-bold"
                           placeholder="Your Name"
                         />
                       </div>
                       <div>
-                        <label className="text-xs font-bold tracking-widest uppercase text-slate-500 ml-1 mb-2 block">About (Bio) <span className="text-red-500">*</span></label>
+                        <label className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-500 ml-1 mb-2 block">About (Bio) <span className="text-red-500">*</span></label>
                         <textarea
                           rows={3}
                           value={bio}
                           onChange={(e) => setBio(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl py-4 px-5 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a] focus:border-[#f7931a] transition-all resize-none text-lg"
+                          className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-5 text-white focus:outline-none focus:ring-4 focus:ring-[#f7931a]/20 focus:border-[#f7931a] transition-all resize-none text-lg font-medium"
                           placeholder="What are you creating?"
                         />
                       </div>
@@ -347,44 +412,36 @@ export default function OnboardingPage() {
 
                   {/* Social Links */}
                   <div className="pt-8 border-t border-white/5 space-y-6">
-                    <h3 className="text-sm font-bold text-white mb-4">Connect Socials <span className="text-slate-500 font-normal">(Optional)</span></h3>
+                    <h3 className="text-[10px] font-black tracking-[0.2em] uppercase text-slate-500 ml-1 mb-2 block">Connect Socials <span className="text-slate-600 font-normal lowercase">(Optional)</span></h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                      <div>
-                        <input
-                          type="text"
-                          value={twitter}
-                          onChange={(e) => setTwitter(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a] transition-all text-sm"
-                          placeholder="Twitter (@handle)"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          value={github}
-                          onChange={(e) => setGithub(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a] transition-all text-sm"
-                          placeholder="GitHub Username"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="url"
-                          value={website}
-                          onChange={(e) => setWebsite(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a] transition-all text-sm"
-                          placeholder="Website URL"
-                        />
-                      </div>
-                      <div>
-                        <input
-                          type="text"
-                          value={discord}
-                          onChange={(e) => setDiscord(e.target.value)}
-                          className="w-full bg-black/40 border border-white/10 rounded-xl py-3 px-4 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a] transition-all text-sm"
-                          placeholder="Discord ID"
-                        />
-                      </div>
+                      <input
+                        type="text"
+                        value={twitter}
+                        onChange={(e) => setTwitter(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl py-4 px-5 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a]/30 transition-all text-sm font-bold"
+                        placeholder="Twitter (@handle)"
+                      />
+                      <input
+                        type="text"
+                        value={github}
+                        onChange={(e) => setGithub(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl py-4 px-5 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a]/30 transition-all text-sm font-bold"
+                        placeholder="GitHub Username"
+                      />
+                      <input
+                        type="url"
+                        value={website}
+                        onChange={(e) => setWebsite(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl py-4 px-5 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a]/30 transition-all text-sm font-bold"
+                        placeholder="Website URL"
+                      />
+                      <input
+                        type="text"
+                        value={discord}
+                        onChange={(e) => setDiscord(e.target.value)}
+                        className="w-full bg-black/40 border border-white/10 rounded-xl py-4 px-5 text-white focus:outline-none focus:ring-2 focus:ring-[#f7931a]/30 transition-all text-sm font-bold"
+                        placeholder="Discord ID"
+                      />
                     </div>
                   </div>
                 </div>
@@ -392,70 +449,133 @@ export default function OnboardingPage() {
                 <div className="flex justify-between items-center pt-4">
                   <button
                     onClick={() => setStep(1)}
-                    className="text-slate-400 hover:text-white font-bold transition-colors"
+                    className="group w-14 h-14 rounded-full border border-white/10 flex items-center justify-center text-slate-500 hover:text-white hover:border-white/30 transition-all hover:bg-white/5"
+                    title="Back to Step 1"
                   >
-                    Back
+                    <ChevronLeft className="w-7 h-7 group-hover:-translate-x-0.5 transition-transform" />
                   </button>
                   <button
                     onClick={submitProfile}
                     disabled={!displayName || !bio || !avatarUrl || isSubmitting}
-                    className="group relative flex items-center gap-2 bg-[#f7931a] text-black px-8 py-4 rounded-full font-black text-lg transition-all hover:scale-105 disabled:opacity-50 disabled:hover:scale-100 disabled:cursor-not-allowed"
+                    className="group relative flex items-center gap-3 bg-[#f7931a] text-black px-12 py-5 rounded-full font-black text-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed shadow-[0_20px_40px_rgba(247,147,26,0.2)]"
                   >
-                    {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Rocket className="w-5 h-5" />}
-                    {isSubmitting ? 'Creating...' : 'Create My Page 🚀'}
-                    <div className="absolute inset-0 rounded-full shadow-[0_0_20px_#f7931a] opacity-50 group-hover:opacity-100 transition-opacity" />
+                    {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Rocket className="w-6 h-6" />}
+                    {isSubmitting ? 'Finalizing...' : 'Launch My Page'}
                   </button>
                 </div>
-              </motion.div>
-            )}
 
-            {/* STEP 3: SUCCESS */}
-            {step === 3 && (
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* STEP 3: PREMIUM SUCCESS LAYOUT */}
+        {step === 3 && (
+          <motion.div
+            key="step3"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="fixed inset-0 z-[100] flex flex-col items-center justify-center p-6"
+          >
+            {/* Background Image */}
+            <div className="absolute inset-0 z-0">
+              <img
+                src="/images/congo.webp"
+                alt="Celebration"
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
+              
+              {/* Animated Glows */}
+              <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse" />
+              <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
+            </div>
+
+            <div className="relative z-10 w-full max-w-[640px] flex flex-col items-center text-center">
               <motion.div
-                key="step3"
-                initial={{ opacity: 0, scale: 0.9 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.5, type: 'spring' }}
-                className="text-center space-y-8"
+                initial={{ y: -20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.2, duration: 0.8 }}
+                className="space-y-4 mb-10"
               >
-                <div className="w-24 h-24 mx-auto bg-green-500/20 border border-green-500/30 rounded-full flex items-center justify-center shadow-[0_0_50px_rgba(34,197,94,0.2)]">
-                  <CheckCircle2 className="w-12 h-12 text-green-500" />
-                </div>
-                
+                <h1 className="text-5xl md:text-7xl font-black text-white tracking-tighter uppercase italic leading-[0.9]">
+                  Welcome to <br />
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-400 via-pink-500 to-orange-400">
+                    TipHive Creator Era
+                  </span>
+                </h1>
+                <p className="text-slate-300 text-lg md:text-xl font-medium max-w-[500px] mx-auto">
+                  Your identity is now live on the network. Share your link, accept tips, and grow your audience.
+                </p>
+              </motion.div>
+
+              {/* Glassmorphic Link Card */}
+              <motion.div
+                initial={{ scale: 0.9, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                transition={{ delay: 0.4, type: "spring", damping: 15 }}
+                className="w-full bg-white/[0.03] border border-white/10 rounded-[3rem] p-8 md:p-12 backdrop-blur-2xl shadow-2xl space-y-8"
+              >
                 <div className="space-y-4">
-                  <h1 className="text-4xl md:text-5xl font-black text-white tracking-tight">
-                    Your creator page is live! 🎉
-                  </h1>
-                  <p className="text-slate-400 text-lg">You can now start accepting Bitcoin tips natively.</p>
+                  <span className="text-[10px] font-black tracking-[0.4em] uppercase text-slate-500">Your Public Link</span>
+                  <div className="relative group">
+                    <div className="flex items-center bg-black/60 border border-white/10 rounded-2xl p-4 md:p-5 gap-4 transition-all group-hover:border-purple-500/50 group-hover:bg-black/80">
+                      <div className="w-12 h-12 md:w-14 md:h-14 rounded-xl bg-purple-500/20 flex items-center justify-center text-purple-400 shadow-inner">
+                        <Globe className="w-6 h-6 md:w-7 md:h-7" />
+                      </div>
+                      <div className="flex-1 text-left overflow-hidden">
+                        <p className="text-white font-black text-lg md:text-xl truncate">
+                          {origin.replace(/^https?:\/\//, '')}/<span className="text-purple-400">{username}</span>
+                        </p>
+                      </div>
+                      <button 
+                        onClick={() => {
+                          navigator.clipboard.writeText(`${origin}/${username}`);
+                          setCopied(true);
+                          setTimeout(() => setCopied(false), 2000);
+                        }}
+                        className={`flex items-center gap-2 px-5 py-3 rounded-xl border transition-all font-black uppercase tracking-wider text-xs md:text-sm ${
+                          copied 
+                            ? 'bg-green-500/20 border-green-500/50 text-green-400' 
+                            : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
+                        }`}
+                      >
+                        {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
+                        {copied ? 'Copied' : 'Copy'}
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="bg-white/[0.03] border border-white/[0.08] p-6 rounded-2xl backdrop-blur-sm inline-block">
-                  <p className="text-sm font-bold text-slate-500 uppercase tracking-widest mb-2">Your public link</p>
-                  <a 
-                    href={`/${username}`} 
-                    target="_blank" 
-                    rel="noreferrer"
-                    className="text-xl md:text-2xl font-black text-[#f7931a] hover:underline"
-                  >
-                    {origin}/{username}
-                  </a>
-                </div>
-
-                <div className="pt-8">
-                  <Link 
-                    href="/dashboard"
-                    className="inline-flex items-center gap-2 bg-white text-black px-10 py-5 rounded-full font-black text-xl transition-all hover:scale-105 shadow-[0_0_30px_rgba(255,255,255,0.1)] hover:shadow-[0_0_40px_rgba(255,255,255,0.2)]"
-                  >
-                    Go to Dashboard
-                    <ChevronRight className="w-6 h-6" />
-                  </Link>
+                <div className="flex items-center justify-center gap-3">
+                  <div className="w-2 h-2 rounded-full bg-green-500 animate-pulse shadow-[0_0_10px_#22c55e]" />
+                  <span className="text-green-500 font-black text-xs md:text-sm uppercase tracking-[0.3em]">
+                    Live on Network
+                  </span>
                 </div>
               </motion.div>
-            )}
-            
-          </AnimatePresence>
-        </div>
-      </div>
+
+              {/* Action Button */}
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.6 }}
+                className="mt-12"
+              >
+                <Link
+                  href="/dashboard"
+                  className="group relative flex items-center gap-3 bg-gradient-to-br from-purple-600 via-indigo-600 to-blue-600 text-white px-14 py-6 rounded-full font-black text-xl md:text-2xl transition-all hover:scale-105 hover:shadow-[0_20px_60px_rgba(124,58,237,0.4)] active:scale-95 shadow-[0_10px_30px_rgba(0,0,0,0.3)]"
+                >
+                  <Rocket className="w-7 h-7 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform duration-300" />
+                  Go to Dashboard
+                </Link>
+              </motion.div>
+            </div>
+          </motion.div>
+        )}
+
+      </AnimatePresence>
     </div>
   );
 }
+

@@ -48,7 +48,7 @@ const RichTextEditor = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const isDropsPage = pathname?.includes('/dashboard/drops');
+  const isDropsPage = pathname?.includes('/dashboard/posts') || pathname?.includes('/dashboard/createposts');
 
   // Measure actual toolbar height for accurate padding
   useEffect(() => {
@@ -234,7 +234,7 @@ const RichTextEditor = ({
             target.style.height = 'auto';
             target.style.height = `${target.scrollHeight}px`;
           }}
-          placeholder="Give your drop a catchy title..."
+          placeholder="Give your post a catchy title..."
           className="w-full bg-transparent text-white font-outfit text-4xl md:text-5xl lg:text-6xl font-black focus:outline-none placeholder:text-slate-800 tracking-tighter resize-none overflow-hidden leading-tight"
         />
         <div className="w-20 h-1.5 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full mt-6 opacity-50" />

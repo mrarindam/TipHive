@@ -88,7 +88,7 @@ export default function DropsPage() {
         </div>
         <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.85] flex flex-wrap gap-x-4">
           <span>Content</span>
-          <span className="text-[#f7931a]">Drops</span>
+          <span className="text-[#f7931a]">Posts</span>
         </h1>
         <p className="text-slate-500 text-lg md:text-xl max-w-2xl font-medium leading-relaxed">
           Share exclusive updates, photos, and media with your most loyal supporters.
@@ -103,7 +103,7 @@ export default function DropsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
-            onClick={() => router.push(`/dashboard/drops/new?type=${type.id}`)}
+            onClick={() => router.push(`/dashboard/createposts?type=${type.id}`)}
             className="group relative flex flex-col items-center justify-center gap-4 p-8 rounded-2xl bg-[#0f0f14] border border-white/5 hover:border-white/20 transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]"
           >
             <div
@@ -279,7 +279,7 @@ export default function DropsPage() {
               </div>
               <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Delete Post?</h3>
               <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
-                This action cannot be undone. All media and data associated with this drop will be permanently removed.
+                This action cannot be undone. All media and data associated with this post will be permanently removed.
               </p>
               <div className="flex gap-3">
                 <button 

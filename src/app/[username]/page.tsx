@@ -11,6 +11,7 @@ import { waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther } from 'viem';
 import SubscriptionSection from '@/components/profile/SubscriptionSection';
 import CelebrationModal from '@/components/ui/CelebrationModal';
+import { ArrowRight } from 'lucide-react';
 import { useProfile, TextThumbnail, extractFirstImage } from './layout';
 
 const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_TIPPING_CONTRACT || '0x0000000000000000000000000000000000000000';
@@ -63,6 +64,7 @@ export default function CreatorHome() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [recentTips, setRecentTips] = useState<Tip[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [hasMorePlans, setHasMorePlans] = useState(false);
 
   const { writeContractAsync } = useWriteContract();
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
@@ -73,6 +75,7 @@ export default function CreatorHome() {
   });
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     if (!creator) return;
 
     async function loadHomeData() {
@@ -97,6 +100,17 @@ export default function CreatorHome() {
             const activeSub = subs.find(s => new Date(s.end_date) > now);
             if (activeSub) setIsSubscribed(true);
           }
+        }
+
+        // Check for more plans
+        const { count: plansCount } = await supabase
+          .from('subscription_plans')
+          .select('*', { count: 'exact', head: true })
+          .eq('creator_address', creator!.wallet_address.toLowerCase())
+          .eq('active', true);
+        
+        if (plansCount && plansCount > 1) {
+          setHasMorePlans(true);
         }
 
       const { data: tipsData } = await supabase
@@ -257,9 +271,20 @@ export default function CreatorHome() {
         <div className="xl:col-span-8 space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
             <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-5 md:p-8 shadow-xl flex flex-col">
-              <div className="mb-6">
-                <h3 className="text-xl font-black uppercase tracking-tighter text-white font-outfit">SUBSCRIPTIONS</h3>
-                <p className="text-slate-500 text-[10px] font-medium mt-1 uppercase tracking-widest">Exclusive Access</p>
+              <div className="mb-6 flex items-center justify-between">
+                <div>
+                  <h3 className="text-xl font-black uppercase tracking-tighter text-white font-outfit">SUBSCRIPTIONS</h3>
+                  <p className="text-slate-500 text-[10px] font-medium mt-1 uppercase tracking-widest">Exclusive Access</p>
+                </div>
+                {hasMorePlans && (
+                  <Link 
+                    href={`/${creator!.username}/subscriptions`}
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-slate-500 hover:text-[#F7931A] hover:bg-[#F7931A]/5 hover:border-[#F7931A]/20 transition-all duration-300 group"
+                  >
+                    <span className="text-[10px] font-black uppercase tracking-widest">More Perks</span>
+                    <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
+                  </Link>
+                )}
               </div>
               <SubscriptionSection 
                 limit={1} 

@@ -271,7 +271,7 @@ export default function MySubscriptions() {
                       <div className="px-1 pb-2">
                         <h3 className="text-xl font-black text-white uppercase tracking-tight mb-0.5 font-outfit line-clamp-1">{sub.creators?.name}</h3>
                         <p className="text-[11px] text-[#F7931A] font-bold mb-3">@{sub.creators?.username}</p>
- 
+
                         <div className="flex justify-between items-end mb-4">
                           <div className="space-y-0.5">
                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Selected Plan</span>
@@ -351,7 +351,7 @@ export default function MySubscriptions() {
                               </button>
                             )}
                           </div>
- 
+
                           <a
                             href={`https://explorer.test.mezo.org/tx/${sub.tx_hash}`}
                             target="_blank"
