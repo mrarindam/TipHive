@@ -9,6 +9,8 @@ import { parseEther } from 'viem';
 import { ConnectButton } from '@rainbow-me/rainbowkit';
 import CelebrationModal from '@/components/ui/CelebrationModal';
 import { useSearchParams } from 'next/navigation';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
+import { TIPPING_ABI, ERC20_ABI } from '@/lib/contracts';
 
 interface CreatorProfile {
   username: string;
@@ -19,21 +21,11 @@ interface CreatorProfile {
   thank_you_message: string;
 }
 
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_TIPPING_CONTRACT || '0x0000000000000000000000000000000000000000';
-const MUSD_ADDRESS = process.env.NEXT_PUBLIC_MUSD_ADDRESS || '0x0000000000000000000000000000000000000000';
-
-const ERC20_ABI = [
-  { "name": "approve", "type": "function", "stateMutability": "nonpayable", "inputs": [{ "name": "spender", "type": "address" }, { "name": "amount", "type": "uint256" }], "outputs": [{ "name": "", "type": "bool" }] },
-  { "name": "allowance", "type": "function", "stateMutability": "view", "inputs": [{ "name": "owner", "type": "address" }, { "name": "spender", "type": "address" }], "outputs": [{ "name": "", "type": "uint256" }] }
-];
-const TIPPING_ABI = [
-  { "name": "tip", "type": "function", "stateMutability": "nonpayable", "inputs": [{ "name": "_creator", "type": "address" }, { "name": "_amount", "type": "uint256" }], "outputs": [] }
-];
-
 export default function EmbedPage({ params: paramsPromise }: { params: Promise<{ username: string }> }) {
   const params = use(paramsPromise);
   const { username } = params;
   const searchParams = useSearchParams();
+  const { contracts, chainId } = useNetworkConfig();
   
   const overrideTitle = searchParams.get('title');
   const overrideDesc = searchParams.get('desc');
@@ -53,10 +45,10 @@ export default function EmbedPage({ params: paramsPromise }: { params: Promise<{
   const { writeContractAsync } = useWriteContract();
   
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: MUSD_ADDRESS as `0x${string}`,
+    address: contracts.MUSD,
     abi: ERC20_ABI,
     functionName: 'allowance',
-    args: [userAddress as `0x${string}`, CONTRACT_ADDRESS as `0x${string}`],
+    args: [userAddress as `0x${string}`, contracts.TIPPING],
   });
 
   useEffect(() => {
@@ -87,10 +79,10 @@ export default function EmbedPage({ params: paramsPromise }: { params: Promise<{
       if (!allowance || BigInt(allowance.toString()) < tipAmount) {
         setTipStatus('approving');
         const approveHash = await writeContractAsync({
-          address: MUSD_ADDRESS as `0x${string}`,
+          address: contracts.MUSD,
           abi: ERC20_ABI,
           functionName: 'approve',
-          args: [CONTRACT_ADDRESS as `0x${string}`, tipAmount],
+          args: [contracts.TIPPING, tipAmount],
         });
         await waitForTransactionReceipt(config, { hash: approveHash });
         await refetchAllowance();
@@ -98,7 +90,7 @@ export default function EmbedPage({ params: paramsPromise }: { params: Promise<{
 
       setTipStatus('tipping');
       const tipHash = await writeContractAsync({
-        address: CONTRACT_ADDRESS as `0x${string}`,
+        address: contracts.TIPPING,
         abi: TIPPING_ABI,
         functionName: 'tip',
         args: [creator.wallet_address as `0x${string}`, tipAmount],
@@ -110,7 +102,8 @@ export default function EmbedPage({ params: paramsPromise }: { params: Promise<{
         to_address: creator.wallet_address.toLowerCase(),
         amount: parseFloat(finalAmount),
         tx_hash: tipHash,
-        message: message
+        message: message,
+        chain_id: chainId
       });
 
       await supabase.rpc('increment_creator_earned', {

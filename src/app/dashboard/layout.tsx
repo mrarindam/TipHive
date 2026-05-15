@@ -3,15 +3,17 @@
 import { useState, useEffect, useCallback, ReactNode, createContext, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
+import { usePrivy, type User } from '@privy-io/react-auth';
 import {
   Globe, Users, Calendar, Edit3,
-  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings, Heart
+  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings, Heart, Gift, Mail
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { TIPPING_CONTRACT, TIPPING_ABI, SUBSCRIPTION_CONTRACT, SUBSCRIPTION_ABI } from '@/lib/contracts';
+import { TIPPING_ABI, SUBSCRIPTION_ABI } from '@/lib/contracts';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 
 export interface CreatorProfile {
   address: string;
@@ -27,6 +29,7 @@ export interface CreatorProfile {
   button_text?: string;
   thank_you_message?: string;
   suggested_amounts?: string[];
+  referral_code?: string;
 }
 
 export interface Activity {
@@ -36,7 +39,7 @@ export interface Activity {
   amount: number;
   to_name?: string;
   created_at: string;
-  tx_hash: string;
+  tx_hash?: string;
   from_address?: string;
   plan_name?: string;
 }
@@ -52,6 +55,15 @@ export interface DashboardContextType {
   fetchData: () => void;
   address: string | undefined;
   totalSent: number;
+  totalEarned: number;
+  linkWallet: () => void;
+  walletSwitched: boolean;
+  switchedToAddress: string | undefined;
+  dismissWalletSwitch: () => void;
+  handleSwitchAccount: () => void;
+  user: User | null;
+  authenticated: boolean;
+  getAccessToken: () => Promise<string | null>;
 }
 
 const DashboardContext = createContext<DashboardContextType | undefined>(undefined);
@@ -63,26 +75,23 @@ export const useDashboard = () => {
 };
 
 export default function DashboardLayoutWrapper({ children }: { children: ReactNode }) {
-  const pathname = usePathname();
-
-  // Full-screen editor: bypass entire dashboard layout — no hooks called conditionally
-  if (pathname?.includes('/dashboard/createposts')) {
-    return <>{children}</>;
-  }
-
   return <DashboardLayoutInner>{children}</DashboardLayoutInner>;
 }
 
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
+  const { ready, authenticated, user, linkWallet, logout, getAccessToken } = usePrivy();
+  const { contracts, chainId } = useNetworkConfig();
   const pathname = usePathname();
-  // const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
   const [totalSent, setTotalSent] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobile, setIsMobile] = useState(false);
+  const [walletSwitched, setWalletSwitched] = useState(false);
+  const [switchedToAddress, setSwitchedToAddress] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     const checkMobile = () => setIsMobile(window.innerWidth < 768);
@@ -91,19 +100,50 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     return () => window.removeEventListener('resize', checkMobile);
   }, []);
 
+  // Detect wallet mismatch: active wallet in wallet manager vs wallet linked to TipHive account
+  // Only show banner if user has a wallet linked to their account AND it's different from the active one
+  useEffect(() => {
+    const linkedWallet = creatorProfile?.address?.toLowerCase();
+    const activeWallet = address?.toLowerCase();
+
+    if (!linkedWallet || !activeWallet) {
+      // No linked wallet or no active wallet → no mismatch possible
+      setWalletSwitched(false);
+      setSwitchedToAddress(undefined);
+      return;
+    }
+
+    if (activeWallet !== linkedWallet) {
+      setWalletSwitched(true);
+      setSwitchedToAddress(address);
+    } else {
+      // User switched back to their TipHive-linked wallet → dismiss banner
+      setWalletSwitched(false);
+      setSwitchedToAddress(undefined);
+    }
+  }, [address, creatorProfile?.address]);
+
+  const dismissWalletSwitch = () => setWalletSwitched(false);
+
+  const handleSwitchAccount = async () => {
+    await logout();
+  };
+
   // Contract Reads
   const { data: tipBalance, refetch: refetchTipBalance } = useReadContract({
-    address: TIPPING_CONTRACT,
+    address: contracts.TIPPING,
     abi: TIPPING_ABI,
     functionName: 'getCreatorBalance',
     args: [address as `0x${string}`],
+    query: { enabled: Boolean(address && contracts.TIPPING !== '0x0000000000000000000000000000000000000000') },
   });
 
   const { data: subEarnings, refetch: refetchSubEarnings } = useReadContract({
-    address: SUBSCRIPTION_CONTRACT,
+    address: contracts.SUBSCRIPTION,
     abi: SUBSCRIPTION_ABI,
     functionName: 'getCreatorEarnings',
     args: [address as `0x${string}`],
+    query: { enabled: Boolean(address && contracts.SUBSCRIPTION !== '0x0000000000000000000000000000000000000000') },
   });
 
   const totalOnChainBalance = (tipBalance ? Number(tipBalance) : 0) + (subEarnings ? Number(subEarnings) : 0);
@@ -117,17 +157,25 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 
   const isAnyWithdrawing = isWithdrawingTips || isWithdrawingSub;
 
-  const fetchData = useCallback(async () => {
-    if (!address) return;
-    setLoading(true);
-    const userAddr = address.toLowerCase();
+  const userId = user?.id;
 
+  const fetchData = useCallback(async () => {
+    if (!userId && !address) return;
+    setLoading(true);
+    const userAddr = address ? address.toLowerCase() : null;
+    const userEmail = user?.email?.address || user?.google?.email;
+ 
     try {
-      const authResponse = await fetch(`/api/auth?wallet=${address}`);
+      const token = await getAccessToken();
+      const authResponse = await fetch(`/api/auth?did=${userId || ''}&wallet=${userAddr || ''}&email=${userEmail || ''}&t=${Date.now()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (!authResponse.ok) {
         throw new Error(`Auth API failed with status ${authResponse.status}`);
       }
       const authData = await authResponse.json();
+      const dbWallet = authData.user?.wallet_address?.toLowerCase();
+      
       setCreatorProfile(authData.user ? {
         address: authData.user.wallet_address,
         username: authData.user.username,
@@ -142,12 +190,26 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         button_text: authData.user.button_text,
         thank_you_message: authData.user.thank_you_message,
         suggested_amounts: authData.user.suggested_amounts,
+        referral_code: authData.user.referral_code,
       } : null);
 
-      const { data: sentTips } = await supabase.from('tips').select('*').eq('from_address', userAddr);
-      const { data: receivedTips } = await supabase.from('tips').select('*').eq('to_address', userAddr);
-      const { data: receivedSubs } = await supabase.from('subscriptions').select('*, subscription_plans(name)').eq('creator_address', userAddr);
-      const { data: sentSubs } = await supabase.from('subscriptions').select('*').eq('fan_address', userAddr);
+      const queryAddr = userAddr || dbWallet;
+
+      let sentTips = null, receivedTips = null, receivedSubs = null, sentSubs = null;
+
+      if (queryAddr) {
+        const [stRes, rtRes, rsRes, ssRes] = await Promise.all([
+          supabase.from('tips').select('*').eq('from_address', queryAddr).eq('chain_id', chainId),
+          supabase.from('tips').select('*').eq('to_address', queryAddr).eq('chain_id', chainId),
+          supabase.from('subscriptions').select('*, subscription_plans(name)').eq('creator_address', queryAddr).eq('chain_id', chainId),
+          supabase.from('subscriptions').select('*, subscription_plans(name)').eq('fan_address', queryAddr).eq('chain_id', chainId)
+        ]);
+        
+        sentTips = stRes.data; 
+        receivedTips = rtRes.data; 
+        receivedSubs = rsRes.data; 
+        sentSubs = ssRes.data;
+      }
 
       let totalSentVal = 0;
       if (sentTips) {
@@ -158,11 +220,21 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       }
       setTotalSent(totalSentVal);
 
+      let totalEarnedVal = 0;
+      if (receivedTips) {
+        totalEarnedVal += receivedTips.reduce((sum, tip) => sum + (Number(tip.amount) || 0), 0);
+      }
+      if (receivedSubs) {
+        totalEarnedVal += receivedSubs.reduce((sum, sub) => sum + (Number(sub.total_paid) || 0), 0);
+      }
+      setTotalEarned(totalEarnedVal);
+
       const combined: Activity[] = [];
       const knownAddresses = Array.from(new Set([
         ...(sentTips || []).map((tip) => tip.to_address),
         ...(receivedTips || []).map((tip) => tip.from_address),
         ...(receivedSubs || []).map((sub) => sub.fan_address),
+        ...(sentSubs || []).map((sub) => sub.creator_address),
       ].filter(Boolean).map((item) => item.toLowerCase())));
 
       const { data: knownProfiles } = knownAddresses.length
@@ -170,14 +242,14 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         : { data: [] };
 
       const profileByAddress = new Map((knownProfiles || []).map((item: { wallet_address: string; display_name: string; username: string }) => [
-        item.wallet_address,
+        item.wallet_address.toLowerCase(),
         item.username ? `${item.display_name} (@${item.username})` : item.display_name,
       ]));
 
       if (sentTips) sentTips.forEach(s => combined.push({ id: s.id, type: 'sent', source: 'tip', amount: s.amount, to_name: profileByAddress.get(s.to_address?.toLowerCase()) || s.to_address?.slice(0, 10) || 'Anonymous', created_at: s.created_at, tx_hash: s.tx_hash }));
       if (receivedTips) receivedTips.forEach(r => combined.push({ id: r.id, type: 'received', source: 'tip', amount: r.amount, from_address: r.from_address, to_name: profileByAddress.get(r.from_address?.toLowerCase()) || r.from_address?.slice(0, 10) || 'Anonymous', created_at: r.created_at, tx_hash: r.tx_hash }));
       if (receivedSubs) receivedSubs.forEach(sub => combined.push({ id: sub.id, type: 'received', source: 'subscription', amount: sub.total_paid, from_address: sub.fan_address, to_name: profileByAddress.get(sub.fan_address?.toLowerCase()) || sub.fan_address?.slice(0, 10) || 'Anonymous', created_at: sub.created_at, tx_hash: sub.tx_hash, plan_name: sub.subscription_plans?.name }));
-      if (sentSubs) sentSubs.forEach(sub => combined.push({ id: sub.id, type: 'sent', source: 'subscription', amount: sub.total_paid, created_at: sub.created_at, tx_hash: sub.tx_hash }));
+      if (sentSubs) sentSubs.forEach(sub => combined.push({ id: sub.id, type: 'sent', source: 'subscription', amount: sub.total_paid, to_name: profileByAddress.get(sub.creator_address?.toLowerCase()) || sub.creator_address?.slice(0, 10) || 'Anonymous', created_at: sub.created_at, tx_hash: sub.tx_hash, plan_name: sub.subscription_plans?.name }));
 
       setActivities(combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     } catch (err) {
@@ -185,11 +257,11 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [userId, address, user?.email?.address, user?.google?.email, getAccessToken, chainId]);
 
   useEffect(() => {
-    if (isConnected && address) fetchData();
-  }, [address, isConnected, fetchData]);
+    if (ready && authenticated) fetchData();
+  }, [address, authenticated, ready, fetchData]);
 
   useEffect(() => {
     if (tipWithdrawSuccess || subWithdrawSuccess) {
@@ -202,21 +274,25 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const handleWithdraw = async () => {
     if (totalOnChainBalance <= 0) return alert('No funds available for withdrawal.');
     if (tipBalance && Number(tipBalance) > 0) {
-      withdrawTips({ address: TIPPING_CONTRACT, abi: TIPPING_ABI, functionName: 'withdraw', args: [BigInt(tipBalance.toString())] });
+      withdrawTips({ address: contracts.TIPPING, abi: TIPPING_ABI, functionName: 'withdraw', args: [BigInt(tipBalance.toString())] });
     }
     if (subEarnings && Number(subEarnings) > 0) {
-      withdrawSub({ address: SUBSCRIPTION_CONTRACT, abi: SUBSCRIPTION_ABI, functionName: 'withdrawEarnings', args: [BigInt(subEarnings.toString())] });
+      withdrawSub({ address: contracts.SUBSCRIPTION, abi: SUBSCRIPTION_ABI, functionName: 'withdrawEarnings', args: [BigInt(subEarnings.toString())] });
     }
   };
 
-  if (!isConnected) {
+  if (!ready) {
+    return <div className="min-h-screen bg-black" />;
+  }
+
+  if (!authenticated) {
     return (
       <div className="w-full min-h-screen bg-[#000] flex flex-col items-center justify-center px-4 text-center">
         <div className="mb-8 h-24 w-24 flex items-center justify-center rounded-[2rem] border border-white/5 bg-[#0f0f14] shadow-2xl">
           <Wallet className="h-10 w-10 text-[#f7931a]" />
         </div>
         <h2 className="text-5xl font-black text-white mb-4 uppercase tracking-tighter">Gateway Locked</h2>
-        <p className="text-slate-500 mb-12 max-w-md mx-auto">Connect your wallet to access your creator dashboard.</p>
+        <p className="text-slate-500 mb-12 max-w-md mx-auto">Please login to access your creator dashboard.</p>
       </div>
     );
   }
@@ -244,6 +320,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 
       <div className="space-y-1 mb-8">
         <SidebarItem icon={<LayoutDashboard size={20} />} label="Hive" active={pathname === '/dashboard'} href="/dashboard" onClick={() => setIsSidebarOpen(false)} />
+        <SidebarItem icon={<Gift size={20} />} label="Referrals" active={pathname === '/dashboard/referrals'} href="/dashboard/referrals" onClick={() => setIsSidebarOpen(false)} />
         <SidebarItem icon={<Globe />} label="My Page" href={`/${creatorProfile?.username || ''}`} external onClick={() => setIsSidebarOpen(false)} />
       </div>
       <div className="mb-8">
@@ -257,7 +334,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Content</div>
         <div className="space-y-1">
           <SidebarItem icon={<Edit3 />} label="Posting" active={pathname === '/dashboard/posts'} href="/dashboard/posts" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<Inbox />} label="Inbox" onClick={() => setIsSidebarOpen(false)} disabled />
+          <SidebarItem icon={<Inbox />} label="Inbox" active={pathname === '/dashboard/inbox'} href="/dashboard/inbox" onClick={() => setIsSidebarOpen(false)} />
         </div>
       </div>
       <div className="mb-8">
@@ -273,14 +350,25 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       <div className="mt-auto pt-8 border-t border-white/5">
         <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Settings</div>
         <div className="space-y-1">
-          <SidebarItem icon={<Settings size={18} />} label="Visual Toolkit" active={pathname === '/dashboard/settings'} href="/dashboard/settings" onClick={() => setIsSidebarOpen(false)} />
+          <SidebarItem icon={<Settings size={18} />} label="Visual Toolkit" active={pathname === '/dashboard/visual-toolkit'} href="/dashboard/visual-toolkit" onClick={() => setIsSidebarOpen(false)} />
+          <SidebarItem icon={<Mail size={18} />} label="Email Notifications" active={pathname === '/dashboard/email-notifications'} href="/dashboard/email-notifications" onClick={() => setIsSidebarOpen(false)} />
         </div>
       </div>
     </div>
   );
 
+  const isCreatePost = pathname?.includes('/dashboard/createposts');
+
+  if (isCreatePost) {
+    return (
+      <DashboardContext.Provider value={{ creatorProfile, activities, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, fetchData, address, totalSent, totalEarned, linkWallet, walletSwitched, switchedToAddress, dismissWalletSwitch, handleSwitchAccount, user, authenticated, getAccessToken }}>
+        {children}
+      </DashboardContext.Provider>
+    );
+  }
+
   return (
-    <DashboardContext.Provider value={{ creatorProfile, activities, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, fetchData, address, totalSent }}>
+    <DashboardContext.Provider value={{ creatorProfile, activities, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, fetchData, address, totalSent, totalEarned, linkWallet, walletSwitched, switchedToAddress, dismissWalletSwitch, handleSwitchAccount, user, authenticated, getAccessToken }}>
       <div className="min-h-screen bg-[#000] flex">
         {/* Redesigned Hanging Menu Trigger */}
         <motion.div

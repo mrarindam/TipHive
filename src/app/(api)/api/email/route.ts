@@ -1,14 +1,30 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 
+import { privy } from '@/lib/privy';
+import { sendEmail } from '@/lib/brevo';
+import { emailUpdateTemplate } from '@/lib/email-templates';
+
+
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { wallet_address, email } = body;
+    const { email } = body;
 
-    if (!wallet_address || !email) {
-      return NextResponse.json({ error: 'wallet_address and email are required' }, { status: 400 });
+    if (!email) {
+      return NextResponse.json({ error: 'email is required' }, { status: 400 });
     }
+
+    // --- SECURE AUTH CHECK ---
+    const header = request.headers.get('authorization');
+    const token = header?.replace('Bearer ', '');
+    if (!token) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
+    let verifiedDid: string;
+    try {
+      const verified = await privy.utils().auth().verifyAccessToken(token);
+      verifiedDid = verified.user_id;
+    } catch { return NextResponse.json({ error: 'Invalid session' }, { status: 401 }); }
+    // -------------------------
 
     // Basic email format validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -17,7 +33,6 @@ export async function POST(request: NextRequest) {
     }
 
     const supabase = createServerSupabase();
-    const normalizedWallet = wallet_address.toLowerCase();
 
     const { data, error } = await supabase
       .from('user_profiles')
@@ -25,11 +40,25 @@ export async function POST(request: NextRequest) {
         notification_email: email.toLowerCase().trim(),
         updated_at: new Date().toISOString(),
       })
-      .eq('wallet_address', normalizedWallet)
-      .select('wallet_address, notification_email')
+      .eq('privy_did', verifiedDid)
+      .select('privy_did, notification_email')
       .single();
 
     if (error) throw error;
+    
+    // --- BREVO INTEGRATION ---
+    try {
+      if (email) {
+        await sendEmail({
+          to: email.toLowerCase().trim(),
+          subject: 'Email Notifications Enabled ✅',
+          htmlContent: emailUpdateTemplate()
+        });
+      }
+    } catch (emailErr) {
+      console.error('Failed to send confirmation email:', emailErr);
+    }
+    // -------------------------
 
     return NextResponse.json({ success: true, profile: data });
   } catch (error) {
@@ -40,14 +69,22 @@ export async function POST(request: NextRequest) {
 
 export async function GET(request: NextRequest) {
   try {
-    const wallet = request.nextUrl.searchParams.get('wallet');
-    if (!wallet) return NextResponse.json({ error: 'wallet required' }, { status: 400 });
+    // --- SECURE AUTH CHECK ---
+    const header = request.headers.get('authorization');
+    const token = header?.replace('Bearer ', '');
+    if (!token) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
+    let verifiedDid: string;
+    try {
+      const verified = await privy.utils().auth().verifyAccessToken(token);
+      verifiedDid = verified.user_id;
+    } catch { return NextResponse.json({ error: 'Invalid session' }, { status: 401 }); }
+    // -------------------------
 
     const supabase = createServerSupabase();
     const { data, error } = await supabase
       .from('user_profiles')
       .select('notification_email')
-      .eq('wallet_address', wallet.toLowerCase())
+      .eq('privy_did', verifiedDid)
       .maybeSingle();
 
     if (error) throw error;

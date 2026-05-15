@@ -1,8 +1,19 @@
+// Legacy exports (backward compat — point to testnet)
 export const MUSD_ADDRESS = process.env.NEXT_PUBLIC_MUSD_ADDRESS as `0x${string}`;
 export const BTC_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_BTC_TOKEN_ADDRESS || '0x7b7C000000000000000000000000000000000000') as `0x${string}`;
 export const MEZO_TOKEN_ADDRESS = (process.env.NEXT_PUBLIC_MEZO_TOKEN_ADDRESS || '0x7B7c000000000000000000000000000000000001') as `0x${string}`;
 export const TIPPING_CONTRACT = process.env.NEXT_PUBLIC_TIPPING_CONTRACT as `0x${string}`;
 export const SUBSCRIPTION_CONTRACT = process.env.NEXT_PUBLIC_SUBSCRIPTION_CONTRACT as `0x${string}`;
+
+// Per-network contract addresses
+export const TESTNET_MUSD = (process.env.NEXT_PUBLIC_TESTNET_MUSD_ADDRESS || process.env.NEXT_PUBLIC_MUSD_ADDRESS) as `0x${string}`;
+export const TESTNET_TIPPING = (process.env.NEXT_PUBLIC_TESTNET_TIPPING_CONTRACT || process.env.NEXT_PUBLIC_TIPPING_CONTRACT) as `0x${string}`;
+export const TESTNET_SUBSCRIPTION = (process.env.NEXT_PUBLIC_TESTNET_SUBSCRIPTION_CONTRACT || process.env.NEXT_PUBLIC_SUBSCRIPTION_CONTRACT) as `0x${string}`;
+
+export const MAINNET_MUSD = (process.env.NEXT_PUBLIC_MAINNET_MUSD_ADDRESS || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+export const MAINNET_TIPPING = (process.env.NEXT_PUBLIC_MAINNET_TIPPING_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+export const MAINNET_SUBSCRIPTION = (process.env.NEXT_PUBLIC_MAINNET_SUBSCRIPTION_CONTRACT || '0x0000000000000000000000000000000000000000') as `0x${string}`;
+
 
 export const ERC20_ABI = [
   {

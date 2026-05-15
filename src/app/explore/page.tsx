@@ -9,7 +9,9 @@ import Link from 'next/link';
 import TopCreatorsBubbles from '@/components/ui/TopCreatorsBubbles';
 import { extractFirstImage, TextThumbnail } from '../[username]/layout';
 import { useAccount } from 'wagmi';
+import { usePrivy } from '@privy-io/react-auth';
 import { Skeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 
 interface Post {
   id: string;
@@ -34,7 +36,8 @@ interface Creator {
 }
 
 function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isFollowingInitial: boolean }) {
-  const { isConnected, address: userAddress } = useAccount();
+  const { address: userAddress } = useAccount();
+  const { user } = usePrivy();
   const [isFollowing, setIsFollowing] = useState(isFollowingInitial);
   const rowRef = useRef<HTMLDivElement>(null);
   
@@ -47,14 +50,18 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
 
   const handleFollow = async (e: React.MouseEvent) => {
     e.preventDefault();
-    if (!isConnected || !userAddress) return alert('Please connect your wallet');
+    if (!user?.id) return alert('Please login to follow creators');
     
     try {
-      const { data: currentUserProfile } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('wallet_address', userAddress.toLowerCase())
-        .single();
+      let profileQuery = supabase.from('user_profiles').select('id');
+      
+      if (userAddress) {
+        profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
+      } else {
+        profileQuery = profileQuery.eq('privy_did', user.id);
+      }
+
+      const { data: currentUserProfile } = await profileQuery.single();
 
       if (!currentUserProfile) return;
 
@@ -90,7 +97,7 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
         </Link>
 
         <div className="flex items-center gap-4 flex-1">
-          {userAddress?.toLowerCase() !== creator.wallet_address.toLowerCase() && (
+          {(!userAddress || !creator.wallet_address || userAddress.toLowerCase() !== creator.wallet_address.toLowerCase()) && (
             <button 
               onClick={handleFollow}
               className={`px-6 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
@@ -199,6 +206,8 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
 
 export default function Explore() {
   const { address: userAddress } = useAccount();
+  const { user } = usePrivy();
+  const userId = user?.id;
   const [creators, setCreators] = useState<Creator[]>([]);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -206,6 +215,7 @@ export default function Explore() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+  const { chainId } = useNetworkConfig();
   
   const observer = useRef<IntersectionObserver | null>(null);
   const lastElementRef = useCallback((node: HTMLDivElement) => {
@@ -227,6 +237,23 @@ export default function Explore() {
     if (pageNum === 0) setLoading(true);
     else setLoadingMore(true);
 
+    // 1. Get top earners on this network first
+    const { data: topTips } = await supabase
+      .from('tips')
+      .select('to_address, amount')
+      .eq('chain_id', chainId);
+
+    const earningsMap: Record<string, number> = {};
+    (topTips || []).forEach(tip => {
+      const addr = tip.to_address.toLowerCase();
+      earningsMap[addr] = (earningsMap[addr] || 0) + (Number(tip.amount) || 0);
+    });
+
+    const topAddresses = Object.entries(earningsMap)
+      .sort(([, a], [, b]) => b - a)
+      .map(([addr]) => addr);
+
+    // 2. Fetch profiles
     let query = supabase
       .from('user_profiles')
       .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
@@ -236,11 +263,36 @@ export default function Explore() {
       query = query.or(`display_name.ilike.%${search}%,username.ilike.%${search}%`);
     }
 
-    const { data: profileData, error } = await query
-      .order('total_earned', { ascending: false })
-      .range(from, to);
+    let profileData = [];
+    if (!search && topAddresses.length > 0) {
+      // If no search, show top earners first
+      const { data } = await query.in('wallet_address', topAddresses.slice(from, to + 1));
+      // Sort them to match topAddresses order
+      profileData = (data || []).sort((a, b) => {
+        const indexA = topAddresses.indexOf(a.wallet_address.toLowerCase());
+        const indexB = topAddresses.indexOf(b.wallet_address.toLowerCase());
+        return indexA - indexB;
+      });
+      
+      // If we need more creators (not in top earners), fetch them
+      if (profileData.length < limit && pageNum === 0) {
+        const { data: others } = await supabase
+          .from('user_profiles')
+          .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
+          .eq('is_creator', true)
+          .not('wallet_address', 'in', `(${topAddresses.join(',')})`)
+          .limit(limit - profileData.length);
+        if (others) profileData = [...profileData, ...others];
+      }
+    } else {
+      // Regular search or fallback
+      const { data } = await query
+        .order('total_earned', { ascending: false })
+        .range(from, to);
+      profileData = data || [];
+    }
 
-    if (error || !profileData) {
+    if (profileData.length === 0) {
       setHasMore(false);
       setLoading(false);
       setLoadingMore(false);
@@ -259,8 +311,15 @@ export default function Explore() {
 
     // Fetch following status
     let fIds: string[] = [];
-    if (userAddress) {
-      const { data: currentUser } = await supabase.from('user_profiles').select('id').eq('wallet_address', userAddress.toLowerCase()).single();
+    if (userAddress || userId) {
+      let profileQuery = supabase.from('user_profiles').select('id');
+      if (userAddress) {
+        profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
+      } else {
+        profileQuery = profileQuery.eq('privy_did', userId!);
+      }
+
+      const { data: currentUser } = await profileQuery.single();
       if (currentUser) {
         const { data: follows } = await supabase.from('followers').select('creator_id').eq('follower_id', currentUser.id);
         if (follows) fIds = follows.map(f => f.creator_id);
@@ -276,13 +335,13 @@ export default function Explore() {
     setCreators(prev => isNewSearch ? creatorsWithPosts : [...prev, ...creatorsWithPosts]);
     setLoading(false);
     setLoadingMore(false);
-  }, [search, userAddress]);
+  }, [search, userAddress, userId, chainId]);
 
   useEffect(() => {
     setPage(0);
     setHasMore(true);
     fetchCreators(0, true);
-  }, [search, fetchCreators]);
+  }, [search, fetchCreators, chainId]);
 
   useEffect(() => {
     if (page > 0) {

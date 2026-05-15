@@ -4,12 +4,14 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Zap, Clock, Loader2, X, CheckCircle2 } from 'lucide-react';
 import { useAccount, useWriteContract, useReadContract, useConfig } from 'wagmi';
+import { usePrivy } from '@privy-io/react-auth';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther } from 'viem';
 import { supabase } from '@/lib/supabase';
-import { SUBSCRIPTION_ABI, SUBSCRIPTION_CONTRACT, MUSD_ADDRESS, ERC20_ABI } from '@/lib/contracts';
+import { SUBSCRIPTION_ABI, ERC20_ABI } from '@/lib/contracts';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import CelebrationModal from '@/components/ui/CelebrationModal';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 
 interface Plan {
   id: string;
@@ -32,6 +34,8 @@ interface SubscriptionSectionProps {
 
 export default function SubscriptionSection({ creatorAddress, creatorName, limit, onSuccess }: SubscriptionSectionProps) {
   const { address: userAddress, isConnected } = useAccount();
+  const { authenticated, login, getAccessToken } = usePrivy();
+  const { contracts, chainId } = useNetworkConfig();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);
   const [status, setStatus] = useState<'idle' | 'approving' | 'subscribing' | 'success' | 'error'>('idle');
@@ -52,14 +56,14 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
   const { writeContractAsync: subscribeWriteAsync } = useWriteContract();
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: MUSD_ADDRESS,
+    address: contracts.MUSD,
     abi: ERC20_ABI,
     functionName: 'allowance',
-    args: [userAddress as `0x${string}`, SUBSCRIPTION_CONTRACT],
+    args: [userAddress as `0x${string}`, contracts.SUBSCRIPTION],
   });
 
   const { data: balance } = useReadContract({
-    address: MUSD_ADDRESS,
+    address: contracts.MUSD,
     abi: ERC20_ABI,
     functionName: 'balanceOf',
     args: [userAddress as `0x${string}`],
@@ -67,6 +71,11 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
 
   useEffect(() => {
     async function fetchPlans() {
+      if (!creatorAddress) {
+        setLoading(false);
+        setPlans([]);
+        return;
+      }
       setLoading(true);
 
       let query = supabase
@@ -74,6 +83,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
         .select('*')
         .eq('creator_address', creatorAddress.toLowerCase())
         .eq('active', true)
+        .eq('chain_id', chainId)
         .order('duration', { ascending: true });
 
       if (limit) {
@@ -91,9 +101,13 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
     if (creatorAddress) {
       fetchPlans();
     }
-  }, [creatorAddress, limit]);
+  }, [creatorAddress, limit, chainId]);
 
   const handleSubscribe = async (plan: Plan) => {
+    if (!authenticated) {
+      login();
+      return;
+    }
     if (!isConnected || !userAddress) {
       setNotification({ message: 'Please connect your wallet first! 🔌', type: 'error' });
       return;
@@ -140,10 +154,10 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
       if (!allowance || BigInt(allowance.toString()) < amount) {
         setStatus('approving');
         const approveHash = await approveWriteAsync({
-          address: MUSD_ADDRESS,
+          address: contracts.MUSD,
           abi: ERC20_ABI,
           functionName: 'approve',
-          args: [SUBSCRIPTION_CONTRACT, amount],
+          args: [contracts.SUBSCRIPTION, amount],
         });
         await waitForTransactionReceipt(config, { hash: approveHash });
         await refetchAllowance();
@@ -152,7 +166,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
       // 2. Already has allowance, go direct
       setStatus('subscribing');
       const subHash = await subscribeWriteAsync({
-        address: SUBSCRIPTION_CONTRACT,
+        address: contracts.SUBSCRIPTION,
         abi: SUBSCRIPTION_ABI,
         functionName: 'subscribe',
         args: [BigInt(plan.chain_plan_id)],
@@ -173,7 +187,8 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
         active: true,
         total_paid: plan.price,
         tx_hash: subHash,
-        subscription_hash: subHash
+        subscription_hash: subHash,
+        chain_id: chainId
       });
 
       await supabase.rpc('increment_creator_earned', {
@@ -190,16 +205,19 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
           .eq('wallet_address', userAddress.toLowerCase())
           .single();
 
-        const subscriberName = subscriberProfile?.display_name || (subscriberProfile?.username ? `@${subscriberProfile.username}` : `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`);
+        const identifier = subscriberProfile?.username || `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
 
         await fetch('/api/notifications', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await getAccessToken()}`
+          },
           body: JSON.stringify({
             wallet: creatorAddress.toLowerCase(),
             action: 'create',
             type: 'subscription',
-            content: `New subscriber! ${subscriberName} joined your ${plan.name} circle. 🌟`,
+            content: `New subscriber! ${identifier} joined your ${plan.name} circle. 🌟`,
           })
         });
       } catch (err) {
@@ -211,7 +229,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
     }
   };
 
-  if (loading) return (
+  if (loading && creatorAddress?.startsWith('0x')) return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
       {[1, 2].map(i => (
         <div key={i} className="h-80 bg-white/5 rounded-[2rem] border border-white/5" />
@@ -220,10 +238,20 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
   );
 
   if (plans.length === 0) return (
-    <div className="py-12 text-center glass-card border-dashed border-white/5">
-      <Zap className="w-10 h-10 text-slate-800 mx-auto mb-4 opacity-50" />
-      <p className="text-slate-500 font-medium uppercase text-xs tracking-widest">No Exclusive Tiers Available Yet</p>
-    </div>
+    <motion.div
+      initial={{ opacity: 0, y: 10 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="py-20 text-center glass-card border-dashed border-white/10 bg-white/[0.02]"
+    >
+      <div className="relative w-16 h-16 mx-auto mb-6">
+        <div className="absolute inset-0 bg-[#F7931A]/20 blur-2xl rounded-full" />
+        <Zap className="w-16 h-16 text-slate-700 relative opacity-40" />
+      </div>
+      <h3 className="text-xl font-black text-white font-outfit uppercase tracking-tighter mb-2">No active tiers yet</h3>
+      <p className="text-slate-500 font-medium max-w-xs mx-auto text-sm leading-relaxed">
+        {creatorName} hasn&apos;t launched any exclusive subscription tiers for this page yet.
+      </p>
+    </motion.div>
   );
 
   return (

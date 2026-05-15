@@ -3,7 +3,7 @@
 import { useDashboard } from './layout';
 
 import { motion } from 'framer-motion';
-import { User, DollarSign, Loader2, Copy, Check, TrendingUp, History, Globe } from 'lucide-react';
+import { User, DollarSign, Loader2, Copy, Check, TrendingUp, History, Globe, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import MUSDLogo from '@/components/ui/MUSDLogo';
@@ -14,18 +14,23 @@ function shortAddress(address?: string) {
 }
 
 export default function DashboardPage() {
-  const { creatorProfile, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, address, totalSent } = useDashboard();
+  const { 
+    creatorProfile, loading, onChainBalanceFormatted, totalOnChainBalance, 
+    isAnyWithdrawing, handleWithdraw, address, totalSent, totalEarned, linkWallet 
+  } = useDashboard();
   const [copied, setCopied] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [origin, setOrigin] = useState('');
+
+  const displayAddress = address || creatorProfile?.address;
 
   useEffect(() => {
     setOrigin(window.location.origin);
   }, []);
 
   const copyAddress = () => {
-    if (!address) return;
-    navigator.clipboard.writeText(address);
+    if (!displayAddress) return;
+    navigator.clipboard.writeText(displayAddress);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -79,22 +84,32 @@ export default function DashboardPage() {
               <span className="font-bold text-[#f7931a]">@{creatorProfile?.username}</span>
               <span className="text-slate-600">•</span>
               <button onClick={copyAddress} className="text-slate-400 font-mono flex items-center gap-1 hover:text-white transition-colors">
-                {shortAddress(address)} {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
+                {shortAddress(displayAddress)} {copied ? <Check className="w-3 h-3 text-green-500" /> : <Copy className="w-3 h-3" />}
               </button>
             </div>
           </div>
         </div>
 
         <div className="flex flex-col gap-3 relative z-10">
-          <button
-            onClick={handleWithdraw}
-            disabled={isAnyWithdrawing || totalOnChainBalance <= 0}
-            className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-black transition-all hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {isAnyWithdrawing ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
-            Withdraw Earnings
-          </button>
-          <Link href="/profile" className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl font-bold transition-all hover:bg-white/10">
+          {address ? (
+            <button
+              onClick={handleWithdraw}
+              disabled={isAnyWithdrawing || totalOnChainBalance <= 0}
+              className="flex items-center justify-center gap-2 bg-white text-black px-6 py-3 rounded-xl font-black transition-all hover:bg-slate-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {isAnyWithdrawing ? <Loader2 className="w-4 h-4 animate-spin" /> : <DollarSign className="w-4 h-4" />}
+              Withdraw Earnings
+            </button>
+          ) : (
+            <button
+              onClick={linkWallet}
+              className="flex items-center justify-center gap-2 bg-[#f7931a] text-white px-6 py-3 rounded-xl font-black transition-all hover:bg-[#e08215]"
+            >
+              <Wallet className="w-4 h-4" />
+              Link Wallet
+            </button>
+          )}
+          <Link href="/editprofile" className="flex items-center justify-center gap-2 bg-white/5 border border-white/10 text-white px-6 py-3 rounded-xl font-bold transition-all hover:bg-white/10">
             Edit Profile
           </Link>
         </div>
@@ -129,20 +144,20 @@ export default function DashboardPage() {
         <DashboardCard
           icon={<DollarSign className="w-5 h-5 text-orange-500" />}
           label="Total Earnings"
-          value={creatorProfile?.total_earned?.toString() || "0"}
-          subtitle="Lifetime Combined"
+          value={totalEarned.toString()}
+          subtitle="Tips + Subscriptions"
         />
         <DashboardCard
           icon={<TrendingUp className="w-5 h-5 text-green-500" />}
           label="Claimable Funds"
-          value={onChainBalanceFormatted}
-          subtitle="Tips + Subscriptions"
-          highlight={true}
+          value={displayAddress ? onChainBalanceFormatted : "0"}
+          subtitle="Ready for Withdrawal"
+          highlight={displayAddress ? true : false}
         />
         <DashboardCard
           icon={<History className="w-5 h-5 text-blue-400" />}
           label="Sent By You"
-          value={totalSent.toString()}
+          value={displayAddress ? totalSent.toString() : "0"}
           subtitle="Your Contributions"
         />
       </div>

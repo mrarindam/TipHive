@@ -2,13 +2,16 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Users, Crown, ChevronRight, MessageSquare } from 'lucide-react';
+import { Users, Crown, MessageSquare } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import Link from 'next/link';
 import { useProfile } from '../layout';
 import Pagination from '@/components/ui/Pagination';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 
 interface Member {
+  privy_did: string;
   follower_address: string;
   created_at: string;
   display_name?: string;
@@ -17,6 +20,7 @@ interface Member {
 }
 
 interface ProfileResult {
+  privy_did: string;
   wallet_address: string;
   display_name: string;
   avatar_url: string;
@@ -25,6 +29,7 @@ interface ProfileResult {
 
 export default function CreatorMembers() {
   const { creator, isOwner, fetchData } = useProfile();
+  const { chainId } = useNetworkConfig();
 
   const [memberFilter, setMemberFilter] = useState<'supporters' | 'followers' | 'following'>('supporters');
   const [members, setMembers] = useState<Member[]>([]);
@@ -34,7 +39,7 @@ export default function CreatorMembers() {
   const itemsPerPage = 10;
 
   useEffect(() => {
-    if (!creator || !isOwner) return;
+    if (!creator) return;
 
     async function loadMembersData() {
       // Followers
@@ -43,7 +48,7 @@ export default function CreatorMembers() {
         .select(`
           created_at,
           follower:user_profiles!follower_id (
-            id,
+            privy_did,
             wallet_address,
             display_name,
             avatar_url,
@@ -54,8 +59,9 @@ export default function CreatorMembers() {
 
       if (membersData) {
         setMembers(membersData.map(m => {
-          const profile = m.follower as unknown as ProfileResult;
+          const profile = m.follower as unknown as ProfileResult & { privy_did: string };
           return { 
+            privy_did: profile?.privy_did || profile?.wallet_address || '',
             follower_address: profile?.wallet_address || '', 
             created_at: m.created_at, 
             display_name: profile?.display_name,
@@ -64,24 +70,25 @@ export default function CreatorMembers() {
         }));
       }
 
-      // Supporters (Tips)
       const { data: tipsData } = await supabase
         .from('tips')
         .select('*')
         .eq('to_address', creator!.wallet_address.toLowerCase())
+        .eq('chain_id', chainId)
         .order('created_at', { ascending: false });
 
       if (tipsData) {
         const uniqueAddrs = Array.from(new Set(tipsData.map(t => t.from_address)));
         const { data: profiles } = await supabase
           .from('user_profiles')
-          .select('wallet_address, display_name, avatar_url, username')
+          .select('privy_did, wallet_address, display_name, avatar_url, username')
           .in('wallet_address', uniqueAddrs);
 
         setSupporters(uniqueAddrs.map(addr => {
           const p = profiles?.find(pr => pr.wallet_address.toLowerCase() === addr.toLowerCase());
           const totalTipped = tipsData.filter(t => t.from_address.toLowerCase() === addr.toLowerCase()).reduce((sum, t) => sum + (t.amount || 0), 0);
           return {
+            privy_did: p?.privy_did || addr,
             follower_address: addr,
             created_at: tipsData.filter(t => t.from_address.toLowerCase() === addr.toLowerCase())[0].created_at,
             total_tipped: totalTipped,
@@ -97,7 +104,7 @@ export default function CreatorMembers() {
         .select(`
           created_at,
           following:user_profiles!creator_id (
-            id,
+            privy_did,
             wallet_address,
             display_name,
             avatar_url,
@@ -108,8 +115,9 @@ export default function CreatorMembers() {
 
       if (followingData) {
         setFollowingList(followingData.map(f => {
-          const profile = f.following as unknown as ProfileResult;
+          const profile = f.following as unknown as ProfileResult & { privy_did: string };
           return { 
+            privy_did: profile?.privy_did || profile?.wallet_address || '',
             follower_address: profile?.wallet_address || '', 
             created_at: f.created_at, 
             display_name: profile?.display_name,
@@ -120,7 +128,7 @@ export default function CreatorMembers() {
     }
 
     loadMembersData();
-  }, [creator, isOwner, fetchData]);
+  }, [creator, isOwner, fetchData, chainId]);
 
   if (!creator) return null;
 
@@ -198,18 +206,13 @@ export default function CreatorMembers() {
                     {isSupporter && tippedAmount && <p className="text-xs text-[#F7931A] font-black mt-2 tracking-wide">${tippedAmount} tipped</p>}
                   </div>
 
-                  <div className="w-full flex items-center gap-2 mt-auto">
-                    <div className="relative flex-1 group/msg">
-                      <button disabled className="w-full py-3.5 bg-white/5 border border-white/5 rounded-2xl text-slate-500 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 blur-[1px] transition-all cursor-not-allowed">
-                        <MessageSquare className="w-3.5 h-3.5" /> Message
-                      </button>
-                      <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover/msg:opacity-100 transition-opacity">
-                        <span className="bg-black/80 text-[8px] font-black uppercase tracking-tighter px-2 py-1 rounded-md text-white border border-white/10">Coming Soon</span>
-                      </div>
-                    </div>
-                    <button className="p-3.5 bg-white/5 border border-white/5 rounded-2xl text-slate-500 hover:text-white transition-all">
-                      <ChevronRight className="w-4 h-4" />
-                    </button>
+                  <div className="w-full mt-auto">
+                    <Link 
+                      href={`/dashboard/inbox?chat=${member.privy_did}`}
+                      className="w-full py-3.5 bg-white/5 border border-white/5 rounded-2xl text-slate-300 hover:text-white hover:bg-white/10 hover:border-[#8A2BE2]/30 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all group/msg"
+                    >
+                      <MessageSquare className="w-3.5 h-3.5 group-hover/msg:scale-110 transition-transform" /> Message
+                    </Link>
                   </div>
                 </motion.div>
               );

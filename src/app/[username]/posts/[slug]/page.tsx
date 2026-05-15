@@ -8,6 +8,7 @@ import { Heart, ArrowLeft, Share2, MessageCircle, Zap, Lock, Globe2, Users } fro
 import Link from 'next/link';
 import Image from 'next/image';
 import { useAccount } from 'wagmi';
+import { usePrivy } from '@privy-io/react-auth';
 import { motion } from 'framer-motion';
 import ShareModal from '@/components/ui/ShareModal';
 
@@ -40,6 +41,8 @@ interface Post {
 export default function PostPage() {
   const { username, slug } = useParams();
   const { address: userAddress } = useAccount();
+  const { user, getAccessToken } = usePrivy();
+  const userId = user?.id;
   const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
   const [creator, setCreator] = useState<Record<string, unknown> | null>(null);
@@ -60,7 +63,7 @@ export default function PostPage() {
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('*')
-        .eq('username', username)
+        .ilike('username', username as string)
         .single();
 
       if (profile) {
@@ -84,14 +87,22 @@ export default function PostPage() {
             .eq('post_id', postData.id);
           setLikes(likesCount || 0);
 
-          if (userAddress) {
-            const { data: userLike } = await supabase
-              .from('post_likes')
+          if (userAddress || userId) {
+            const { data: currentUserProfile } = await supabase
+              .from('user_profiles')
               .select('id')
-              .eq('post_id', postData.id)
-              .eq('user_address', userAddress.toLowerCase())
+              .or(userAddress ? `wallet_address.eq.${userAddress.toLowerCase()}` : `privy_did.eq.${userId!}`)
               .single();
-            setIsLiked(!!userLike);
+
+            if (currentUserProfile) {
+              const { data: userLike } = await supabase
+                .from('post_likes')
+                .select('id')
+                .eq('post_id', postData.id)
+                .eq('user_address', userAddress ? userAddress.toLowerCase() : userId!)
+                .single();
+              setIsLiked(!!userLike);
+            }
           }
 
           // Fetch Comments
@@ -103,13 +114,21 @@ export default function PostPage() {
 
           if (commentsData && commentsData.length > 0) {
             // Fetch profiles for commenters
-            const commenterAddrs = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
+            const commenterIds = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
+            
+            // This is a bit tricky: user_address in post_comments could be a wallet OR a DID.
+            // We'll fetch profiles that match either wallet_address or privy_did.
             const { data: commenterProfiles } = await supabase
               .from('user_profiles')
-              .select('wallet_address, username, display_name, avatar_url')
-              .in('wallet_address', commenterAddrs);
+              .select('wallet_address, privy_did, username, display_name, avatar_url')
+              .or(`wallet_address.in.(${commenterIds.join(',')}),privy_did.in.(${commenterIds.join(',')})`);
 
-            const profileMap = new Map((commenterProfiles || []).map(p => [p.wallet_address.toLowerCase(), p]));
+            const profileMap = new Map();
+            commenterProfiles?.forEach(p => {
+              if (p.wallet_address) profileMap.set(p.wallet_address.toLowerCase(), p);
+              if (p.privy_did) profileMap.set(p.privy_did.toLowerCase(), p);
+            });
+
             setComments(commentsData.map(c => ({
               ...c,
               sender: profileMap.get(c.user_address.toLowerCase())
@@ -118,28 +137,40 @@ export default function PostPage() {
         }
 
         // Check subscription if post is exclusive
-        if (userAddress && profile) {
-          const { data: subs } = await supabase
-            .from('subscriptions')
-            .select('id, end_date')
-            .eq('fan_address', userAddress.toLowerCase())
-            .eq('creator_address', profile.wallet_address.toLowerCase())
-            .eq('active', true);
+        if ((userAddress || userId) && profile) {
+          let profileQuery = supabase.from('user_profiles').select('id');
+          if (userAddress) {
+            profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
+          } else {
+            profileQuery = profileQuery.eq('privy_did', userId!);
+          }
+          const { data: currentUserProfile } = await profileQuery.single();
 
-          if (subs && subs.length > 0) {
-            const now = new Date();
-            const activeSub = subs.find(s => new Date(s.end_date) > now);
-            if (activeSub) setIsSubscribed(true);
+          if (currentUserProfile && profile.wallet_address) {
+            const { data: subs } = await supabase
+              .from('subscriptions')
+              .select('id, end_date')
+              .eq('fan_address', userAddress ? userAddress.toLowerCase() : userId!)
+              .eq('creator_address', profile.wallet_address.toLowerCase())
+              .eq('active', true);
+
+            if (subs && subs.length > 0) {
+              const now = new Date();
+              const activeSub = subs.find(s => new Date(s.end_date) > now);
+              if (activeSub) setIsSubscribed(true);
+            }
           }
         }
       }
       setLoading(false);
     }
     fetchData();
-  }, [username, slug, userAddress]);
+  }, [username, slug, userAddress, userId]);
 
   const handleLike = async () => {
-    if (!userAddress || !post) return alert('Please connect your wallet to like posts');
+    if (!userId && !userAddress) return alert('Please login to like posts');
+    if (!post) return;
+    const identifier = userAddress ? userAddress.toLowerCase() : userId!;
 
     try {
       if (isLiked) {
@@ -147,7 +178,7 @@ export default function PostPage() {
           .from('post_likes')
           .delete()
           .eq('post_id', post.id)
-          .eq('user_address', userAddress.toLowerCase());
+          .eq('user_address', identifier);
         setLikes(prev => prev - 1);
         setIsLiked(false);
       } else {
@@ -155,10 +186,29 @@ export default function PostPage() {
           .from('post_likes')
           .insert({
             post_id: post.id,
-            user_address: userAddress.toLowerCase()
+            user_address: identifier
           });
         setLikes(prev => prev + 1);
         setIsLiked(true);
+
+        // Create notification for creator
+        if (creator && (creator.wallet_address || creator.privy_did)) {
+          await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${await getAccessToken()}`
+            },
+            body: JSON.stringify({
+              wallet: creator.wallet_address,
+              did: creator.privy_did,
+              action: 'create',
+              type: 'like',
+              actor: identifier,
+              postTitle: post.title
+            }),
+          });
+        }
       }
     } catch (err) {
       console.error('Like error:', err);
@@ -166,8 +216,11 @@ export default function PostPage() {
   };
 
   const handlePostComment = async () => {
-    if (!userAddress || !post) return alert('Please connect your wallet to comment');
+    if (!userId && !userAddress) return alert('Please login to comment');
+    if (!post) return;
     if (!commentText.trim()) return;
+
+    const identifier = userAddress ? userAddress.toLowerCase() : userId!;
 
     setIsSubmittingComment(true);
     try {
@@ -175,7 +228,7 @@ export default function PostPage() {
         .from('post_comments')
         .insert({
           post_id: post.id,
-          user_address: userAddress.toLowerCase(),
+          user_address: identifier,
           content: commentText.trim()
         })
         .select()
@@ -184,17 +237,33 @@ export default function PostPage() {
       if (error) throw error;
 
       // Fetch user profile for the new comment
-      const { data: userProfile } = await supabase
-        .from('user_profiles')
-        .select('wallet_address, username, display_name, avatar_url')
-        .eq('wallet_address', userAddress.toLowerCase())
-        .single();
+      const { data: userProfile } = await supabase.from('user_profiles').select('wallet_address, privy_did, username, display_name, avatar_url').or(`wallet_address.eq.${identifier},privy_did.eq.${identifier}`).maybeSingle();
 
       setComments(prev => [{
         ...newComment,
         sender: userProfile
       }, ...prev]);
+      
       setCommentText('');
+
+      // Create notification for creator
+      if (creator && (creator.wallet_address || creator.privy_did)) {
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await getAccessToken()}`
+          },
+          body: JSON.stringify({
+            wallet: creator.wallet_address,
+            did: creator.privy_did,
+            action: 'create',
+            type: 'comment',
+            actor: identifier,
+            postTitle: post.title
+          }),
+        });
+      }
     } catch (err) {
       console.error('Comment error:', err);
       alert('Failed to post comment');
@@ -213,7 +282,9 @@ export default function PostPage() {
 
   if (!post || !creator) return <div className="py-20 flex flex-col items-center justify-center text-white"><p className="mb-4">Post not found.</p><button onClick={() => router.back()} className="text-[#F7931A] hover:underline font-bold">Go Back</button></div>;
 
-  const isOwner = userAddress?.toLowerCase() === (creator?.wallet_address as string)?.toLowerCase();
+  const isOwner = (userAddress || userId) && (creator?.wallet_address || creator?.privy_did)
+    ? (userAddress?.toLowerCase() === (creator?.wallet_address as string)?.toLowerCase()) || (userId === creator?.privy_did)
+    : false;
   const isLocked = post.visibility !== 'public' && !isOwner && !isSubscribed;
   const type = post.video_url ? 'video' : post.image_url ? 'image' : 'text';
 
@@ -444,9 +515,9 @@ export default function PostPage() {
           <div className="space-y-10">
             <div className="flex gap-6 mb-12">
               <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8A2BE2]/20 to-[#F7931A]/20 border border-white/10 shrink-0 flex items-center justify-center overflow-hidden">
-                {userAddress ? (
+                {userAddress || userId ? (
                   <img
-                    src={`https://api.dicebear.com/9.x/shapes/svg?seed=${userAddress}`}
+                    src={`https://api.dicebear.com/9.x/shapes/svg?seed=${userAddress || userId}`}
                     alt="You"
                     className="w-full h-full object-cover"
                   />

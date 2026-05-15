@@ -1,25 +1,54 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 
+import { privy } from '@/lib/privy';
+
 const WALLET_REGEX = /^0x[a-fA-F0-9]{40}$/;
 const USERNAME_REGEX = /^[a-z0-9_]{3,24}$/;
+const PUBLIC_PROFILE_FIELDS = [
+  'id',
+  'privy_did',
+  'wallet_address',
+  'username',
+  'display_name',
+  'bio',
+  'avatar_url',
+  'banner_url',
+  'social_links',
+  'is_creator',
+  'creator_category',
+  'creator_description',
+  'location',
+  'button_text',
+  'thank_you_message',
+  'suggested_amounts',
+  'verified_on_chain',
+  'total_earned',
+  'created_at',
+  'updated_at',
+].join(', ');
 
 export async function GET(request: NextRequest) {
   try {
+    const did = request.nextUrl.searchParams.get('did');
     const wallet = request.nextUrl.searchParams.get('wallet');
 
-    if (!wallet || !WALLET_REGEX.test(wallet)) {
-      return NextResponse.json({ error: 'Valid wallet required' }, { status: 400 });
+    if (!did && !wallet) {
+      return NextResponse.json({ error: 'DID or wallet required' }, { status: 400 });
     }
 
     const supabase = createServerSupabase();
-    const normalizedWallet = wallet.toLowerCase();
+    
+    let query = supabase.from('user_profiles').select(PUBLIC_PROFILE_FIELDS);
+    if (did) {
+      query = query.eq('privy_did', did);
+    } else if (wallet && WALLET_REGEX.test(wallet)) {
+      query = query.eq('wallet_address', wallet.toLowerCase());
+    } else {
+      return NextResponse.json({ error: 'Invalid identifiers' }, { status: 400 });
+    }
 
-    const { data: profile, error } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .eq('wallet_address', normalizedWallet)
-      .maybeSingle();
+    const { data: profile, error } = await query.maybeSingle();
 
     if (error) throw error;
     if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
@@ -34,14 +63,26 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const body = await request.json();
-    const wallet = body.wallet_address;
 
-    if (!wallet || !WALLET_REGEX.test(wallet)) {
-      return NextResponse.json({ error: 'Valid wallet required' }, { status: 400 });
+    // --- SECURE AUTH CHECK ---
+    const header = request.headers.get('authorization');
+    const token = header?.replace('Bearer ', '');
+
+    if (!token) {
+      return NextResponse.json({ error: 'Authentication required' }, { status: 401 });
     }
 
+    let verifiedDid: string;
+    try {
+      const verified = await privy.utils().auth().verifyAccessToken(token);
+      verifiedDid = verified.user_id;
+    } catch (authError) {
+      console.error('Privy Auth Error:', authError);
+      return NextResponse.json({ error: 'Invalid or expired session' }, { status: 401 });
+    }
+    // -------------------------
+
     const socialLinks = body.social_links !== undefined ? body.social_links : undefined;
-    const normalizedWallet = wallet.toLowerCase();
     const supabase = createServerSupabase();
     const username = String(body.username || '').trim().toLowerCase().replace(/[^a-z0-9_]/g, '');
 
@@ -60,6 +101,7 @@ export async function PATCH(request: NextRequest) {
       button_text?: string;
       thank_you_message?: string;
       suggested_amounts?: number[];
+      referred_by?: string;
     }
 
     const updateData: ProfileUpdate = {
@@ -70,7 +112,7 @@ export async function PATCH(request: NextRequest) {
       const { data: currentProfile } = await supabase
         .from('user_profiles')
         .select('username')
-        .eq('wallet_address', normalizedWallet)
+        .eq('privy_did', verifiedDid)
         .single();
 
       if (currentProfile?.username !== username) {
@@ -78,12 +120,13 @@ export async function PATCH(request: NextRequest) {
           return NextResponse.json({ error: 'Username must be 3-24 characters: lowercase letters, numbers, underscore' }, { status: 400 });
         }
 
-        const { data: usernameOwner, error: usernameError } = await supabase
+        const usernameQuery = supabase
           .from('user_profiles')
-          .select('wallet_address')
+          .select('privy_did, wallet_address')
           .eq('username', username)
-          .neq('wallet_address', normalizedWallet)
-          .maybeSingle();
+          .neq('privy_did', verifiedDid);
+        
+        const { data: usernameOwner, error: usernameError } = await usernameQuery.maybeSingle();
 
         if (usernameError) throw usernameError;
         if (usernameOwner) {
@@ -108,12 +151,23 @@ export async function PATCH(request: NextRequest) {
     if (body.thank_you_message !== undefined) updateData.thank_you_message = body.thank_you_message;
     if (body.suggested_amounts !== undefined) updateData.suggested_amounts = body.suggested_amounts;
 
-    const { data, error } = await supabase
-      .from('user_profiles')
-      .update(updateData)
-      .eq('wallet_address', normalizedWallet)
-      .select()
-      .single();
+    if (body.referred_by_code) {
+      const { data: referrer } = await supabase
+        .from('user_profiles')
+        .select('privy_did')
+        .eq('referral_code', body.referred_by_code)
+        .maybeSingle();
+      
+      if (referrer) {
+        updateData.referred_by = referrer.privy_did;
+      }
+    }
+
+    let updateQuery = supabase.from('user_profiles').update(updateData);
+
+    updateQuery = updateQuery.eq('privy_did', verifiedDid);
+
+    const { data, error } = await updateQuery.select().single();
 
     if (error) throw error;
 

@@ -18,7 +18,8 @@ import {
 } from 'lucide-react';
 import { useAccount, useWriteContract, useWaitForTransactionReceipt, useReadContract } from 'wagmi';
 import { parseEther } from 'viem';
-import { SUBSCRIPTION_ABI, SUBSCRIPTION_CONTRACT } from '@/lib/contracts';
+import { SUBSCRIPTION_ABI } from '@/lib/contracts';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import { supabase } from '@/lib/supabase';
 import CelebrationModal from '@/components/ui/CelebrationModal';
 import MUSDLogo from '@/components/ui/MUSDLogo';
@@ -60,8 +61,15 @@ interface Subscriber {
 
 
 
+import { usePrivy } from '@privy-io/react-auth';
+import { useDashboard } from '@/app/dashboard/layout';
+
 export default function SubscriptionManager() {
   const { address } = useAccount();
+  const { contracts, chainId, explorerUrl } = useNetworkConfig();
+  const { creatorProfile } = useDashboard();
+  const { linkWallet, authenticated } = usePrivy();
+  
   const [activeTab, setActiveTab] = useState<ViewMode>('manage');
   const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -110,7 +118,7 @@ export default function SubscriptionManager() {
 
   // Read current plan counter from contract
   const { data: planCounter, refetch: refetchCounter } = useReadContract({
-    address: SUBSCRIPTION_CONTRACT,
+    address: contracts.SUBSCRIPTION,
     abi: SUBSCRIPTION_ABI,
     functionName: 'planCounter',
   });
@@ -132,6 +140,7 @@ export default function SubscriptionManager() {
         .from('subscription_plans')
         .select('*')
         .eq('creator_address', address.toLowerCase())
+        .eq('chain_id', chainId)
         .order('created_at', { ascending: false });
 
       if (data) setPlans(data as Plan[]);
@@ -141,6 +150,7 @@ export default function SubscriptionManager() {
         .from('subscriptions')
         .select('*')
         .or(`creator_address.eq.${address},creator_address.eq.${address.toLowerCase()}`)
+        .eq('chain_id', chainId)
         .order('created_at', { ascending: false });
 
       if (subsError) {
@@ -185,11 +195,11 @@ export default function SubscriptionManager() {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [address, chainId]);
 
   useEffect(() => {
     fetchPlans();
-  }, [address, fetchPlans]);
+  }, [address, fetchPlans, chainId]);
 
   const handleCreatePlan = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -217,7 +227,7 @@ export default function SubscriptionManager() {
       const durationSeconds = BigInt(parseInt(formData.durationDays) * 86400);
 
       writeContract({
-        address: SUBSCRIPTION_CONTRACT,
+        address: contracts.SUBSCRIPTION,
         abi: SUBSCRIPTION_ABI,
         functionName: 'createPlan',
         args: [formData.name, priceWei, durationSeconds],
@@ -239,7 +249,7 @@ export default function SubscriptionManager() {
     try {
       const priceWei = parseEther(plan.price.toString());
       writeContract({
-        address: SUBSCRIPTION_CONTRACT,
+        address: contracts.SUBSCRIPTION,
         abi: SUBSCRIPTION_ABI,
         functionName: 'updatePlan',
         args: [BigInt(plan.chain_plan_id), plan.name, priceWei, !plan.active],
@@ -258,9 +268,9 @@ export default function SubscriptionManager() {
       const saveToDb = async () => {
         try {
           const { data: updatedCounter } = await refetchCounter();
-          let chainId = 0;
+          let chainPlanId = 0;
           if (updatedCounter !== undefined) {
-            chainId = Number(updatedCounter) - 1;
+            chainPlanId = Number(updatedCounter) - 1;
           }
 
           await supabase.from('subscription_plans').insert({
@@ -272,7 +282,8 @@ export default function SubscriptionManager() {
             perks: formData.perks.map(p => p.text),
             welcome_note: formData.welcome_note,
             active: true,
-            chain_plan_id: chainId >= 0 ? chainId : 0
+            chain_plan_id: chainPlanId >= 0 ? chainPlanId : 0,
+            chain_id: chainId
           });
 
           setNotification({ message: "Subscription Tier Live! 🎉", type: 'success' });
@@ -321,9 +332,43 @@ export default function SubscriptionManager() {
       };
       updateDb();
     }
-  }, [isConfirmed, hash, creating, activeActionId, address, planCounter, refetchCounter, fetchPlans, formData, plans]);
+  }, [isConfirmed, hash, creating, activeActionId, address, planCounter, refetchCounter, fetchPlans, formData, plans, chainId]);
 
   if (loading) return <div className="py-20 text-center animate-pulse text-slate-500 font-outfit uppercase tracking-widest font-black">Syncing Tiers with Mezo...</div>;
+
+  if (authenticated && !address) {
+    const hasLinkedWallet = !!creatorProfile?.address;
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-3xl mx-auto py-20 px-8 text-center glass-card border-dashed border-[#F7931A]/30 bg-white/[0.02]"
+      >
+        <div className="relative w-24 h-24 mx-auto mb-8">
+          <div className="absolute inset-0 bg-[#F7931A]/20 blur-3xl rounded-full animate-pulse" />
+          <div className="relative w-24 h-24 bg-black border border-[#F7931A]/30 rounded-3xl flex items-center justify-center">
+            <Zap className="w-12 h-12 text-[#F7931A]" />
+          </div>
+        </div>
+        <h2 className="text-4xl font-black text-white font-outfit uppercase tracking-tighter mb-4">
+          {hasLinkedWallet ? 'Connect Your Wallet' : 'Unlock Creator Engine'}
+        </h2>
+        <p className="text-slate-400 text-lg font-medium mb-10 leading-relaxed max-w-lg mx-auto">
+          {hasLinkedWallet 
+            ? 'Your wallet is linked but not currently connected. Please connect it to manage your on-chain tiers.'
+            : 'To build recurring revenue and manage your exclusive tiers, you need to link a Web3 wallet to your account.'}
+        </p>
+        <button
+          onClick={linkWallet}
+          className="btn-primary px-12 py-5 text-lg flex items-center justify-center gap-3 mx-auto group"
+        >
+          <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
+          {hasLinkedWallet ? 'Connect Wallet' : 'Link Your Wallet'}
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
     <div className="space-y-8 relative">
@@ -628,7 +673,7 @@ export default function SubscriptionManager() {
                             </p>
                             {sub.tx_hash && (
                               <a
-                                href={`https://explorer.test.mezo.org/tx/${sub.tx_hash}`}
+                                href={`${explorerUrl}/tx/${sub.tx_hash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="text-[#F7931A] text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline"

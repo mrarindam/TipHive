@@ -8,7 +8,11 @@ import { useAccount, useWriteContract, useWaitForTransactionReceipt } from 'wagm
 import Image from 'next/image';
 import Link from 'next/link';
 import MUSDLogo from '@/components/ui/MUSDLogo';
-import { SUBSCRIPTION_ABI, SUBSCRIPTION_CONTRACT } from '@/lib/contracts';
+import { SUBSCRIPTION_ABI } from '@/lib/contracts';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
+import { useDashboard } from '@/app/dashboard/layout';
+import { usePrivy } from '@privy-io/react-auth';
+import { Plus } from 'lucide-react';
 
 interface Subscription {
   id: string;
@@ -37,6 +41,9 @@ interface Subscription {
 
 export default function MySubscriptions() {
   const { address } = useAccount();
+  const { creatorProfile, linkWallet } = useDashboard();
+  const { contracts, chainId, explorerUrl } = useNetworkConfig();
+  const { authenticated } = usePrivy();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionStatus, setActionStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');
@@ -51,7 +58,11 @@ export default function MySubscriptions() {
   const { isSuccess: isConfirmed } = useWaitForTransactionReceipt({ hash });
 
   const fetchSubscriptions = useCallback(async () => {
-    if (!address) return;
+    if (!address) {
+      setLoading(false);
+      setSubscriptions([]);
+      return;
+    }
     setLoading(true);
     try {
       const { data, error } = await supabase
@@ -61,6 +72,7 @@ export default function MySubscriptions() {
           subscription_plans(name, price, chain_plan_id, description, perks, duration, active)
         `)
         .eq('fan_address', address.toLowerCase())
+        .eq('chain_id', chainId)
         .order('end_date', { ascending: false });
 
       if (error) throw error;
@@ -96,11 +108,11 @@ export default function MySubscriptions() {
     } finally {
       setLoading(false);
     }
-  }, [address]);
+  }, [address, chainId]);
 
   useEffect(() => {
     fetchSubscriptions();
-  }, [address, fetchSubscriptions]);
+  }, [address, fetchSubscriptions, chainId]);
 
   const handleRenew = async (sub: Subscription) => {
     if (!sub.subscription_plans?.chain_plan_id && sub.subscription_plans?.chain_plan_id !== 0) return;
@@ -111,7 +123,7 @@ export default function MySubscriptions() {
 
     try {
       writeContract({
-        address: SUBSCRIPTION_CONTRACT,
+        address: contracts.SUBSCRIPTION,
         abi: SUBSCRIPTION_ABI,
         functionName: 'renewSubscription',
         args: [BigInt(sub.subscription_plans.chain_plan_id)],
@@ -188,6 +200,40 @@ export default function MySubscriptions() {
 
 
   if (loading) return <div className="py-20 text-center animate-pulse text-slate-500 font-outfit">Loading Your Subscriptions...</div>;
+  
+  if (authenticated && !address) {
+    const hasLinkedWallet = !!creatorProfile?.address;
+    
+    return (
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-3xl mx-auto py-20 px-8 text-center glass-card border-dashed border-[#F7931A]/30 bg-white/[0.02]"
+      >
+        <div className="relative w-24 h-24 mx-auto mb-8">
+          <div className="absolute inset-0 bg-[#F7931A]/20 blur-3xl rounded-full animate-pulse" />
+          <div className="relative w-24 h-24 bg-black border border-[#F7931A]/30 rounded-3xl flex items-center justify-center">
+            <Zap className="w-12 h-12 text-[#F7931A]" />
+          </div>
+        </div>
+        <h2 className="text-4xl font-black text-white font-outfit uppercase tracking-tighter mb-4">
+          {hasLinkedWallet ? 'Connect Your Wallet' : 'Unlock Supporter Suite'}
+        </h2>
+        <p className="text-slate-400 text-lg font-medium mb-10 leading-relaxed max-w-lg mx-auto">
+          {hasLinkedWallet 
+            ? 'Your wallet is linked but not currently connected. Please connect it to view and manage your active subscriptions.'
+            : 'To explore creator circles and manage your subscriptions, you need to link a Web3 wallet to your account.'}
+        </p>
+        <button
+          onClick={linkWallet}
+          className="btn-primary px-12 py-5 text-lg flex items-center justify-center gap-3 mx-auto group"
+        >
+          <Plus className="w-6 h-6 group-hover:rotate-90 transition-transform duration-500" />
+          {hasLinkedWallet ? 'Connect Wallet' : 'Link Your Wallet'}
+        </button>
+      </motion.div>
+    );
+  }
 
   return (
     <div className="relative w-full py-20 overflow-hidden">
@@ -353,7 +399,7 @@ export default function MySubscriptions() {
                           </div>
 
                           <a
-                            href={`https://explorer.test.mezo.org/tx/${sub.tx_hash}`}
+                            href={`${explorerUrl}/tx/${sub.tx_hash}`}
                             target="_blank"
                             onClick={(e) => e.stopPropagation()}
                             className="flex items-center justify-center gap-2 text-[9px] text-slate-600 hover:text-[#F7931A] uppercase tracking-widest font-black transition-colors"

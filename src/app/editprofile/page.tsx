@@ -1,16 +1,12 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { ConnectButton } from '@rainbow-me/rainbowkit';
-import { useAccount, useBalance, useReadContract } from 'wagmi';
-import { formatEther } from 'viem';
+import { motion, AnimatePresence } from 'framer-motion';
+import { useAccount } from 'wagmi';
+import { usePrivy } from '@privy-io/react-auth';
 import {
   AtSign,
-  BadgeCheck,
-  Bitcoin,
-  CheckCircle2,
-  Copy,
   Crown,
   ExternalLink,
   Loader2,
@@ -18,19 +14,15 @@ import {
   Rocket,
   Save,
   ShieldCheck,
-  Sparkles,
   Upload,
   UserRound,
-  Wallet,
   Globe,
   Link as LinkIcon,
+  X,
 } from 'lucide-react';
-import { ERC20_ABI, MUSD_ADDRESS, SUBSCRIPTION_ABI, SUBSCRIPTION_CONTRACT, TIPPING_ABI, TIPPING_CONTRACT } from '@/lib/contracts';
-import MUSDLogo from '@/components/ui/MUSDLogo';
 import { supabase } from '@/lib/supabase';
 import BannerCropper from '@/components/profile/BannerCropper';
 
-const ZERO = BigInt(0);
 
 interface Profile {
   wallet_address: string;
@@ -47,29 +39,16 @@ interface Profile {
   location?: string | null;
 }
 
-function shortAddress(address?: string) {
-  if (!address) return '';
-  return `${address.slice(0, 8)}...${address.slice(-6)}`;
-}
-
-function money(value?: bigint) {
-  if (!value) return '0.00';
-  return Number(formatEther(value)).toLocaleString(undefined, {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
-
 export default function ConnectedProfilePage() {
-  const { address, isConnected } = useAccount();
-  const { data: nativeBalance } = useBalance({ address });
+  const { address } = useAccount();
+  const { ready, authenticated, user, getAccessToken } = usePrivy();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
-  const [copied, setCopied] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
   const [avatarFile, setAvatarFile] = useState<File | null>(null);
   const [bannerFile, setBannerFile] = useState<File | null>(null);
   const [origin, setOrigin] = useState('');
+  const [showSuccess, setShowSuccess] = useState(false);
 
   const [formData, setFormData] = useState({
     username: '',
@@ -89,39 +68,9 @@ export default function ConnectedProfilePage() {
     setOrigin(window.location.origin);
   }, []);
 
-  const { data: musdBalance } = useReadContract({
-    address: MUSD_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: 'balanceOf',
-    args: [address as `0x${string}`],
-    query: { enabled: Boolean(isConnected && address && MUSD_ADDRESS) },
-  });
-
-  const { data: tipBalance } = useReadContract({
-    address: TIPPING_CONTRACT,
-    abi: TIPPING_ABI,
-    functionName: 'getCreatorBalance',
-    args: [address as `0x${string}`],
-    query: { enabled: Boolean(isConnected && address && TIPPING_CONTRACT) },
-  });
-
-  const { data: subBalance } = useReadContract({
-    address: SUBSCRIPTION_CONTRACT,
-    abi: SUBSCRIPTION_ABI,
-    functionName: 'getCreatorEarnings',
-    args: [address as `0x${string}`],
-    query: { enabled: Boolean(isConnected && address && SUBSCRIPTION_CONTRACT) },
-  });
-
-  const claimable = useMemo(() => {
-    const tipValue = typeof tipBalance === 'bigint' ? tipBalance : ZERO;
-    const subValue = typeof subBalance === 'bigint' ? subBalance : ZERO;
-    return tipValue + subValue;
-  }, [tipBalance, subBalance]);
-
 
   useEffect(() => {
-    if (!address) {
+    if (!user?.id && !address) {
       setTimeout(() => setLoading(false), 0);
       return;
     }
@@ -131,9 +80,13 @@ export default function ConnectedProfilePage() {
       if (!cancelled) setLoading(true);
     }, 0);
 
-    fetch(`/api/auth?wallet=${address}`)
-      .then((res) => res.json())
-      .then((data: { user: Profile | null }) => {
+    const loadProfile = async () => {
+      try {
+        const token = await getAccessToken();
+        const res = await fetch(`/api/auth?did=${encodeURIComponent(user?.id || '')}&wallet=${address || ''}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
         if (cancelled) return;
         const nextProfile = data.user || null;
         setProfile(nextProfile);
@@ -147,30 +100,23 @@ export default function ConnectedProfilePage() {
           creator_description: nextProfile?.creator_description || '',
           location: nextProfile?.location || '',
         });
-      })
-      .finally(() => {
+      } catch (err) {
+        console.error('Error loading profile:', err);
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
+
+    loadProfile();
 
     return () => {
       cancelled = true;
     };
-  }, [address]);
-
-  const avatar = profile?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${address}`;
-  const displayName = profile?.display_name || 'Wallet profile';
-  const totalAssets = Number(formatEther(musdBalance || ZERO)) + Number(formatEther(claimable));
-
-  const copyWallet = async () => {
-    if (!address) return;
-    await navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 1600);
-  };
+  }, [address, user?.id, getAccessToken]);
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault();
-    if (!address) return;
+    if (!user?.id && !address) return;
 
     setSaving(true);
     try {
@@ -179,7 +125,7 @@ export default function ConnectedProfilePage() {
 
       if (avatarFile) {
         const fileExt = avatarFile.name.split('.').pop() || 'png';
-        const fileName = `${address.toLowerCase()}-avatar-${Date.now()}.${fileExt}`;
+        const fileName = `${user?.id || address?.toLowerCase()}-avatar-${Date.now()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage.from('tipmusd').upload(fileName, avatarFile, { upsert: true });
         if (uploadError) throw uploadError;
         const { data } = supabase.storage.from('tipmusd').getPublicUrl(fileName);
@@ -188,18 +134,23 @@ export default function ConnectedProfilePage() {
 
       if (bannerFile) {
         const fileExt = bannerFile.name.split('.').pop() || 'png';
-        const fileName = `${address.toLowerCase()}-banner-${Date.now()}.${fileExt}`;
+        const fileName = `${user?.id || address?.toLowerCase()}-banner-${Date.now()}.${fileExt}`;
         const { error: uploadError } = await supabase.storage.from('tipmusd').upload(fileName, bannerFile, { upsert: true });
         if (uploadError) throw uploadError;
         const { data } = supabase.storage.from('tipmusd').getPublicUrl(fileName);
         bannerUrl = data.publicUrl;
       }
 
+      const token = await getAccessToken();
       const response = await fetch('/api/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
-          wallet_address: address,
+          privy_did: user?.id,
+          wallet_address: address || null,
           username: formData.username,
           display_name: formData.display_name,
           bio: formData.bio,
@@ -217,6 +168,8 @@ export default function ConnectedProfilePage() {
       setProfile(data.profile);
       window.dispatchEvent(new CustomEvent('wallet-profile-updated', { detail: data.profile }));
       setAvatarFile(null);
+      setShowSuccess(true);
+      setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Profile update failed';
       alert(message);
@@ -260,19 +213,20 @@ export default function ConnectedProfilePage() {
     !l.includes('x.com') && !l.includes('twitter.com') && !l.includes('github.com') && !l.includes('discord.com')
   );
 
-  if (!isConnected) {
+  if (!ready) {
+    return <div className="min-h-[70vh] bg-black" />;
+  }
+
+  if (!authenticated) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-4 text-center">
         <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] border border-white/5 bg-white/5 shadow-2xl shadow-orange-500/10">
-          <Wallet className="h-10 w-10 text-[#F7931A]" />
+          <UserRound className="h-10 w-10 text-[#F7931A]" />
         </div>
-        <h1 className="font-outfit text-5xl font-black uppercase tracking-tighter text-white">Connect Your Identity</h1>
+        <h1 className="font-outfit text-5xl font-black uppercase tracking-tighter text-white">Gateway Locked</h1>
         <p className="mt-4 max-w-lg text-lg font-medium text-slate-400">
-          Your EVM wallet is your SuperPay profile. Connect once and the profile is created automatically.
+          You must be logged in to access your universal profile.
         </p>
-        <div className="mt-10">
-          <ConnectButton />
-        </div>
       </div>
     );
   }
@@ -287,14 +241,14 @@ export default function ConnectedProfilePage() {
 
   return (
     <div className="w-full px-4 py-10 sm:px-6 lg:px-8">
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between max-w-4xl mx-auto">
         <div>
           <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#F7931A]/25 bg-[#F7931A]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#F7931A]">
             <ShieldCheck className="h-4 w-4" />
-            Universal wallet profile
+            Universal profile settings
           </p>
           <h1 className="font-outfit text-5xl font-black uppercase tracking-tighter text-white">
-            Wallet <span className="text-[#F7931A]">Profile</span>
+            Profile <span className="text-[#F7931A]">Settings</span>
           </h1>
         </div>
         {profile?.username && (
@@ -305,45 +259,7 @@ export default function ConnectedProfilePage() {
         )}
       </div>
 
-      <div className="grid gap-8 lg:grid-cols-[0.9fr_1.1fr]">
-        <section className="glass-card overflow-hidden">
-          <div className="relative p-8">
-            <div className="absolute inset-x-0 top-0 h-48 bg-[radial-gradient(circle_at_20%_20%,rgba(247,147,26,0.32),transparent_35%),radial-gradient(circle_at_85%_15%,rgba(34,211,238,0.26),transparent_30%),radial-gradient(circle_at_55%_0%,rgba(217,70,239,0.18),transparent_32%)]" />
-            <div className="relative">
-              <img src={avatar} alt="" className="mb-6 h-28 w-28 rounded-[2rem] border-4 border-black bg-white object-cover shadow-2xl shadow-black/40" />
-              <div className="flex items-start justify-between gap-4">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2">
-                    <h2 className="truncate font-outfit text-4xl font-black uppercase tracking-tighter text-white">{displayName}</h2>
-                    <BadgeCheck className="h-6 w-6 shrink-0 fill-cyan-400 text-black" />
-                  </div>
-                  <p className="mt-2 font-mono text-sm font-bold text-slate-400">{shortAddress(address)}</p>
-                  {profile?.username && (
-                    <p className="mt-2 inline-flex items-center gap-2 rounded-full border border-[#F7931A]/25 bg-[#F7931A]/10 px-3 py-1 text-xs font-black uppercase tracking-[0.18em] text-[#F7931A]">
-                      <AtSign className="h-3 w-3" />
-                      {profile.username}
-                    </p>
-                  )}
-                </div>
-                <button onClick={copyWallet} type="button" className="rounded-2xl border border-white/5 bg-white/5 p-3 text-slate-300 transition hover:border-[#F7931A]/40 hover:text-[#F7931A]">
-                  {copied ? <CheckCircle2 className="h-5 w-5 text-lime-400" /> : <Copy className="h-5 w-5" />}
-                </button>
-              </div>
-
-              <p className="mt-6 min-h-16 text-base font-medium leading-relaxed text-slate-300">
-                {profile?.bio || 'No bio yet. Add a sharp little intro so people know who owns this wallet.'}
-              </p>
-
-              <div className="mt-8 grid grid-cols-2 gap-3">
-                <MetricCard icon={<MUSDLogo className="h-5 w-5" />} label="MUSD" value={`$${money(musdBalance as bigint | undefined)}`} />
-                <MetricCard icon={<Bitcoin className="h-5 w-5" />} label="BTC" value={nativeBalance ? Number(formatEther(nativeBalance.value)).toFixed(5) : '0.00000'} />
-                <MetricCard icon={<Sparkles className="h-5 w-5" />} label="Claimable" value={`$${money(claimable)}`} />
-                <MetricCard icon={<UserRound className="h-5 w-5" />} label="Total Assets" value={`$${totalAssets.toFixed(2)}`} />
-              </div>
-            </div>
-          </div>
-        </section>
-
+      <div className="mx-auto max-w-4xl">
         <section className="glass-card p-8">
           <div className="mb-8 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F7931A]/15 text-[#F7931A]">
@@ -581,13 +497,13 @@ export default function ConnectedProfilePage() {
 
             <button type="submit" disabled={saving} className="btn-primary flex w-full items-center justify-center gap-3 py-5 text-lg shadow-[0_20px_40px_rgba(247,147,26,0.2)]">
               {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
-              {saving ? 'Saving Profile...' : 'Save Wallet Profile'}
+              {saving ? 'Saving Profile...' : 'Save Profile'}
             </button>
           </form>
         </section>
       </div>
 
-      <section className="glass-card mt-8 overflow-hidden p-8 relative flex flex-col items-center justify-center text-center">
+      <section className="mx-auto max-w-4xl glass-card mt-8 overflow-hidden p-8 relative flex flex-col items-center justify-center text-center">
         <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-[#F7931A]/10 blur-3xl" />
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F7931A]/15 text-[#F7931A]">
           <Crown className="h-8 w-8" />
@@ -610,16 +526,33 @@ export default function ConnectedProfilePage() {
           </Link>
         </div>
       </section>
-    </div>
-  );
-}
 
-function MetricCard({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
-  return (
-    <div className="rounded-2xl border border-white/5 bg-black/35 p-4">
-      <div className="mb-4 flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#F7931A]">{icon}</div>
-      <p className="text-[10px] font-black uppercase tracking-[0.2em] text-slate-500">{label}</p>
-      <p className="mt-1 truncate text-xl font-black text-white">{value}</p>
+      <AnimatePresence>
+        {showSuccess && (
+          <motion.div
+            initial={{ opacity: 0, y: 100 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 100 }}
+            className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-md"
+          >
+            <div className="bg-[#111113]/90 backdrop-blur-2xl border border-[#F7931A]/30 rounded-[2rem] p-6 shadow-[0_20px_50px_rgba(247,147,26,0.2)] flex items-center gap-6">
+              <div className="w-14 h-14 rounded-2xl bg-[#F7931A] flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0">
+                <ShieldCheck className="w-8 h-8 text-black" />
+              </div>
+              <div className="flex-1">
+                <h4 className="text-white font-black uppercase tracking-tight text-xl">Profile Saved</h4>
+                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Changes are now live!</p>
+              </div>
+              <button 
+                onClick={() => setShowSuccess(false)}
+                className="text-slate-500 hover:text-white transition-colors p-2"
+              >
+                <X className="w-6 h-6" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

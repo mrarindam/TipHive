@@ -5,9 +5,11 @@ import { useDashboard, Activity } from '../layout';
 import { Heart, History, ExternalLink } from 'lucide-react';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import Pagination from '@/components/ui/Pagination';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 
 export default function SentSupportPage() {
   const { activities, loading } = useDashboard();
+  const { explorerUrl } = useNetworkConfig();
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
 
@@ -47,7 +49,7 @@ export default function SentSupportPage() {
                       <p className="text-slate-500 text-xs">To {activity.to_name || 'Creator'} • {new Date(activity.created_at).toLocaleDateString()}</p>
                       {activity.tx_hash && (
                         <a 
-                          href={`https://explorer.test.mezo.org/tx/${activity.tx_hash}`} 
+                          href={`${explorerUrl}/tx/${activity.tx_hash}`} 
                           target="_blank" 
                           rel="noopener noreferrer"
                           className="text-[#F7931A] text-[10px] font-black uppercase tracking-widest mt-2 flex items-center gap-1 hover:underline"

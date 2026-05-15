@@ -7,6 +7,7 @@ import { FileText, ImageIcon, Headphones, Video, Eye, Calendar, Trash2, AlertTri
 import { AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAccount } from 'wagmi';
+import { useDashboard } from '../layout';
 import Pagination from '@/components/ui/Pagination';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -43,15 +44,26 @@ export default function DropsPage() {
   const [deleteId, setDeleteId] = useState<string | null>(null);
   const itemsPerPage = 10;
 
+  const { user } = useDashboard();
+
   useEffect(() => {
-    if (!address) return;
     const fetchPosts = async () => {
+      if (!address && !user?.id) {
+        setLoading(false);
+        return;
+      }
+
       setLoading(true);
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('id, username')
-        .eq('wallet_address', address.toLowerCase())
-        .single();
+      
+      let profileQuery = supabase.from('user_profiles').select('id, username');
+      
+      if (address) {
+        profileQuery = profileQuery.eq('wallet_address', address.toLowerCase());
+      } else if (user?.id) {
+        profileQuery = profileQuery.eq('privy_did', user.id);
+      }
+
+      const { data: profile } = await profileQuery.single();
     
       if (profile) {
         setUsername(profile.username);
@@ -65,7 +77,7 @@ export default function DropsPage() {
       setLoading(false);
     };
     fetchPosts();
-  }, [address]);
+  }, [address, user?.id]);
 
   const confirmDelete = async () => {
     if (!deleteId) return;

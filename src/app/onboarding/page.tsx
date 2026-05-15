@@ -1,15 +1,29 @@
 'use client';
 
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
-import { useRouter } from 'next/navigation';
+import { usePrivy } from '@privy-io/react-auth';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { Camera, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Rocket, XCircle, Globe, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
 
 export default function OnboardingPage() {
-  const { address, isConnected } = useAccount();
+  return (
+    <Suspense fallback={<div className="fixed inset-0 z-[100] bg-[#0b0b0f] flex items-center justify-center">
+      <Loader2 className="w-8 h-8 animate-spin text-[#f7931a]" />
+    </div>}>
+      <OnboardingContent />
+    </Suspense>
+  );
+}
+
+function OnboardingContent() {
+  const { address } = useAccount();
+  const { ready, authenticated, user, getAccessToken } = usePrivy();
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const referralCode = searchParams.get('ref');
 
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(true);
@@ -38,14 +52,19 @@ export default function OnboardingPage() {
   useEffect(() => {
     setOrigin(window.location.origin);
 
-    if (!isConnected || !address) {
+    if (!ready) return;
+
+    if (!authenticated) {
       router.replace('/');
       return;
     }
 
     const loadProfile = async () => {
       try {
-        const res = await fetch(`/api/auth?wallet=${address}`);
+        const token = await getAccessToken();
+        const res = await fetch(`/api/auth?did=${user?.id}&wallet=${address || ''}`, {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
         if (!res.ok) {
           throw new Error(`Auth API failed: ${res.status}`);
         }
@@ -74,7 +93,7 @@ export default function OnboardingPage() {
     };
 
     loadProfile();
-  }, [address, isConnected, router]);
+  }, [address, ready, authenticated, user?.id, getAccessToken, router]);
 
   const checkUsername = useCallback(async (val: string) => {
     if (!val || val.length < 3) {
@@ -122,7 +141,7 @@ export default function OnboardingPage() {
   };
 
   const submitProfile = async () => {
-    if (!address) return;
+    if (!user?.id && !address) return;
     setIsSubmitting(true);
     try {
       const links = {
@@ -132,22 +151,61 @@ export default function OnboardingPage() {
         website: website.startsWith('http') ? website : (website ? `https://${website}` : ''),
       };
 
+      const token = await getAccessToken();
       const response = await fetch('/api/profile', {
         method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify({
-          wallet_address: address,
+          privy_did: user?.id,
+          wallet_address: address || null,
           username,
           display_name: displayName,
           bio,
           avatar_url: avatarUrl,
           social_links: links,
           is_creator: true,
+          referred_by_code: referralCode,
         }),
       });
 
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Failed to complete profile');
+
+      window.dispatchEvent(
+        new CustomEvent('wallet-profile-updated', {
+          detail: {
+            privy_did: user?.id,
+            wallet_address: address || null,
+            username,
+            display_name: displayName,
+            avatar_url: avatarUrl,
+            bio,
+            social_links: links,
+            is_creator: true,
+          },
+        })
+      );
+
+      // Create onboarding complete notification
+      const notifIdentifier = address?.toLowerCase() || user?.id;
+      if (notifIdentifier) {
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await getAccessToken()}`
+          },
+          body: JSON.stringify({
+            wallet: notifIdentifier,
+            action: 'create',
+            type: 'welcome',
+            content: `🎉 Your creator profile is now live! Share your page: ${origin}/${username}`,
+          }),
+        });
+      }
 
       setStep(3); // Success step
     } catch (error) {
@@ -578,4 +636,3 @@ export default function OnboardingPage() {
     </div>
   );
 }
-

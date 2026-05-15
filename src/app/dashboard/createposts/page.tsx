@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useRef, useMemo, Suspense } from 'react';
+import { useDashboard } from '../layout';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
@@ -15,7 +16,6 @@ import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
 import { common, createLowlight } from 'lowlight';
 import { supabase } from '@/lib/supabase';
-import { useAccount } from 'wagmi';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   ArrowLeft, Bold, Italic, Underline, Strikethrough, List, ListOrdered,
@@ -32,7 +32,9 @@ function EditorInner() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const postType = searchParams.get('type') || 'text';
-  const { address } = useAccount();
+  const { address, creatorProfile, getAccessToken } = useDashboard();
+  
+  const displayAddress = address || creatorProfile?.address;
 
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
@@ -92,13 +94,23 @@ function EditorInner() {
     },
   });
 
+  const { user } = useDashboard();
+
   const handlePublish = async () => {
-    if (!address || !title) return alert('Title is required');
+    if (!title) return alert('Title is required');
     setStatus('saving');
     try {
-      const { data: profile } = await supabase
-        .from('user_profiles').select('id')
-        .eq('wallet_address', address.toLowerCase()).single();
+      let profileQuery = supabase.from('user_profiles').select('id');
+      
+      if (address) {
+        profileQuery = profileQuery.eq('wallet_address', address.toLowerCase());
+      } else if (user?.id) {
+        profileQuery = profileQuery.eq('privy_did', user.id);
+      } else {
+        throw new Error('Authentication required');
+      }
+
+      const { data: profile } = await profileQuery.single();
       if (!profile) throw new Error('Profile not found');
 
       const postData: {
@@ -153,7 +165,13 @@ function EditorInner() {
       signFormData.append('action', 'sign');
       signFormData.append('upload_preset', uploadPreset);
       
-      const signRes = await fetch('/api/upload', { method: 'POST', body: signFormData });
+      const token = await getAccessToken();
+      const signRes = await fetch('/api/upload', { 
+        method: 'POST', 
+        body: signFormData,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
       const signData = await signRes.json();
       
       if (!signRes.ok) throw new Error(signData.error || 'Failed to get upload signature');
@@ -245,7 +263,13 @@ function EditorInner() {
       signFormData.append('action', 'sign');
       signFormData.append('upload_preset', uploadPreset);
       
-      const signRes = await fetch('/api/upload', { method: 'POST', body: signFormData });
+      const token = await getAccessToken();
+      const signRes = await fetch('/api/upload', { 
+        method: 'POST', 
+        body: signFormData,
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
       const signData = await signRes.json();
       if (!signRes.ok) throw new Error(signData.error || 'Failed to get signature');
 
@@ -348,19 +372,26 @@ function EditorInner() {
                     exit={{ opacity: 0, y: 10 }}
                     className="absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-white/10 rounded-xl shadow-2xl p-2 z-50"
                   >
-                    {visibilityOptions.map(v => (
-                      <button
-                        key={v.id}
-                        onClick={() => { setVisibility(v.id as 'public' | 'followers' | 'supporters'); setShowVisibility(false); }}
-                        className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${visibility === v.id ? 'bg-white/5' : 'hover:bg-white/5'}`}
-                      >
-                        <v.icon size={16} className={v.color} />
-                        <div>
-                          <p className="text-sm font-semibold text-white">{v.label}</p>
-                          <p className="text-xs text-slate-500">{v.desc}</p>
-                        </div>
-                      </button>
-                    ))}
+                    {visibilityOptions.map(v => {
+                      const isDisabled = v.id === 'supporters' && !displayAddress;
+                      return (
+                        <button
+                          key={v.id}
+                          disabled={isDisabled}
+                          onClick={() => { setVisibility(v.id as 'public' | 'followers' | 'supporters'); setShowVisibility(false); }}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${visibility === v.id ? 'bg-white/5' : 'hover:bg-white/5'} ${isDisabled ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+                        >
+                          <v.icon size={16} className={v.color} />
+                          <div className="flex-1">
+                            <p className="text-sm font-semibold text-white flex items-center gap-2">
+                              {v.label}
+                              {isDisabled && <Lock size={12} className="text-amber-500" />}
+                            </p>
+                            <p className="text-xs text-slate-500">{isDisabled ? 'Wallet connection required' : v.desc}</p>
+                          </div>
+                        </button>
+                      );
+                    })}
                   </motion.div>
                 )}
               </AnimatePresence>

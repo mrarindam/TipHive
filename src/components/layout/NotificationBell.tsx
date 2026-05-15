@@ -1,20 +1,22 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { Bell, BellRing, Info, Zap, Star } from 'lucide-react';
+import { Bell, BellRing, Info, Zap, Star, Heart, MessageCircle, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
+import { usePrivy } from '@privy-io/react-auth';
 
 interface Notification {
   id: string;
-  type: 'welcome' | 'subscription' | 'tip';
+  type: 'welcome' | 'subscription' | 'tip' | 'like' | 'comment' | 'follow';
   content: string;
   is_read: boolean;
   created_at: string;
 }
 
 export default function NotificationBell() {
-  const { address, isConnected } = useAccount();
+  const { address } = useAccount();
+  const { authenticated, user, getAccessToken } = usePrivy();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
@@ -22,10 +24,18 @@ export default function NotificationBell() {
   const unreadCount = notifications.filter(n => !n.is_read).length;
   const displayCount = unreadCount > 9 ? '9+' : unreadCount;
 
+  const userId = user?.id;
+
   const fetchNotifications = useCallback(async () => {
-    if (!address) return;
+    if (!authenticated || (!address && !userId)) return;
     try {
-      const res = await fetch(`/api/notifications?wallet=${address}`);
+      const params = new URLSearchParams();
+      if (address) params.set('wallet', address);
+      if (userId) params.set('did', userId);
+      const token = await getAccessToken();
+      const res = await fetch(`/api/notifications?${params.toString()}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
       if (!res.ok) {
         throw new Error(`Notifications API failed: ${res.status}`);
       }
@@ -36,15 +46,15 @@ export default function NotificationBell() {
     } catch (error) {
       console.error('Error fetching notifications:', error);
     }
-  }, [address]);
+  }, [address, userId, authenticated, getAccessToken]);
 
   useEffect(() => {
-    if (isConnected && address) {
+    if (authenticated) {
       fetchNotifications();
       const interval = setInterval(fetchNotifications, 5000); // Poll every 5s
       return () => clearInterval(interval);
     }
-  }, [isConnected, address, fetchNotifications]);
+  }, [authenticated, fetchNotifications]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -57,12 +67,21 @@ export default function NotificationBell() {
   }, []);
 
   const markAllRead = async () => {
-    if (!address) return;
+    // Use wallet if available, otherwise use privy_did
+    const identifier = address || user?.id;
+    if (!identifier) return;
     try {
       const res = await fetch('/api/notifications', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ wallet: address, action: 'markAllRead' }),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${await getAccessToken()}`
+        },
+        body: JSON.stringify({ 
+          wallet: address, 
+          did: user?.id, 
+          action: 'markAllRead' 
+        }),
       });
       if (res.ok) {
         setNotifications(notifications.map(n => ({ ...n, is_read: true })));
@@ -72,7 +91,7 @@ export default function NotificationBell() {
     }
   };
 
-  if (!isConnected) return null;
+  if (!authenticated) return null;
 
   return (
     <div className="relative" ref={bellRef}>
@@ -121,37 +140,49 @@ export default function NotificationBell() {
             <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
               {notifications.length > 0 ? (
                 <div className="divide-y divide-white/5">
-                  {notifications.map((notification) => (
-                    <div
-                      key={notification.id}
-                      className={`p-5 transition-colors hover:bg-white/[0.03] relative ${
-                        !notification.is_read ? 'bg-[#F7931A]/5' : ''
-                      }`}
-                    >
-                      {!notification.is_read && (
-                        <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F7931A]" />
-                      )}
-                      <div className="flex gap-4">
-                        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                          notification.type === 'welcome' ? 'bg-blue-500/10 text-blue-400' :
-                          notification.type === 'tip' ? 'bg-[#F7931A]/10 text-[#F7931A]' :
-                          'bg-purple-500/10 text-purple-400'
-                        }`}>
-                          {notification.type === 'welcome' ? <Info className="w-5 h-5" /> :
-                           notification.type === 'tip' ? <Zap className="w-5 h-5" /> :
-                           <Star className="w-5 h-5" />}
-                        </div>
-                        <div className="flex-1 min-w-0">
-                          <p className="text-xs font-medium text-slate-300 leading-relaxed">
-                            {notification.content}
-                          </p>
-                          <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-2">
-                            {new Date(notification.created_at).toLocaleDateString()} at {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                          </p>
+                  {notifications.map((notification) => {
+                    const displayType = notification.content.startsWith('❤️') ? 'like' : 
+                                        notification.content.startsWith('💬') ? 'comment' :
+                                        notification.content.startsWith('👤') ? 'follow' : 
+                                        notification.type;
+                    return (
+                      <div
+                        key={notification.id}
+                        className={`p-5 transition-colors hover:bg-white/[0.03] relative ${
+                          !notification.is_read ? 'bg-[#F7931A]/5' : ''
+                        }`}
+                      >
+                        {!notification.is_read && (
+                          <div className="absolute left-0 top-0 bottom-0 w-1 bg-[#F7931A]" />
+                        )}
+                        <div className="flex gap-4">
+                          <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
+                            displayType === 'welcome' ? 'bg-blue-500/10 text-blue-400' :
+                            displayType === 'tip' ? 'bg-[#F7931A]/10 text-[#F7931A]' :
+                            displayType === 'like' ? 'bg-red-500/10 text-red-400' :
+                            displayType === 'comment' ? 'bg-green-500/10 text-green-400' :
+                            displayType === 'follow' ? 'bg-blue-500/10 text-blue-400' :
+                            'bg-purple-500/10 text-purple-400'
+                          }`}>
+                            {displayType === 'welcome' ? <Info className="w-5 h-5" /> :
+                             displayType === 'tip' ? <Zap className="w-5 h-5" /> :
+                             displayType === 'like' ? <Heart className="w-5 h-5" /> :
+                             displayType === 'comment' ? <MessageCircle className="w-5 h-5" /> :
+                             displayType === 'follow' ? <UserPlus className="w-5 h-5" /> :
+                             <Star className="w-5 h-5" />}
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs font-medium text-slate-300 leading-relaxed">
+                              {notification.content}
+                            </p>
+                            <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-2">
+                              {new Date(notification.created_at).toLocaleDateString()} at {new Date(notification.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </p>
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  ))}
+                    );
+                  })}
                 </div>
               ) : (
                 <div className="py-12 px-6 text-center">

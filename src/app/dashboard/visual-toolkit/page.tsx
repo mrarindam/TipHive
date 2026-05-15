@@ -2,14 +2,15 @@
 
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { MousePointerClick, QrCode, ArrowRight, Sparkles } from 'lucide-react';
+import { MousePointerClick, QrCode, ArrowRight, Sparkles, Lock } from 'lucide-react';
 import { useDashboard } from '../layout';
 import ButtonGeneratorModal from '@/components/dashboard/ButtonGeneratorModal';
 import WidgetGeneratorModal from '@/components/dashboard/WidgetGeneratorModal';
 import QRCodeGeneratorModal from '@/components/dashboard/QRCodeGeneratorModal';
 
 export default function VisualToolkitPage() {
-  const { creatorProfile } = useDashboard();
+  const { creatorProfile, address } = useDashboard();
+  const hasWallet = !!creatorProfile?.address || !!address;
   const username = creatorProfile?.username || 'creator';
   const [isButtonModalOpen, setIsButtonModalOpen] = useState(false);
   const [isWidgetModalOpen, setIsWidgetModalOpen] = useState(false);
@@ -20,7 +21,8 @@ export default function VisualToolkitPage() {
       title: 'Website buttons',
       description: 'Create customizable buttons which take your audience to your page. You can add this to your site or blog.',
       buttonText: 'Generate',
-      onClick: () => setIsButtonModalOpen(true),
+      locked: !hasWallet,
+      onClick: () => hasWallet && setIsButtonModalOpen(true),
       visual: (
         <div className="relative w-full h-40 bg-[#050507] rounded-2xl border border-white/5 flex items-center justify-center overflow-hidden">
            <div className="absolute top-0 left-0 right-0 h-6 bg-white/5 flex items-center px-3 gap-1.5">
@@ -46,7 +48,8 @@ export default function VisualToolkitPage() {
       title: 'Website widget',
       description: 'Allow your audience to support you right from your own website. Customize the widget with a message and your brand color.',
       buttonText: 'Generate',
-      onClick: () => setIsWidgetModalOpen(true),
+      locked: !hasWallet,
+      onClick: () => hasWallet && setIsWidgetModalOpen(true),
       visual: (
         <div className="relative w-full h-40 bg-[#050507] rounded-2xl border border-white/5 overflow-hidden p-4">
            <div className="absolute top-0 left-0 right-0 h-6 bg-white/5 flex items-center px-3 gap-1.5">
@@ -135,11 +138,23 @@ export default function VisualToolkitPage() {
             {/* Background glow on hover */}
             <div className="absolute -top-24 -right-24 w-48 h-48 bg-[#f7931a]/5 blur-[60px] rounded-full group-hover:bg-[#f7931a]/10 transition-colors duration-500" />
             
-            <div className="w-full mb-8 relative z-10">
+            {tool.locked && (
+              <div className="absolute inset-0 z-20 backdrop-blur-[6px] bg-black/40 flex flex-col items-center justify-center p-6 transition-all duration-500">
+                <div className="w-14 h-14 bg-[#f7931a]/10 rounded-full flex items-center justify-center mb-4 border border-[#f7931a]/20">
+                  <Lock className="w-6 h-6 text-[#f7931a]" />
+                </div>
+                <h4 className="text-white font-black uppercase tracking-tight mb-2">Wallet Required</h4>
+                <p className="text-slate-300 text-xs font-bold leading-relaxed max-w-[180px]">
+                  Connect your wallet to enable website integrations.
+                </p>
+              </div>
+            )}
+
+            <div className={`w-full mb-8 relative z-10 ${tool.locked ? 'grayscale opacity-50' : ''}`}>
                {tool.visual}
             </div>
             
-            <div className="relative z-10 flex-1 flex flex-col items-center">
+            <div className={`relative z-10 flex-1 flex flex-col items-center ${tool.locked ? 'opacity-30' : ''}`}>
               <h3 className="text-2xl font-black text-white mb-4 tracking-tight group-hover:text-[#f7931a] transition-colors">
                 {tool.title}
               </h3>
@@ -149,10 +164,15 @@ export default function VisualToolkitPage() {
               
               <button 
                 onClick={tool.onClick}
-                className="mt-auto w-full py-4 bg-white/[0.03] border border-white/10 rounded-2xl text-white font-black uppercase tracking-widest text-xs hover:bg-[#f7931a] hover:text-black hover:border-transparent transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-xl"
+                disabled={tool.locked}
+                className={`mt-auto w-full py-4 rounded-2xl font-black uppercase tracking-widest text-xs transition-all duration-300 flex items-center justify-center gap-2 group/btn shadow-xl ${
+                  tool.locked 
+                    ? 'bg-white/5 text-slate-600 border border-white/5 cursor-not-allowed' 
+                    : 'bg-white/[0.03] border border-white/10 text-white hover:bg-[#f7931a] hover:text-black hover:border-transparent'
+                }`}
               >
-                {tool.buttonText}
-                <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+                {tool.locked ? 'Locked' : tool.buttonText}
+                {!tool.locked && <ArrowRight className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />}
               </button>
             </div>
           </motion.div>

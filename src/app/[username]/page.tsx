@@ -7,23 +7,15 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAccount, useWriteContract, useReadContract, useConfig } from 'wagmi';
+import { usePrivy } from '@privy-io/react-auth';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther } from 'viem';
 import SubscriptionSection from '@/components/profile/SubscriptionSection';
 import CelebrationModal from '@/components/ui/CelebrationModal';
 import { ArrowRight } from 'lucide-react';
 import { useProfile, TextThumbnail, extractFirstImage } from './layout';
-
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_TIPPING_CONTRACT || '0x0000000000000000000000000000000000000000';
-const MUSD_ADDRESS = process.env.NEXT_PUBLIC_MUSD_ADDRESS || '0x0000000000000000000000000000000000000000';
-
-const ERC20_ABI = [
-  { "name": "approve", "type": "function", "stateMutability": "nonpayable", "inputs": [{ "name": "spender", "type": "address" }, { "name": "amount", "type": "uint256" }], "outputs": [{ "name": "", "type": "bool" }] },
-  { "name": "allowance", "type": "function", "stateMutability": "view", "inputs": [{ "name": "owner", "type": "address" }, { "name": "spender", "type": "address" }], "outputs": [{ "name": "", "type": "uint256" }] }
-];
-const TIPPING_ABI = [
-  { "name": "tip", "type": "function", "stateMutability": "nonpayable", "inputs": [{ "name": "_creator", "type": "address" }, { "name": "_amount", "type": "uint256" }], "outputs": [] }
-];
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
+import { TIPPING_ABI, ERC20_ABI } from '@/lib/contracts';
 
 interface Post {
   id: string;
@@ -51,10 +43,12 @@ interface Tip {
 
 export default function CreatorHome() {
   const { creator, fetchData, isOwner } = useProfile();
+  const { contracts, chainId } = useNetworkConfig();
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastTipAmount, setLastTipAmount] = useState('0');
 
   const { isConnected, address: userAddress } = useAccount();
+  const { authenticated, login, getAccessToken } = usePrivy();
   const config = useConfig();
 
   const [amount, setAmount] = useState('10');
@@ -68,10 +62,10 @@ export default function CreatorHome() {
 
   const { writeContractAsync } = useWriteContract();
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: MUSD_ADDRESS as `0x${string}`,
+    address: contracts.MUSD,
     abi: ERC20_ABI,
     functionName: 'allowance',
-    args: [userAddress as `0x${string}`, CONTRACT_ADDRESS as `0x${string}`],
+    args: [userAddress as `0x${string}`, contracts.TIPPING],
   });
 
   useEffect(() => {
@@ -84,69 +78,86 @@ export default function CreatorHome() {
         .select('*')
         .eq('creator_id', creator!.id)
         .order('created_at', { ascending: false });
-        if (postsData) setPosts(postsData);
+      if (postsData) setPosts(postsData);
 
-        // Check subscription
-        if (userAddress && creator) {
-          const { data: subs } = await supabase
-            .from('subscriptions')
-            .select('id, end_date')
-            .eq('fan_address', userAddress.toLowerCase())
-            .eq('creator_address', creator.wallet_address.toLowerCase())
-            .eq('active', true);
-          
-          if (subs && subs.length > 0) {
-            const now = new Date();
-            const activeSub = subs.find(s => new Date(s.end_date) > now);
-            if (activeSub) setIsSubscribed(true);
-          }
+      // Check subscription
+      if (userAddress && creator?.wallet_address) {
+        const { data: subs } = await supabase
+          .from('subscriptions')
+          .select('id, end_date')
+          .eq('fan_address', userAddress.toLowerCase())
+          .eq('creator_address', creator.wallet_address.toLowerCase())
+          .eq('active', true)
+          .eq('chain_id', chainId);
+
+        if (subs && subs.length > 0) {
+          const now = new Date();
+          const activeSub = subs.find(s => new Date(s.end_date) > now);
+          if (activeSub) setIsSubscribed(true);
         }
+      }
 
-        // Check for more plans
+      // Check for more plans
+      let hasPlans = false;
+      if (creator?.wallet_address) {
         const { count: plansCount } = await supabase
           .from('subscription_plans')
           .select('*', { count: 'exact', head: true })
-          .eq('creator_address', creator!.wallet_address.toLowerCase())
-          .eq('active', true);
-        
+          .eq('creator_address', creator.wallet_address.toLowerCase())
+          .eq('active', true)
+          .eq('chain_id', chainId);
+
         if (plansCount && plansCount > 1) {
-          setHasMorePlans(true);
+          hasPlans = true;
         }
+      }
+      setHasMorePlans(hasPlans);
 
-      const { data: tipsData } = await supabase
-        .from('tips')
-        .select('*')
-        .eq('to_address', creator!.wallet_address.toLowerCase())
-        .order('created_at', { ascending: false })
-        .limit(5);
+      if (creator?.wallet_address) {
+        const { data: tipsData } = await supabase
+          .from('tips')
+          .select('*')
+          .eq('to_address', creator!.wallet_address.toLowerCase())
+          .eq('chain_id', chainId)
+          .order('created_at', { ascending: false })
+          .limit(5);
 
-      if (tipsData && tipsData.length > 0) {
-        const tipAddresses = tipsData.map((t) => t.from_address);
-        const { data: senderProfiles } = await supabase
-          .from('user_profiles')
-          .select('wallet_address, display_name, avatar_url, username')
-          .in('wallet_address', tipAddresses);
+        if (tipsData && tipsData.length > 0) {
+          const tipAddresses = tipsData.map((t) => t.from_address);
+          const { data: senderProfiles } = await supabase
+            .from('user_profiles')
+            .select('wallet_address, display_name, avatar_url, username')
+            .in('wallet_address', tipAddresses);
 
-        const combinedTips = tipsData.map((t) => ({
-          ...t,
-          sender_profile: senderProfiles?.find((p) => p.wallet_address.toLowerCase() === t.from_address.toLowerCase())
-        }));
-        setRecentTips(combinedTips as Tip[]);
+          const combinedTips = tipsData.map((t) => ({
+            ...t,
+            sender_profile: senderProfiles?.find((p) => p.wallet_address.toLowerCase() === t.from_address.toLowerCase())
+          }));
+          setRecentTips(combinedTips as Tip[]);
+        } else {
+          setRecentTips([]);
+        }
+      } else {
+        setRecentTips([]);
       }
     }
 
     loadHomeData();
-  }, [creator, fetchData, userAddress]);
+  }, [creator, fetchData, userAddress, chainId]);
 
   if (!creator) return null;
 
   const handleTip = async () => {
-    if (!isConnected || !userAddress) return alert('Please connect your wallet');
+    if (!authenticated) {
+      login();
+      return;
+    }
+    if (!isConnected || !userAddress) return alert('Please link a wallet to send tips');
     if (!creator) return;
 
     const val = customAmount || amount;
     const finalAmount = String(val || '0');
-    
+
     if (!finalAmount || isNaN(Number(finalAmount)) || Number(finalAmount) <= 0) return alert('Enter a valid amount');
 
     try {
@@ -154,10 +165,10 @@ export default function CreatorHome() {
       if (!allowance || BigInt(allowance.toString()) < tipAmount) {
         setTipStatus('approving');
         const approveHash = await writeContractAsync({
-          address: MUSD_ADDRESS as `0x${string}`,
+          address: contracts.MUSD,
           abi: ERC20_ABI,
           functionName: 'approve',
-          args: [CONTRACT_ADDRESS as `0x${string}`, tipAmount],
+          args: [contracts.TIPPING, tipAmount],
         });
         await waitForTransactionReceipt(config, { hash: approveHash });
         await refetchAllowance();
@@ -165,25 +176,28 @@ export default function CreatorHome() {
 
       setTipStatus('tipping');
       const tipHash = await writeContractAsync({
-        address: CONTRACT_ADDRESS as `0x${string}`,
+        address: contracts.TIPPING,
         abi: TIPPING_ABI,
         functionName: 'tip',
         args: [creator.wallet_address as `0x${string}`, tipAmount],
       });
       await waitForTransactionReceipt(config, { hash: tipHash });
 
-      await supabase.from('tips').insert({
-        from_address: userAddress.toLowerCase(),
-        to_address: creator.wallet_address.toLowerCase(),
-        amount: parseFloat(finalAmount),
-        tx_hash: tipHash,
-        message: message
-      });
+      if (creator?.wallet_address) {
+        await supabase.from('tips').insert({
+          from_address: userAddress.toLowerCase(),
+          to_address: creator.wallet_address.toLowerCase(),
+          amount: parseFloat(finalAmount),
+          tx_hash: tipHash,
+          message: message,
+          chain_id: chainId
+        });
 
-      await supabase.rpc('increment_creator_earned', {
-        creator_address: creator.wallet_address.toLowerCase(),
-        amount_to_add: parseFloat(finalAmount)
-      });
+        await supabase.rpc('increment_creator_earned', {
+          creator_address: creator.wallet_address.toLowerCase(),
+          amount_to_add: parseFloat(finalAmount)
+        });
+      }
 
       // Create notification for creator
       try {
@@ -192,21 +206,26 @@ export default function CreatorHome() {
           .select('display_name, username')
           .eq('wallet_address', userAddress.toLowerCase())
           .single();
-        
-        const senderName = senderProfile?.display_name || (senderProfile?.username ? `@${senderProfile.username}` : `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`);
-        
-        const res = await fetch('/api/notifications', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            wallet: creator.wallet_address.toLowerCase(),
-            action: 'create',
-            type: 'tip',
-            content: `You received a ${finalAmount} MUSD tip from ${senderName}! 💝`
-          })
-        });
-        if (!res.ok) {
-          console.warn('Failed to send tip notification:', res.status);
+
+        const identifier = senderProfile?.username || `${userAddress.slice(0, 6)}...${userAddress.slice(-4)}`;
+
+        if (creator?.wallet_address) {
+          const res = await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${await getAccessToken()}`
+            },
+            body: JSON.stringify({
+              wallet: creator.wallet_address.toLowerCase(),
+              action: 'create',
+              type: 'tip',
+              content: `You received a ${finalAmount} MUSD tip from ${identifier}! 💝`
+            })
+          });
+          if (!res.ok) {
+            console.warn('Failed to send tip notification:', res.status);
+          }
         }
       } catch (nErr) {
         console.error('Failed to send tip notification:', nErr);
@@ -277,7 +296,7 @@ export default function CreatorHome() {
                   <p className="text-slate-500 text-[10px] font-medium mt-1 uppercase tracking-widest">Exclusive Access</p>
                 </div>
                 {hasMorePlans && (
-                  <Link 
+                  <Link
                     href={`/${creator!.username}/subscriptions`}
                     className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-slate-500 hover:text-[#F7931A] hover:bg-[#F7931A]/5 hover:border-[#F7931A]/20 transition-all duration-300 group"
                   >
@@ -286,65 +305,75 @@ export default function CreatorHome() {
                   </Link>
                 )}
               </div>
-              <SubscriptionSection 
-                limit={1} 
-                creatorAddress={creator!.wallet_address as string} 
-                creatorName={creator!.display_name as string} 
+              <SubscriptionSection
+                limit={1}
+                creatorAddress={creator!.wallet_address as string}
+                creatorName={creator!.display_name as string}
                 onSuccess={fetchData}
               />
             </div>
 
-            <div className="bg-gradient-to-b from-[#0a0a0c] to-[#111113] border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col">
+            <div className="bg-gradient-to-b from-[#0a0a0c] to-[#111113] border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col min-h-[400px]">
               <div className="absolute top-0 right-0 w-48 h-48 bg-[#F7931A]/10 blur-[60px] rounded-full pointer-events-none" />
-              <div className="relative z-10 flex flex-col">
+              <div className="relative z-10 flex flex-col h-full">
                 <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 font-outfit text-white/70">
                   <Heart className="w-4 h-4 text-red-500" /> Support with Tip
                 </h3>
-                
-                <div className="space-y-8 py-6">
-                  <div className={`grid gap-3 ${(creator.suggested_amounts?.length || 3) === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
-                    {(creator.suggested_amounts?.length ? creator.suggested_amounts : ['5', '25', '50']).slice(0, 4).map((val: string) => (
-                      <button 
-                        key={val} 
-                        onClick={() => { setAmount(val); setCustomAmount(''); }} 
-                        className={`py-3 rounded-2xl font-black transition-all text-xs border ${amount === val && !customAmount ? 'bg-[#F7931A] text-black border-[#F7931A] shadow-[0_10px_20px_rgba(247,147,26,0.2)]' : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10 hover:border-white/10'}`}
-                      >
-                        ${val}
-                      </button>
-                    ))}
-                  </div>
 
-                  <div className="space-y-4">
-                    <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl px-4 py-1.5 focus-within:ring-2 focus-within:ring-[#F7931A] transition-all">
-                      <span className="text-slate-400 font-black mr-2">$</span>
-                      <input 
-                        type="number" 
-                        placeholder="Custom" 
-                        value={customAmount} 
-                        onChange={e => setCustomAmount(e.target.value)} 
-                        className="w-full bg-transparent border-none py-2 text-white outline-none text-base font-black placeholder:text-slate-600" 
+                {creator.wallet_address ? (
+                  <div className="space-y-8 py-6">
+                    <div className={`grid gap-3 ${(creator.suggested_amounts?.length || 3) === 3 ? 'grid-cols-3' : 'grid-cols-4'}`}>
+                      {(creator.suggested_amounts?.length ? creator.suggested_amounts : ['5', '25', '50']).slice(0, 4).map((val: string) => (
+                        <button
+                          key={val}
+                          onClick={() => { setAmount(val); setCustomAmount(''); }}
+                          className={`py-3 rounded-2xl font-black transition-all text-xs border ${amount === val && !customAmount ? 'bg-[#F7931A] text-black border-[#F7931A] shadow-[0_10px_20px_rgba(247,147,26,0.2)]' : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10 hover:border-white/10'}`}
+                        >
+                          ${val}
+                        </button>
+                      ))}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl px-4 py-1.5 focus-within:ring-2 focus-within:ring-[#F7931A] transition-all">
+                        <span className="text-slate-400 font-black mr-2">$</span>
+                        <input
+                          type="number"
+                          placeholder="Custom"
+                          value={customAmount}
+                          onChange={e => setCustomAmount(e.target.value)}
+                          className="w-full bg-transparent border-none py-2 text-white outline-none text-base font-black placeholder:text-slate-600"
+                        />
+                      </div>
+
+                      <textarea
+                        placeholder="Leave a message..."
+                        value={message}
+                        onChange={e => setMessage(e.target.value)}
+                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:ring-2 focus:ring-[#F7931A] outline-none resize-none h-32 text-sm font-medium placeholder:text-slate-600 transition-all"
                       />
                     </div>
 
-                    <textarea 
-                      placeholder="Leave a message..." 
-                      value={message} 
-                      onChange={e => setMessage(e.target.value)} 
-                      className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:ring-2 focus:ring-[#F7931A] outline-none resize-none h-32 text-sm font-medium placeholder:text-slate-600 transition-all" 
-                    />
+                    <div className="pt-2">
+                      <button
+                        onClick={handleTip}
+                        disabled={tipStatus === 'approving' || tipStatus === 'tipping'}
+                        className="w-full bg-[#8A2BE2] text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-[#7828c8] hover:scale-[1.01] active:scale-[0.98] transition-all shadow-[0_20px_40px_rgba(138,43,226,0.2)] text-xs uppercase tracking-[0.2em]"
+                      >
+                        {tipStatus === 'approving' ? 'Confirming Approval...' :
+                          tipStatus === 'tipping' ? 'Sending Tip...' : `Send ${creator!.button_text || 'Tip'}`}
+                      </button>
+                    </div>
                   </div>
-
-                  <div className="pt-2">
-                    <button 
-                      onClick={handleTip} 
-                      disabled={tipStatus === 'approving' || tipStatus === 'tipping'} 
-                      className="w-full bg-[#8A2BE2] text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-[#7828c8] hover:scale-[1.01] active:scale-[0.98] transition-all shadow-[0_20px_40px_rgba(138,43,226,0.2)] text-xs uppercase tracking-[0.2em]"
-                    >
-                      {tipStatus === 'approving' ? 'Confirming Approval...' :
-                    tipStatus === 'tipping' ? 'Sending Tip...' : `Send ${creator!.button_text || 'Tip'}`}
-                    </button>
+                ) : (
+                  <div className="flex-1 flex flex-col items-center justify-center text-center py-12 px-4">
+                    <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
+                      <Lock className="w-8 h-8 text-slate-600" />
+                    </div>
+                    <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-2">No tip setup yet</h4>
+                    <p className="text-slate-500 text-sm font-medium max-w-[200px]">This creator hasn&apos;t linked a wallet to receive tips.</p>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
@@ -361,7 +390,7 @@ export default function CreatorHome() {
             Explore All <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
-        
+
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {posts.slice(0, 4).map(post => {
             const isLocked = post.visibility !== 'public' && !isOwner && !isSubscribed;
@@ -410,7 +439,7 @@ export default function CreatorHome() {
                   {isLocked && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
                       <div className="bg-[#0a0a0c]/90 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-white shadow-2xl">
-                        <Lock className="w-3.5 h-3.5 text-[#F7931A]" /> 
+                        <Lock className="w-3.5 h-3.5 text-[#F7931A]" />
                         <span className="uppercase tracking-widest">Locked</span>
                       </div>
                     </div>
@@ -420,11 +449,10 @@ export default function CreatorHome() {
                   <h4 className="font-black text-lg mb-2 truncate group-hover:text-[#8A2BE2] transition-colors">{post.title as string}</h4>
                   <div className="flex items-center justify-between mt-4">
                     <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{new Date(post.created_at as string).toLocaleDateString()}</p>
-                    <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${
-                        post.visibility === 'public' ? 'text-emerald-500 bg-emerald-500/10' : 
-                        (post.visibility === 'followers' ? 'text-blue-400 bg-blue-400/10' : 'text-orange-500 bg-orange-500/10')
+                    <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${post.visibility === 'public' ? 'text-emerald-500 bg-emerald-500/10' :
+                      (post.visibility === 'followers' ? 'text-blue-400 bg-blue-400/10' : 'text-orange-500 bg-orange-500/10')
                       }`}>
-                        {post.visibility === 'public' ? 'Public' : 'Members Only'}
+                      {post.visibility === 'public' ? 'Public' : 'Members Only'}
                     </div>
                   </div>
                 </div>
@@ -433,8 +461,8 @@ export default function CreatorHome() {
           })}
         </div>
       </div>
-      <CelebrationModal 
-        isOpen={showCelebration} 
+      <CelebrationModal
+        isOpen={showCelebration}
         onClose={() => {
           setShowCelebration(false);
           setTipStatus('idle');

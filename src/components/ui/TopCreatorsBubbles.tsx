@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Sparkles } from 'lucide-react';
 import MUSDLogo from '@/components/ui/MUSDLogo';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 
 interface TopCreator {
   wallet_address: string;
@@ -17,6 +18,7 @@ interface TopCreator {
 }
 
 export default function TopCreatorsBubbles() {
+  const { chainId } = useNetworkConfig();
   const [creators, setCreators] = useState<TopCreator[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -28,6 +30,7 @@ export default function TopCreatorsBubbles() {
       const { data: tips, error } = await supabase
         .from('tips')
         .select('to_address, amount')
+        .eq('chain_id', chainId)
         .gt('created_at', thirtyDaysAgo.toISOString());
 
       if (error) {
@@ -75,7 +78,7 @@ export default function TopCreatorsBubbles() {
     }
 
     fetchTopCreators();
-  }, []);
+  }, [chainId]);
 
   if (loading || creators.length === 0) return null;
 

@@ -1,15 +1,29 @@
 import { NextRequest } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 
+function escapeXml(value: string) {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+}
+
+function cleanColor(value: string) {
+  const color = value.replace('#', '');
+  return /^[a-fA-F0-9]{3}([a-fA-F0-9]{3})?$/.test(color) ? color : 'f7931a';
+}
+
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   
   // Get parameters
   const slug = searchParams.get('slug');
-  const text = searchParams.get('text') || 'Support on TipHive';
+  const text = (searchParams.get('text') || 'Support on TipHive').slice(0, 80);
   const emoji = searchParams.get('emoji') || '⚡';
-  const color = searchParams.get('color') || 'f7931a';
-  const font = searchParams.get('font') || 'Arial, sans-serif';
+  const color = cleanColor(searchParams.get('color') || 'f7931a');
+  const font = (searchParams.get('font') || 'Arial, sans-serif').replace(/[<>"']/g, '').slice(0, 80);
   const showCount = searchParams.get('count') === 'true' || !!searchParams.get('count_val');
   
   let supporterCount = 0;
@@ -51,7 +65,7 @@ export async function GET(req: NextRequest) {
 
   // If manual count value is provided for preview
   const manualCount = searchParams.get('count_val');
-  if (manualCount) supporterCount = parseInt(manualCount);
+  if (manualCount) supporterCount = Math.max(0, Math.min(999999, parseInt(manualCount, 10) || 0));
 
   // Calculate dynamic width
   const charWidth = 9.5; 
@@ -83,7 +97,7 @@ export async function GET(req: NextRequest) {
         </linearGradient>
       </defs>
 
-      <rect x="2" y="2" width="${width - 4}" height="${height - 4}" rx="25" fill="#${color.replace('#', '')}" filter="url(#shadow)"/>
+      <rect x="2" y="2" width="${width - 4}" height="${height - 4}" rx="25" fill="#${color}" filter="url(#shadow)"/>
       <rect x="2" y="2" width="${width - 4}" height="${height - 4}" rx="25" fill="url(#grad)"/>
       
       <text 
@@ -91,19 +105,19 @@ export async function GET(req: NextRequest) {
         y="${height / 2 + 2}" 
         dominant-baseline="middle" 
         text-anchor="middle" 
-        font-family="'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', '${font}', sans-serif" 
+        font-family="'Apple Color Emoji', 'Segoe UI Emoji', 'Noto Color Emoji', '${escapeXml(font)}', sans-serif" 
         font-size="19" 
         font-weight="900" 
         fill="black"
       >
-        ${emoji ? emoji + ' ' : ''}${text}
+        ${escapeXml(emoji ? emoji + ' ' : '')}${escapeXml(text)}
       </text>
 
       ${showCount ? `
         <g transform="translate(${width - 65}, ${height / 2})">
           <line x1="0" y1="-12" x2="0" y2="12" stroke="black" stroke-opacity="0.1" stroke-width="2"/>
           <path d="M12 -5C12 -5 11 -6.5 9 -6.5C7 -6.5 6 -5 6 -3.5C6 -1 9 1.5 12 3.5C15 1.5 18 -1 18 -3.5C18 -5 17 -6.5 15 -6.5C13 -6.5 12 -5 12 -5Z" fill="black" fill-opacity="0.6"/>
-          <text x="22" y="4" font-family="${font}, sans-serif" font-size="13" font-weight="900" fill="black" fill-opacity="0.6">${supporterCount}</text>
+          <text x="22" y="4" font-family="${escapeXml(font)}, sans-serif" font-size="13" font-weight="900" fill="black" fill-opacity="0.6">${supporterCount}</text>
         </g>
       ` : ''}
     </svg>

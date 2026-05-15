@@ -8,6 +8,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAccount } from 'wagmi';
+import { usePrivy } from '@privy-io/react-auth';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import ShareModal from '@/components/ui/ShareModal';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import { ProfileHeaderSkeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
@@ -42,6 +44,7 @@ export const TextThumbnail = ({ title, size = 'large' }: { title: string, size?:
 
 interface CreatorProfile {
   id: string;
+  privy_did: string;
   wallet_address: string;
   display_name: string;
   username: string;
@@ -66,6 +69,7 @@ interface ProfileContextType {
   postsCount: number;
   isFollowing: boolean;
   isOwner: boolean;
+  totalEarned: number;
   handleFollow: () => Promise<void>;
   fetchData: () => Promise<void>;
 }
@@ -81,7 +85,7 @@ export const useProfile = () => {
 export default function ProfileLayout({ children }: { children: React.ReactNode }) {
   const { username } = useParams();
   const pathname = usePathname();
-  const { isConnected, address: userAddress } = useAccount();
+  const { address: userAddress } = useAccount();
 
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [loading, setLoading] = useState(true);
@@ -89,6 +93,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const [isFollowing, setIsFollowing] = useState(false);
   const [followersCount, setFollowersCount] = useState(0);
   const [postsCount, setPostsCount] = useState(0);
+  const [totalEarned, setTotalEarned] = useState(0);
+  const { chainId } = useNetworkConfig();
+
+  const { user, getAccessToken } = usePrivy();
+
+  const userId = user?.id;
 
   const fetchData = useCallback(async () => {
     if (!username) return;
@@ -96,7 +106,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     const { data: profile } = await supabase
       .from('user_profiles')
       .select('*')
-      .eq('username', username)
+      .ilike('username', username as string)
       .single();
 
     if (profile) {
@@ -114,12 +124,16 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
         .eq('creator_id', profile.id);
       setFollowersCount(fCount || 0);
 
-      if (userAddress) {
-        const { data: currentUserProfile } = await supabase
-          .from('user_profiles')
-          .select('id')
-          .eq('wallet_address', userAddress.toLowerCase())
-          .single();
+      if (userAddress || userId) {
+        let profileQuery = supabase.from('user_profiles').select('id');
+        
+        if (userAddress) {
+          profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
+        } else {
+          profileQuery = profileQuery.eq('privy_did', userId!);
+        }
+
+        const { data: currentUserProfile } = await profileQuery.single();
 
         if (currentUserProfile) {
           const { data: followData } = await supabase
@@ -131,9 +145,26 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           setIsFollowing(!!followData);
         }
       }
+
+      // Calculate network-specific earnings
+      const { data: tips } = await supabase
+        .from('tips')
+        .select('amount')
+        .eq('to_address', profile.wallet_address.toLowerCase())
+        .eq('chain_id', chainId);
+      
+      const { data: subs } = await supabase
+        .from('subscriptions')
+        .select('total_paid')
+        .eq('creator_address', profile.wallet_address.toLowerCase())
+        .eq('chain_id', chainId);
+
+      const tipsTotal = (tips || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+      const subsTotal = (subs || []).reduce((acc, curr) => acc + (Number(curr.total_paid) || 0), 0);
+      setTotalEarned(tipsTotal + subsTotal);
     }
     setLoading(false);
-  }, [username, userAddress]);
+  }, [username, userAddress, userId, chainId]);
 
   useEffect(() => {
     fetchData();
@@ -145,15 +176,19 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   }, [pathname]);
 
   const handleFollow = async () => {
-    if (!isConnected || !userAddress) return alert('Please connect your wallet');
+    if (!user?.id) return alert('Please login to follow creators');
     if (!creator) return;
 
     try {
-      const { data: currentUserProfile } = await supabase
-        .from('user_profiles')
-        .select('id')
-        .eq('wallet_address', userAddress.toLowerCase())
-        .single();
+      let profileQuery = supabase.from('user_profiles').select('id');
+      
+      if (userAddress) {
+        profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
+      } else {
+        profileQuery = profileQuery.eq('privy_did', user.id);
+      }
+
+      const { data: currentUserProfile } = await profileQuery.single();
 
       if (!currentUserProfile) return alert('Profile not found. Please complete onboarding.');
 
@@ -178,6 +213,22 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
         if (error) throw error;
         setIsFollowing(true);
         setFollowersCount(prev => prev + 1);
+
+        // Create notification for creator
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await getAccessToken()}`
+          },
+          body: JSON.stringify({
+            wallet: creator.wallet_address,
+            did: creator.privy_did,
+            action: 'create',
+            type: 'follow',
+            actor: userAddress || user.id
+          }),
+        });
       }
     } catch (err) {
       console.error('Follow error:', err);
@@ -204,7 +255,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     return <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center pt-24 text-white">Profile not found.</div>;
   }
 
-  const isOwner = userAddress?.toLowerCase() === (creator.wallet_address as string).toLowerCase();
+  const isOwner = userAddress && creator.wallet_address 
+    ? userAddress.toLowerCase() === creator.wallet_address.toLowerCase()
+    : false;
   const isHome = pathname === `/${username}`;
 
   // Tab logic based on pathname
@@ -224,7 +277,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   };
 
   return (
-    <ProfileContext.Provider value={{ creator, loading, followersCount, postsCount, isFollowing, isOwner, handleFollow, fetchData }}>
+    <ProfileContext.Provider value={{ creator, loading, followersCount, postsCount, isFollowing, isOwner, totalEarned, handleFollow, fetchData }}>
       <div className="min-h-screen bg-[#000] text-white selection:bg-[#F7931A]/30 pb-20 pt-28">
         <div className="w-full space-y-8 px-4 md:px-6 lg:px-8">
 
@@ -356,7 +409,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <MUSDLogo className="w-4 h-4" />
-                        <p className="text-xl font-black text-[#F7931A] leading-tight">{creator.total_earned as number}</p>
+                        <p className="text-xl font-black text-[#F7931A] leading-tight">{totalEarned}</p>
                       </div>
                       <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Earned</p>
                     </div>

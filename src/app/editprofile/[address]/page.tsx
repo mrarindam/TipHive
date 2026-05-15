@@ -13,46 +13,8 @@ import { parseEther } from 'viem';
 import ShareModal from '@/components/ui/ShareModal';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import SubscriptionSection from '@/components/profile/SubscriptionSection';
-
-// Simplified ABIs
-const TIPPING_ABI = [
-  {
-    "name": "tip",
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "inputs": [
-      { "name": "_creator", "type": "address" },
-      { "name": "_amount", "type": "uint256" }
-    ],
-    "outputs": []
-  }
-];
-
-const ERC20_ABI = [
-  {
-    "name": "approve",
-    "type": "function",
-    "stateMutability": "nonpayable",
-    "inputs": [
-      { "name": "spender", "type": "address" },
-      { "name": "amount", "type": "uint256" }
-    ],
-    "outputs": [{ "name": "", "type": "bool" }]
-  },
-  {
-    "name": "allowance",
-    "type": "function",
-    "stateMutability": "view",
-    "inputs": [
-      { "name": "owner", "type": "address" },
-      { "name": "spender", "type": "address" }
-    ],
-    "outputs": [{ "name": "", "type": "uint256" }]
-  }
-];
-
-const CONTRACT_ADDRESS = process.env.NEXT_PUBLIC_TIPPING_CONTRACT || '0x0000000000000000000000000000000000000000';
-const MUSD_ADDRESS = process.env.NEXT_PUBLIC_MUSD_ADDRESS || '0x0000000000000000000000000000000000000000';
+import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
+import { TIPPING_ABI, ERC20_ABI } from '@/lib/contracts';
 
 interface Profile {
   wallet_address: string;
@@ -91,6 +53,7 @@ interface Tip {
 export default function CreatorProfile() {
   const { address } = useParams();
   const { isConnected, address: userAddress } = useAccount();
+  const { contracts, chainId } = useNetworkConfig();
   const [creator, setCreator] = useState<Profile | null>(null);
   const [recentTips, setRecentTips] = useState<Tip[]>([]);
   const [amount, setAmount] = useState('5');
@@ -104,14 +67,14 @@ export default function CreatorProfile() {
   const { writeContractAsync, error: writeError, reset: resetWrite } = useWriteContract();
 
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
-    address: MUSD_ADDRESS as `0x${string}`,
+    address: contracts.MUSD,
     abi: ERC20_ABI,
     functionName: 'allowance',
-    args: [userAddress as `0x${string}`, CONTRACT_ADDRESS as `0x${string}`],
+    args: [userAddress as `0x${string}`, contracts.TIPPING],
   });
 
   const { data: contractBalance, refetch: refetchBalance } = useReadContract({
-    address: CONTRACT_ADDRESS as `0x${string}`,
+    address: contracts.TIPPING,
     abi: [
       {
         "name": "getCreatorBalance",
@@ -200,10 +163,10 @@ export default function CreatorProfile() {
       if (!allowance || BigInt(allowance.toString()) < tipAmount) {
         setStatus('approving');
         const approveHash = await writeContractAsync({
-          address: MUSD_ADDRESS as `0x${string}`,
+          address: contracts.MUSD,
           abi: ERC20_ABI,
           functionName: 'approve',
-          args: [CONTRACT_ADDRESS as `0x${string}`, tipAmount],
+          args: [contracts.TIPPING, tipAmount],
         });
         await waitForTransactionReceipt(config, { hash: approveHash });
         await refetchAllowance();
@@ -211,7 +174,7 @@ export default function CreatorProfile() {
 
       setStatus('tipping');
       const tipHash = await writeContractAsync({
-        address: CONTRACT_ADDRESS as `0x${string}`,
+        address: contracts.TIPPING,
         abi: TIPPING_ABI,
         functionName: 'tip',
         args: [creator.wallet_address as `0x${string}`, tipAmount],
@@ -225,7 +188,8 @@ export default function CreatorProfile() {
         to_address: addr,
         amount: parseFloat(amount),
         tx_hash: tipHash,
-        message: message
+        message: message,
+        chain_id: chainId
       });
 
       await supabase.rpc('increment_creator_earned', {
@@ -489,7 +453,7 @@ export default function CreatorProfile() {
       <ShareModal
         isOpen={isShareModalOpen}
         onClose={() => setIsShareModalOpen(false)}
-        url={`http://localhost:3000/profile/${creator.username || creator.wallet_address}`}
+        url={`${typeof window !== 'undefined' ? window.location.origin : ''}/editprofile/${creator.username || creator.wallet_address}`}
         title={`👋 Check out my profile on TipHive! If you enjoy my work, \n\nyou can now support me by tipping via MUSD on the Mezo Network. Every bit helps! 🚀💎`}
       />
 
