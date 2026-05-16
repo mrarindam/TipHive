@@ -32,14 +32,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       openGraph: {
         title,
         description,
-        images: [imageUrl],
         type: 'profile',
       },
       twitter: {
         card: 'summary',
         title,
         description,
-        images: [imageUrl],
       },
     };
   } catch (error) {
