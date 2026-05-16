@@ -7,6 +7,8 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useProfile, TextThumbnail, extractFirstImage } from '../layout';
+import { usePerformanceSettings } from '@/lib/hooks/usePerformanceSettings';
+
 
 interface Post {
   id: string;
@@ -21,6 +23,8 @@ interface Post {
 
 export default function CreatorPosts() {
   const { creator, fetchData } = useProfile();
+  const { simplifyAnimations, enableBlur } = usePerformanceSettings();
+
 
   const [posts, setPosts] = useState<Post[]>([]);
   const [postAccessFilter, setPostAccessFilter] = useState<'all' | 'public' | 'exclusive'>('all');
@@ -53,7 +57,13 @@ export default function CreatorPosts() {
     });
 
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="grid grid-cols-1 xl:grid-cols-12 gap-8">
+    <motion.div 
+      initial={simplifyAnimations ? { opacity: 0 } : { opacity: 0, y: 15 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 0.2 }} 
+      className="grid grid-cols-1 xl:grid-cols-12 gap-8"
+    >
+
       <div className="xl:col-span-8 space-y-6">
         <div className="flex items-center justify-between mb-2">
           <div>
@@ -149,7 +159,8 @@ export default function CreatorPosts() {
       </div>
 
       <div className="xl:col-span-4">
-        <div className="bg-[#0a0a0c]/80 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 sticky top-24 shadow-2xl">
+        <div className={`bg-[#0a0a0c]/80 ${enableBlur ? 'backdrop-blur-xl' : ''} border border-white/10 rounded-[2.5rem] p-8 sticky top-24 shadow-2xl`}>
+
           <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
             <Filter className="w-5 h-5 text-[#8A2BE2]" />
             <h3 className="font-black uppercase tracking-tighter text-xl italic">Filter Posts</h3>

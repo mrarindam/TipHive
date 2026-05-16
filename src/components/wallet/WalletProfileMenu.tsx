@@ -10,7 +10,6 @@ import {
   BadgeCheck,
   Bitcoin,
   ChevronLeft,
-  Coins,
   ExternalLink,
   LogOut,
   Mail,
@@ -20,7 +19,6 @@ import {
   UserPen,
   Wallet,
   Globe,
-  Zap,
   Info,
 } from 'lucide-react';
 import { BTC_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/contracts';
@@ -363,10 +361,9 @@ export default function WalletProfileMenu() {
                         )}
                         <div className="relative mt-6 grid grid-cols-2 gap-3">
                           <MenuAction
-                            href="https://mezo.org/overview"
-                            external
-                            icon={<Coins className="h-4 w-4" />}
-                            label="BUY MUSD"
+                            href="/mezo-toolkit"
+                            icon={<img src="/mezo.png" alt="" className="h-4 w-4" />}
+                            label="MEZO TOOLKIT"
                           />
                           <button
                             onClick={() => setView('network')}
@@ -575,7 +572,7 @@ export default function WalletProfileMenu() {
                       <NetworkOption
                         name="Mezo Testnet"
                         description="Test your transactions on Mezo"
-                        icon={<Zap className="w-5 h-5 text-[#F7931A]" />}
+                        icon={<img src="/mezo.png" alt="" className="h-5 w-5" />}
                         isActive={chain?.id === mezoTestnet.id}
                         onClick={() => {
                           switchChain?.({ chainId: mezoTestnet.id });
@@ -585,7 +582,7 @@ export default function WalletProfileMenu() {
                       <NetworkOption
                         name="Mezo Mainnet"
                         description="Real transactions on Mezo"
-                        icon={<ShieldCheck className="w-5 h-5 text-emerald-500" />}
+                        icon={<img src="/mezo.png" alt="" className="h-5 w-5" />}
                         isActive={chain?.id === mezoMainnet.id}
                         onClick={() => {
                           switchChain?.({ chainId: mezoMainnet.id });

@@ -13,6 +13,8 @@ import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import ShareModal from '@/components/ui/ShareModal';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import { ProfileHeaderSkeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
+import { usePerformanceSettings } from '@/lib/hooks/usePerformanceSettings';
+
 
 
 
@@ -99,6 +101,8 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const { user, getAccessToken } = usePrivy();
 
   const userId = user?.id;
+  const { enableLayoutTransition, enableBlur, simplifyAnimations } = usePerformanceSettings();
+
 
   const fetchData = useCallback(async () => {
     if (!username) return;
@@ -283,15 +287,17 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
           {/* Main Creator Card */}
           <motion.div
-            layout
-            className={`bg-[#0a0a0c] border border-white/5 md:rounded-3xl transition-all duration-500 ${!isHome ? 'sticky top-4 z-50 backdrop-blur-xl bg-[#0a0a0c]/80 border-b border-[#8A2BE2]/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]' : 'relative'}`}
+            layout={enableLayoutTransition}
+            className={`bg-[#0a0a0c] border border-white/5 md:rounded-3xl transition-all duration-500 ${!isHome ? `sticky top-4 z-50 ${enableBlur ? 'backdrop-blur-xl bg-[#0a0a0c]/80' : 'bg-[#111113]'} border-b border-[#8A2BE2]/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]` : 'relative'}`}
           >
+
             <div className="relative">
               <motion.div
                 animate={{ height: isHome ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 225 : 500) : 0, opacity: isHome ? 1 : 0 }}
-                transition={{ duration: 0.4, ease: "easeInOut" }}
+                transition={simplifyAnimations ? { duration: 0.2 } : { duration: 0.4, ease: "easeInOut" }}
                 className="w-full relative bg-[#111113] overflow-hidden aspect-[16/9] md:aspect-[3/1] md:rounded-t-3xl"
               >
+
                 {creator.banner_url ? (
                   <Image src={creator.banner_url as string} alt="Banner" fill className="object-cover object-center" unoptimized />
                 ) : (
@@ -302,10 +308,11 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
               {isHome && (
                 <motion.div
-                  initial={{ scale: 0.8, opacity: 0 }}
-                  animate={{ scale: 1, opacity: 1 }}
+                  initial={simplifyAnimations ? { opacity: 0 } : { scale: 0.8, opacity: 0 }}
+                  animate={simplifyAnimations ? { opacity: 1 } : { scale: 1, opacity: 1 }}
                   className="absolute -bottom-12 left-6 md:left-10 z-20"
                 >
+
                   <div className="relative w-24 h-24 md:w-32 md:h-32 group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full blur opacity-40 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
                     <div className="relative w-full h-full rounded-full border-4 border-[#0a0a0c] overflow-hidden shadow-2xl bg-black">
@@ -323,18 +330,21 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
             </div>
 
             <motion.div
-              layout
+              layout={enableLayoutTransition}
               className={`px-6 md:px-10 pb-8 relative transition-all duration-500 ${isHome ? 'pt-16' : 'py-6'}`}
             >
+
               <div className={`flex flex-col md:flex-row gap-8 justify-between ${isHome ? 'items-start' : 'items-center'}`}>
-                <motion.div layout className="flex flex-col gap-2 max-w-2xl">
+                <motion.div layout={enableLayoutTransition} className="flex flex-col gap-2 max-w-2xl">
+
                   <div className="flex items-center gap-4">
                     {!isHome && (
                       <motion.div
-                        initial={{ scale: 0.5, opacity: 0 }}
-                        animate={{ scale: 1, opacity: 1 }}
+                        initial={simplifyAnimations ? { opacity: 0 } : { scale: 0.5, opacity: 0 }}
+                        animate={simplifyAnimations ? { opacity: 1 } : { scale: 1, opacity: 1 }}
                         className="w-10 h-10 rounded-full border-2 border-[#8A2BE2] overflow-hidden shrink-0 relative shadow-[0_0_10px_rgba(138,43,226,0.3)]"
                       >
+
                         <Image
                           src={(creator.avatar_url as string) || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.display_name as string)}`}
                           alt={creator.display_name as string}
@@ -344,8 +354,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                         />
                       </motion.div>
                     )}
-                    <motion.div layout className="space-y-1">
-                      <motion.h1 layout className={`${isHome ? 'text-4xl md:text-5xl' : 'text-xl'} font-black flex items-center gap-3`}>
+                    <motion.div layout={enableLayoutTransition} className="space-y-1">
+                      <motion.h1 layout={enableLayoutTransition} className={`${isHome ? 'text-4xl md:text-5xl' : 'text-xl'} font-black flex items-center gap-3`}>
+
                         {creator.display_name as string}
                         <CheckCircle2 className={`${isHome ? 'w-8 h-8' : 'w-4 h-4'} text-[#D8B4FE]`} />
                       </motion.h1>
@@ -394,8 +405,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                   )}
                 </motion.div>
 
-                <motion.div layout className="flex flex-col md:flex-row items-center gap-8">
-                  <motion.div layout className={`flex items-center gap-8 bg-white/5 backdrop-blur-md border border-white/5 px-6 py-3 rounded-2xl ${isHome ? '' : 'hidden md:flex'}`}>
+                <motion.div layout={enableLayoutTransition} className="flex flex-col md:flex-row items-center gap-8">
+                  <motion.div layout={enableLayoutTransition} className={`flex items-center gap-8 ${enableBlur ? 'bg-white/5 backdrop-blur-md' : 'bg-white/10'} border border-white/5 px-6 py-3 rounded-2xl ${isHome ? '' : 'hidden md:flex'}`}>
+
                     <div className="text-center">
                       <p className="text-xl font-black text-white leading-tight">{followersCount}</p>
                       <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Followers</p>
@@ -415,7 +427,8 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     </div>
                   </motion.div>
 
-                  <motion.div layout className="flex items-center gap-3">
+                  <motion.div layout={enableLayoutTransition} className="flex items-center gap-3">
+
                     {isOwner ? (
                       <Link href="/dashboard" className={`flex items-center justify-center gap-2 border border-[#8A2BE2] bg-[#8A2BE2]/10 text-[#8A2BE2] hover:bg-[#8A2BE2] hover:text-white font-bold rounded-2xl transition-all ${isHome ? 'py-3 px-8' : 'py-2 px-6 text-sm'}`}>
                         Dashboard

@@ -28,59 +28,29 @@ export default function Home() {
 
   return (
     <div ref={containerRef} className="relative w-full bg-[#050505] selection:bg-[#F7931A]/30">
-      {/* Cinematic Background */}
-      <div className="fixed inset-0 pointer-events-none z-0">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-[#F7931A]/10 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[10%] right-[-5%] w-[35%] h-[35%] bg-blue-600/5 blur-[120px] rounded-full" />
-        <div className="absolute top-[20%] right-[10%] w-[25%] h-[25%] bg-purple-600/5 blur-[100px] rounded-full animate-float" />
-      </div>
-
       {/* Hero Section */}
-      <section className="relative min-h-[100dvh] flex flex-col items-center justify-center px-4 overflow-hidden">
-        {/* Floating Elements */}
-        <div className="absolute inset-0 pointer-events-none overflow-hidden">
-          <motion.div
-            animate={{ y: [0, -30, 0], rotate: [0, 10, 0] }}
-            transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
-            className="absolute top-[20%] left-[15%] opacity-20 hidden lg:block"
-          >
-            <Bitcoin className="w-16 h-16 text-[#F7931A]" />
-          </motion.div>
-          <motion.div
-            animate={{ y: [0, 40, 0], rotate: [0, -15, 0] }}
-            transition={{ duration: 10, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-            className="absolute bottom-[30%] right-[12%] opacity-20 hidden lg:block"
-          >
-            <MUSDLogo className="w-14 h-14" />
-          </motion.div>
-        </div>
-
+      <section 
+        className="relative min-h-[100dvh] flex flex-col items-center justify-center px-4 overflow-hidden bg-cover bg-top bg-no-repeat"
+        style={{ backgroundImage: "url('/images/background/mainhero.webp')" }}
+      >
+        {/* Dark Overlay for Readability */}
+        <div className="absolute inset-0 bg-black/60 z-0" />
         <div className="w-full px-[5%] md:px-[8%] relative z-10 text-center">
-          <motion.div
-            initial={{ opacity: 0, scale: 0.8 }}
-            animate={{ opacity: 1, scale: 1 }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="inline-flex items-center gap-3 px-6 py-2.5 rounded-full bg-white/[0.03] border border-white/5 text-slate-300 text-xs font-black mb-12 tracking-[0.3em] uppercase backdrop-blur-xl"
-          >
-            <Star className="w-4 h-4 text-[#F7931A] fill-[#F7931A]" />
-            New Era of Digital Gratitude
-            <Star className="w-4 h-4 text-[#F7931A] fill-[#F7931A]" />
-          </motion.div>
 
           <motion.h1
-            initial={{ opacity: 0, y: 40 }}
+            initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.2 }}
             className="text-[clamp(3.8rem,18vw,9.5rem)] font-black text-white tracking-tighter mb-6 leading-[0.75] font-outfit"
           >
             The Bitcoin <br />
             <span className="text-[#F7931A]">
-              Native Economy.
+              Native Economy
             </span>
           </motion.h1>
 
           <motion.p
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.4 }}
             className="max-w-4xl mx-auto text-[clamp(1.1rem,4.5vw,1.6rem)] text-slate-300 mb-12 md:mb-16 leading-tight font-medium px-6"
@@ -89,7 +59,7 @@ export default function Home() {
           </motion.p>
 
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8, delay: 0.6 }}
             className="flex flex-col sm:flex-row items-center justify-center gap-5 md:gap-10 px-8"
@@ -197,8 +167,7 @@ export default function Home() {
       </section>
 
       {/* Solution Section */}
-      <section className="relative w-full py-24 md:py-40 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,rgba(247,147,26,0.05),transparent_70%)]" />
+      <section className="relative w-full py-24 md:py-40 overflow-hidden bg-[#050505]">
         <div className="w-full px-[5%] md:px-[8%] relative z-10">
 
           {/* Header matching image */}
@@ -227,7 +196,7 @@ export default function Home() {
             className="text-center space-y-10 max-w-4xl mx-auto mb-32"
           >
             <h2 className="text-5xl md:text-7xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
-              Welcome to the <br /> <span className="text-glow">TipHive Revolution.</span>
+              Welcome to the <br /> <span>TipHive Revolution.</span>
             </h2>
             <p className="text-xl text-slate-400 text-slate-400 text-slate-400 font-medium leading-relaxed">
               We leverage the power of Mezo Bitcoin L2 to create a borderless, permissionless, and fee-less economy for everyone.
@@ -278,7 +247,6 @@ export default function Home() {
                 <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-[#F7931A]/20 blur-[100px] rounded-full" />
 
                   {/* Animated Tipping UI */}
                   <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl p-6 shadow-2xl flex flex-col gap-6">
@@ -365,7 +333,6 @@ export default function Home() {
                 <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-purple-600/20 blur-[100px] rounded-full" />
 
                   {/* Animated Subscription UI */}
                   <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
@@ -460,7 +427,6 @@ export default function Home() {
                 <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
                   {/* Decorative background grid */}
                   <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
-                  <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3/4 h-3/4 bg-emerald-600/20 blur-[100px] rounded-full" />
 
                   {/* Animated Posting UI */}
                   <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl p-6 shadow-2xl flex flex-col gap-6">
@@ -559,8 +525,7 @@ export default function Home() {
       </section>
 
       {/* Trusted Platform Section */}
-      <section className="relative w-full py-24 md:py-40 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_top,rgba(247,147,26,0.05),transparent_70%)]" />
+      <section className="relative w-full py-24 md:py-40 px-4 overflow-hidden bg-[#050505]">
         <div className="w-full px-[5%] md:px-[8%] text-center space-y-12 relative z-10">
           <motion.h2
             initial={{ opacity: 0, y: 30 }}
@@ -625,10 +590,13 @@ export default function Home() {
 
       {/* Footer CTA */}
       <section className="relative w-full py-24 md:py-60 px-4 overflow-hidden">
-        <div className="absolute inset-0 bg-[#F7931A]/10 blur-[150px] rounded-full translate-y-1/2 scale-150" />
         <div className="w-full px-[5%] md:px-[8%]">
-          <div className="glass-card p-16 md:p-32 text-center relative overflow-hidden group">
-            <div className="absolute inset-0 bg-gradient-to-br from-[#F7931A]/10 via-transparent to-blue-500/10 opacity-50" />
+          <div
+            className="p-16 md:p-32 text-center relative overflow-hidden group rounded-[2.5rem] border border-white/10 bg-cover bg-center"
+            style={{ backgroundImage: "url('/images/background/readytojoineconomy.webp')" }}
+          >
+            {/* Dark Overlay for Readability */}
+            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-colors duration-500" />
 
             <motion.div
               initial={{ opacity: 0, scale: 0.9 }}

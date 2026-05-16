@@ -16,6 +16,8 @@ import { ArrowRight } from 'lucide-react';
 import { useProfile, TextThumbnail, extractFirstImage } from './layout';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import { TIPPING_ABI, ERC20_ABI } from '@/lib/contracts';
+import { usePerformanceSettings } from '@/lib/hooks/usePerformanceSettings';
+
 
 interface Post {
   id: string;
@@ -43,6 +45,8 @@ interface Tip {
 
 export default function CreatorHome() {
   const { creator, fetchData, isOwner } = useProfile();
+  const { simplifyAnimations } = usePerformanceSettings();
+
   const { contracts, chainId } = useNetworkConfig();
   const [showCelebration, setShowCelebration] = useState(false);
   const [lastTipAmount, setLastTipAmount] = useState('0');
@@ -244,7 +248,13 @@ export default function CreatorHome() {
   };
 
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-12">
+    <motion.div 
+      initial={simplifyAnimations ? { opacity: 0 } : { opacity: 0, y: 15 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 0.2 }} 
+      className="space-y-12"
+    >
+
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <div className="xl:col-span-4 space-y-8">
           <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-8">

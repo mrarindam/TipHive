@@ -40,10 +40,10 @@ export const mezoMainnet = defineChain({
 });
 
 const wagmiConfig = createConfig({
-  chains: [mezoTestnet, mezoMainnet],
+  chains: [mezoMainnet, mezoTestnet],
   transports: {
-    [mezoTestnet.id]: http(TESTNET_RPC),
     [mezoMainnet.id]: http(MAINNET_RPC),
+    [mezoTestnet.id]: http(TESTNET_RPC),
   },
 });
 
@@ -65,8 +65,8 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
             createOnLogin: 'off',
           },
         },
-        defaultChain: mezoTestnet,
-        supportedChains: [mezoTestnet, mezoMainnet],
+        defaultChain: mezoMainnet,
+        supportedChains: [mezoMainnet, mezoTestnet],
       }}
     >
       <QueryClientProvider client={queryClient}>

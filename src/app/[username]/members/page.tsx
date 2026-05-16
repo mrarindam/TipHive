@@ -9,6 +9,8 @@ import Link from 'next/link';
 import { useProfile } from '../layout';
 import Pagination from '@/components/ui/Pagination';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
+import { usePerformanceSettings } from '@/lib/hooks/usePerformanceSettings';
+
 
 interface Member {
   privy_did: string;
@@ -29,7 +31,9 @@ interface ProfileResult {
 
 export default function CreatorMembers() {
   const { creator, isOwner, fetchData } = useProfile();
+  const { simplifyAnimations, enableBlur } = usePerformanceSettings();
   const { chainId } = useNetworkConfig();
+
 
   const [memberFilter, setMemberFilter] = useState<'supporters' | 'followers' | 'following'>('supporters');
   const [members, setMembers] = useState<Member[]>([]);
@@ -144,13 +148,20 @@ export default function CreatorMembers() {
   const totalPages = Math.ceil(filteredData.length / itemsPerPage);
 
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="space-y-10">
+    <motion.div 
+      initial={simplifyAnimations ? { opacity: 0 } : { opacity: 0, y: 15 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 0.2 }} 
+      className="space-y-10"
+    >
+
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
           <h2 className="text-3xl font-black uppercase tracking-tighter font-outfit">Audience Insight</h2>
           <p className="text-slate-500 text-sm font-medium mt-1">Detailed view of your growing community</p>
         </div>
-        <div className="flex flex-wrap items-center gap-3 bg-[#0a0a0c]/60 backdrop-blur-xl p-2 rounded-[1.5rem] border border-white/5 shadow-2xl">
+        <div className={`flex flex-wrap items-center gap-3 ${enableBlur ? 'bg-[#0a0a0c]/60 backdrop-blur-xl' : 'bg-[#0a0a0c]'} p-2 rounded-[1.5rem] border border-white/5 shadow-2xl`}>
+
           <button onClick={() => { setMemberFilter('supporters'); setCurrentPage(1); }} className={`px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${memberFilter === 'supporters' ? 'bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
             <Crown className="w-3.5 h-3.5" /> Supporters <span className="opacity-50 text-[10px] bg-black/30 px-2 py-0.5 rounded-full">{supporters.length}</span>
           </button>
@@ -172,7 +183,9 @@ export default function CreatorMembers() {
 
               return (
                 <motion.div 
-                  initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.05 }}
+                  initial={simplifyAnimations ? { opacity: 0 } : { opacity: 0, y: 20 }} 
+                  animate={{ opacity: 1, y: 0 }} 
+                  transition={simplifyAnimations ? { duration: 0.2 } : { delay: i * 0.05 }}
                   key={i} 
                   className="bg-[#0a0a0c] border border-white/5 rounded-[2.5rem] p-6 flex flex-col items-center group hover:border-[#8A2BE2]/40 hover:bg-[#111113] transition-all duration-500 shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                 >

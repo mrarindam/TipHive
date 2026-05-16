@@ -19,9 +19,10 @@ const stackingCardsData = [
   {
     id: 1,
     title: "Tipping Model",
-    color: "bg-[#0a0a0a] border border-white/5",
-    glow: "bg-blue-500/10",
-    icon: <Globe className="w-8 h-8 text-blue-400" />,
+    color: "bg-linear-to-br from-[#7dd3fc] to-[#6366f1]",
+    textColor: "text-zinc-900",
+    labelColor: "bg-black/10 text-zinc-900",
+    icon: <Globe className="w-8 h-8 text-zinc-900" />,
     images: [
       "/images/Elements/tips.webp",
       "/images/Elements/createTIP.webp",
@@ -31,9 +32,10 @@ const stackingCardsData = [
   {
     id: 2,
     title: "Subscription Model",
-    color: "bg-[#0a0a0a] border border-white/5",
-    glow: "bg-emerald-500/10",
-    icon: <Zap className="w-8 h-8 text-emerald-400" />,
+    color: "bg-linear-to-br from-[#6ee7b7] to-[#10b981]",
+    textColor: "text-zinc-900",
+    labelColor: "bg-black/10 text-zinc-900",
+    icon: <Zap className="w-8 h-8 text-zinc-900" />,
     images: [
       "/images/Elements/createSUB.webp",
       "/images/Elements/profileSUB.webp",
@@ -43,9 +45,10 @@ const stackingCardsData = [
   {
     id: 3,
     title: "Posting Model",
-    color: "bg-[#0a0a0a] border border-white/5",
-    glow: "bg-purple-500/10",
-    icon: <Rocket className="w-8 h-8 text-purple-400" />,
+    color: "bg-linear-to-br from-[#c4b5fd] to-[#8b5cf6]",
+    textColor: "text-zinc-900",
+    labelColor: "bg-black/10 text-zinc-900",
+    icon: <Rocket className="w-8 h-8 text-zinc-900" />,
     images: [
       "/images/Elements/myPost.webp",
       "/images/Elements/postTOEarn.webp",
@@ -55,9 +58,10 @@ const stackingCardsData = [
   {
     id: 4,
     title: "Earning Model",
-    color: "bg-[#0a0a0a] border border-white/5",
-    glow: "bg-[#F7931A]/10",
-    icon: <Bitcoin className="w-8 h-8 text-[#F7931A]" />,
+    color: "bg-linear-to-br from-[#fde047] to-[#f59e0b]",
+    textColor: "text-zinc-900",
+    labelColor: "bg-black/10 text-zinc-900",
+    icon: <Bitcoin className="w-8 h-8 text-zinc-900" />,
     images: [
       "/images/Elements/earnALLTime.webp",
       "/images/Elements/realTimeEarnTrack.webp"
@@ -66,9 +70,10 @@ const stackingCardsData = [
   {
     id: 5,
     title: "Profile Model",
-    color: "bg-[#0a0a0a] border border-white/5",
-    glow: "bg-rose-500/10",
-    icon: <Sparkles className="w-8 h-8 text-rose-400" />,
+    color: "bg-linear-to-br from-[#fda4af] to-[#e11d48]",
+    textColor: "text-zinc-900",
+    labelColor: "bg-black/10 text-zinc-900",
+    icon: <Sparkles className="w-8 h-8 text-zinc-900" />,
     images: [
       "/images/Elements/profile.webp",
       "/images/Elements/watchFollowers.webp",
@@ -78,12 +83,14 @@ const stackingCardsData = [
   {
     id: 6,
     title: "Tooling",
-    color: "bg-[#0a0a0a] border border-white/5",
-    glow: "bg-indigo-500/10",
-    icon: <Gem className="w-8 h-8 text-indigo-400" />,
+    color: "bg-linear-to-br from-[#99f6e4] to-[#06b6d4]",
+    textColor: "text-zinc-900",
+    labelColor: "bg-black/10 text-zinc-900",
+    icon: <Gem className="w-8 h-8 text-zinc-900" />,
     images: [
       "/images/Elements/tools.webp",
-      "/images/Elements/getNotified.webp"
+      "/images/Elements/getNotified.webp",
+      "/images/Elements/chatTip.webp"
     ]
   }
 ];
@@ -106,7 +113,6 @@ export default function GsapStackingCards() {
       gsap.set(card, {
         y: window.innerHeight,
         scale: 0.9,
-        rotationX: 15,
         opacity: 0
       });
     });
@@ -131,10 +137,9 @@ export default function GsapStackingCards() {
       tl.to(card, {
         y: 0,
         scale: 1,
-        rotationX: 0,
         opacity: 1,
         duration: 1,
-        ease: "power3.inOut",
+        ease: "power2.inOut",
       }, index); // Using the index as the absolute time position on timeline
 
       // Push all previous cards back
@@ -143,16 +148,15 @@ export default function GsapStackingCards() {
         const depth = index - j; // How many layers deep this card is now
 
         const targetScale = 1 - (depth * 0.05); // 0.95, 0.90, etc.
-        const targetOpacity = Math.max(0, 1 - (depth * 0.2)); // Fades out the deeper it gets
-        const targetY = depth * -20; // Moves slightly up to create tab effect
+        const targetOpacity = Math.max(0.3, 1 - (depth * 0.25)); // Slightly higher opacity for stacking
+        const targetY = depth * -15; // Moves slightly up to create tab effect
 
         tl.to(prevCard, {
           scale: targetScale,
           opacity: targetOpacity,
           y: targetY,
-          rotationX: -5, // Slight backwards tilt
           duration: 1,
-          ease: "power3.inOut",
+          ease: "power2.inOut",
         }, index);
       }
     });
@@ -167,38 +171,26 @@ export default function GsapStackingCards() {
       <div
         ref={cardsWrapperRef}
         className="relative w-full flex-1 flex justify-center items-center px-4"
-        style={{ perspective: '1500px' }}
       >
         <div className="relative w-full max-w-6xl h-[70vh] md:h-[80vh]">
           {stackingCardsData.map((card, i) => (
             <div
               key={card.id}
               ref={(el) => { cardsRef.current[i] = el; }}
-              className={`absolute top-0 w-full h-full rounded-[2.5rem] ${card.color} shadow-[0_30px_60px_rgba(0,0,0,0.8)] overflow-hidden flex flex-col border border-white/10`}
+              className={`absolute top-0 w-full h-full rounded-[2.5rem] ${card.color} shadow-2xl overflow-hidden flex flex-col border border-black/5`}
               style={{ zIndex: i }}
             >
-              {/* Background Glow */}
-              <div className={`absolute top-0 right-0 w-96 h-96 ${card.glow} blur-[120px] rounded-full -mr-48 -mt-48 opacity-50`} />
-              
-              {/* SVG Noise Overlay */}
-              <svg className="absolute inset-0 w-full h-full opacity-[0.05] pointer-events-none mix-blend-overlay z-0">
-                <filter id={`noiseFilter-${i}`}>
-                  <feTurbulence type="fractalNoise" baseFrequency="0.6" stitchTiles="stitch" />
-                </filter>
-                <rect width="100%" height="100%" filter={`url(#noiseFilter-${i})`} />
-              </svg>
-
               <div className="relative z-10 flex flex-col h-full p-6 md:p-12">
                 {/* Header */}
                 <div className="flex flex-col sm:flex-row sm:items-center gap-6 mb-8">
-                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/5 border border-white/10 flex items-center justify-center shadow-lg flex-shrink-0">
+                  <div className="w-14 h-14 md:w-16 md:h-16 rounded-2xl bg-white/20 border border-black/5 flex items-center justify-center shadow-sm flex-shrink-0">
                     {card.icon}
                   </div>
                   <div className="flex flex-col">
-                    <span className="bg-white/10 text-white text-[10px] md:text-xs font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full w-fit mb-1 md:mb-2 border border-white/10 shadow-sm">
+                    <span className={`${card.labelColor} text-[10px] md:text-xs font-black tracking-[0.2em] uppercase px-3 py-1 rounded-full w-fit mb-1 md:mb-2 border border-black/5`}>
                       {i + 1} / {stackingCardsData.length}
                     </span>
-                    <h3 className="text-3xl md:text-4xl lg:text-5xl font-black tracking-tight text-white uppercase font-outfit">
+                    <h3 className={`text-3xl md:text-4xl lg:text-5xl font-black tracking-tight ${card.textColor} uppercase font-outfit`}>
                       {card.title}
                     </h3>
                   </div>
@@ -212,11 +204,10 @@ export default function GsapStackingCards() {
                       className="h-[85%] md:h-full w-[85%] md:w-auto flex-shrink-0 flex items-center justify-center snap-center"
                     >
                       <div className="relative h-full w-full flex items-center justify-center p-4">
-                        <div className="absolute inset-0 bg-white/[0.02] rounded-3xl blur-xl" />
                         <img
                           src={imgSrc}
                           alt={`${card.title} screenshot ${imgIdx + 1}`}
-                          className="h-full w-auto object-contain drop-shadow-[0_20px_50px_rgba(0,0,0,0.5)] hover:scale-[1.02] transition-transform duration-500 rounded-2xl"
+                          className="h-full w-auto object-contain drop-shadow-xl hover:scale-[1.02] transition-transform duration-500 rounded-2xl"
                         />
                       </div>
                     </div>
@@ -230,3 +221,5 @@ export default function GsapStackingCards() {
     </section>
   );
 }
+
+

@@ -97,6 +97,21 @@ Creators can generate ready-to-use assets from the dashboard:
 - **HTML Button** — Copy-paste HTML snippet for any website
 - **JavaScript Widget** — One-line `<script>` tag embeds a full tipping UI
 
+### 💬 Real-Time Messaging & Social
+- **Direct Messaging** — Instant chat between fans and creators powered by Supabase Realtime.
+- **Privacy First** — RLS-protected threads ensure messages stay between sender and receiver.
+- **Social Drops** — Share exclusive content links and tips directly within message threads.
+
+### 📈 Growth & Referrals
+- **Referral Program** — Users earn rewards by inviting new creators via unique links.
+- **On-Chain Tracking** — Referrals are permanently linked to the user's DID in the database.
+- **Dashboard Stats** — Track your network's growth and referral revenue in real-time.
+
+### ✉️ Email Notifications (Brevo)
+- **High-Priority Alerts** — Instant emails for tips received, new subscribers, and security events.
+- **Custom Preferences** — Users can toggle different notification types in their account settings.
+- **Branded Delivery** — Transactional emails styled to match the TipHive aesthetic.
+
 ---
 
 ## 🔌 API Reference (V1)
@@ -225,9 +240,10 @@ Creator's balance increases. Funds available instantly to withdraw.
 ### Backend & Infrastructure
 | Technology | Role |
 |---|---|
-| **Supabase** | PostgreSQL DB + Row Level Security (RLS) |
+| **Supabase** | PostgreSQL DB + Row Level Security (RLS) + Realtime |
 | **Cloudinary** | Media uploads, optimization, and CDN delivery |
-| **Next.js API Routes** | Secure server-side logic with Service Role key |
+| **Privy** | Non-custodial wallet authentication and social login |
+| **Brevo** | Transactional email automation and notifications |
 | **DiceBear** | Auto-generated avatar for new wallets |
 
 ---
@@ -291,14 +307,6 @@ We specifically chose **Mezo** as our execution layer because:
 3. **HODL Proof-of-Stake** — Aligns our platform's long-term incentives with the Bitcoin community.
 4. **EVM Compatibility** — Lets us use the modern Wagmi/Viem/Solidity toolchain builders already know.
 5. **Low Fees** — Makes micro-tipping ($1, $5, $10) economically viable for global audiences.
-
----
-
-## 🗺️ Roadmap
-
-- ✅ **Phase 1 (Current):** Creator profiles, tipping, subscriptions, drops, explore feed
-- 🔜 **Phase 2 (Q3 2026):** Mobile app (iOS + Android), advanced analytics, direct messaging
-- 🔜 **Phase 3 (2027):** DAO governance, creator grants, TipHive token
 
 ---
 

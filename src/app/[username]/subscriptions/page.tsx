@@ -4,14 +4,24 @@ import { motion } from 'framer-motion';
 import SubscriptionSection from '@/components/profile/SubscriptionSection';
 import { useProfile } from '../layout';
 import { Crown } from 'lucide-react';
+import { usePerformanceSettings } from '@/lib/hooks/usePerformanceSettings';
+
 
 export default function CreatorSubscriptions() {
   const { creator } = useProfile();
+  const { simplifyAnimations } = usePerformanceSettings();
+
 
 
   if (!creator) return null;
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="max-w-[1400px] mx-auto space-y-12 px-4">
+    <motion.div 
+      initial={simplifyAnimations ? { opacity: 0 } : { opacity: 0, y: 15 }} 
+      animate={{ opacity: 1, y: 0 }} 
+      transition={{ duration: 0.2 }} 
+      className="max-w-[1400px] mx-auto space-y-12 px-4"
+    >
+
       <div className="text-center space-y-4">
         <div className="inline-flex items-center gap-2 px-4 py-2 bg-[#8A2BE2]/10 border border-[#8A2BE2]/20 rounded-full text-[#D8B4FE] text-xs font-black uppercase tracking-[0.2em] mb-4 shadow-[0_0_20px_rgba(138,43,226,0.2)] animate-pulse">
           <Crown className="w-4 h-4" /> Premium Access

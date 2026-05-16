@@ -13,6 +13,7 @@ export default function Footer() {
       links: [
         { name: 'Explore', href: '/explore' },
         { name: 'Documentation', href: '/docs' },
+        { name: 'Mezo Toolkit', href: '/mezo-toolkit' },
       ]
     },
     {

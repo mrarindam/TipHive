@@ -2,14 +2,13 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { 
-  Zap, 
-  ChevronRight, 
+import {
+  Zap,
+  ChevronRight,
   ArrowRight,
   Search,
   Menu,
   X,
-  ChevronLeft,
   Info,
   AlertCircle,
   Check,
@@ -17,14 +16,16 @@ import {
   DollarSign,
   Shield,
   Code,
-  Database
+  Database,
+  ChevronDown,
+  FileText
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
 // Icons
 const GithubIcon = ({ className }: { className?: string }) => (
-  <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12"/></svg>
+  <svg className={className} fill="currentColor" viewBox="0 0 24 24"><path d="M12 .297c-6.63 0-12 5.373-12 12 0 5.303 3.438 9.8 8.205 11.385.6.113.82-.258.82-.577 0-.285-.01-1.04-.015-2.04-3.338.724-4.042-1.61-4.042-1.61C4.422 18.07 3.633 17.7 3.633 17.7c-1.087-.744.084-.729.084-.729 1.205.084 1.838 1.236 1.838 1.236 1.07 1.835 2.809 1.305 3.495.998.108-.776.417-1.305.76-1.605-2.665-.3-5.466-1.332-5.466-5.93 0-1.31.465-2.38 1.235-3.22-.135-.303-.54-1.523.105-3.176 0 0 1.005-.322 3.3 1.23.96-.267 1.98-.399 3-.405 1.02.006 2.04.138 3 .405 2.28-1.552 3.285-1.23 3.285-1.23.645 1.653.24 2.873.12 3.176.765.84 1.23 1.91 1.23 3.22 0 4.61-2.805 5.625-5.475 5.92.42.36.81 1.096.81 2.22 0 1.606-.015 2.896-.015 3.286 0 .315.21.69.825.57C20.565 22.092 24 17.592 24 12.297c0-6.627-5.373-12-12-12" /></svg>
 );
 
 // Types
@@ -32,7 +33,7 @@ type Section = {
   id: string;
   title: string;
   content: React.ReactNode;
-  category: 'Welcome' | 'Creators' | 'Fans' | 'Technical' | 'Architecture';
+  category: 'Welcome' | 'Creators' | 'Fans' | 'Technical' | 'Architecture' | 'Social & Growth' | 'Trust & Security';
 };
 
 // Components
@@ -93,8 +94,9 @@ export default function DocsPage() {
   const slug = params?.slug as string[] | undefined;
   const urlSection = slug ? slug[0] : 'welcome';
 
-  const [activeSection, setActiveSection] = useState('welcome');
+  const [activeSection, setActiveSection] = useState(urlSection);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
+  const [isTOCOpen, setIsTOCOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [isMounted, setIsMounted] = useState(false);
 
@@ -102,6 +104,7 @@ export default function DocsPage() {
     setActiveSection(id);
     router.push(`/docs/${id === 'welcome' ? '' : id}`);
     setIsSidebarOpen(false);
+    setIsTOCOpen(false);
     if (typeof window !== 'undefined') window.scrollTo(0, 0);
   }, [router]);
 
@@ -265,7 +268,7 @@ export default function DocsPage() {
           <p className="text-lg text-slate-400 leading-relaxed font-medium">
             Becoming a TipHive creator is a simple process that lives entirely on the blockchain. Follow these steps to claim your identity.
           </p>
-          
+
           <div className="space-y-12 mt-8">
             <Step number="01" title="Connect & Claim">
               Connect your Mezo-compatible wallet and choose a unique username. This username becomes your public URL.
@@ -274,7 +277,7 @@ export default function DocsPage() {
               Add your bio, social links (Twitter, Discord, Website), and select your primary category. This helps fans find you.
             </Step>
             <Step number="03" title="Go Live">
-               Once your profile is set up, share your link across your socials to start receiving instant MUSD tips. 
+              Once your profile is set up, share your link across your socials to start receiving instant MUSD tips.
             </Step>
           </div>
 
@@ -285,49 +288,283 @@ export default function DocsPage() {
       )
     },
     {
-      id: 'subscriptions-payouts',
+      id: 'tipping-model',
       category: 'Creators',
-      title: 'Tiers & Payouts',
+      title: 'Tipping Model',
       content: (
         <div className="space-y-12">
           <section className="space-y-6">
-            <h1 className="text-5xl font-black font-outfit tracking-tighter uppercase">Subscriptions <span className="text-[#F7931A]">& Payouts</span></h1>
+            <h1 className="text-5xl font-black font-outfit tracking-tighter uppercase">The <span className="text-[#F7931A]">Tipping</span> Model</h1>
             <p className="text-lg text-slate-400 leading-relaxed font-medium">
-              Subscriptions are the engine of recurring growth on TipHive. They allow your most loyal fans to support you continuously while unlocking exclusive benefits.
+              Tipping is the most direct way for fans to support your work. Built on Mezo L2, TipHive tipping combines the transparency of the blockchain with the speed of a modern fintech app.
             </p>
           </section>
 
           <section className="space-y-6">
-            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">The Tier Concept</h2>
-            <p className="text-slate-400 leading-relaxed font-medium">
-              Creators can define up to three tiers (e.g., Bronze, Silver, Gold), each with its own monthly MUSD price and set of perks.
-            </p>
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">1. Technical Architecture</h2>
             <div className="grid md:grid-cols-2 gap-6">
               <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
-                <h4 className="font-black text-white uppercase tracking-widest text-xs mb-2">On-chain Enforcement</h4>
-                <p className="text-sm text-slate-500 font-medium">Every subscription is a direct agreement between you and the fan, managed by smart contracts.</p>
+                <h4 className="font-black text-white uppercase tracking-widest text-xs mb-4">🔗 On-Chain Transfer</h4>
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                  Every tip is a direct MUSD transfer from the supporter&apos;s wallet to the creator&apos;s wallet. No platform middleman holds the funds.
+                </p>
               </div>
               <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
-                <h4 className="font-black text-white uppercase tracking-widest text-xs mb-2">Flexible Perks</h4>
-                <p className="text-sm text-slate-500 font-medium">You decide what each tier gets: early access, private Discord roles, or exclusive content.</p>
+                <h4 className="font-black text-white uppercase tracking-widest text-xs mb-4">⚡ Mezo Settlement</h4>
+                <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                  Powered by Mezo L2, tips settle in less than 5 seconds with negligible gas fees, making micro-tips viable.
+                </p>
               </div>
             </div>
           </section>
 
-          <section className="space-y-6">
-            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">Withdrawing Your Funds</h2>
-            <p className="text-slate-400 leading-relaxed font-medium">
-              Earnings on TipHive are not locked behind waiting periods. 
-            </p>
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">2. Fan Experience</h2>
             <div className="space-y-4">
-              <Step number="01" title="Visit your Dashboard">
-                Navigate to the **Earnings** tab in your creator dashboard to see your current balance.
+              <Step number="01" title="Select Amount">
+                Fans can choose from pre-set MUSD amounts or enter a custom value to support their favorite creators.
               </Step>
-              <Step number="02" title="Trigger Payout">
-                Click the **Withdraw** button to transfer the MUSD from the smart contract directly to your wallet.
+              <Step number="02" title="Attach a Message">
+                Every tip can include a public or private message, allowing supporters to share their appreciation directly.
               </Step>
-              <Step number="03" title="Instant Settlement">
-                Once confirmed on the Mezo Network, your funds are available in your wallet to spend, swap, or bridge.
+              <Step number="03" title="One-Click Confirm">
+                Once MUSD is approved, tipping is as simple as a single wallet confirmation.
+              </Step>
+            </div>
+          </section>
+
+          <section className="space-y-6">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">3. Creator Dashboard</h2>
+            <div className="p-6 bg-[#F7931A]/5 border border-[#F7931A]/20 rounded-2xl">
+              <p className="text-slate-400 text-sm font-medium mb-4">Creators track their tipping performance in real-time through a dedicated analytics suite:</p>
+              <ul className="space-y-3">
+                <li className="flex gap-3 items-center text-xs text-slate-300 font-bold uppercase tracking-wider">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#F7931A]" />
+                  Total MUSD Received
+                </li>
+                <li className="flex gap-3 items-center text-xs text-slate-300 font-bold uppercase tracking-wider">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#F7931A]" />
+                  Unique Supporter Count
+                </li>
+                <li className="flex gap-3 items-center text-xs text-slate-300 font-bold uppercase tracking-wider">
+                  <div className="w-1.5 h-1.5 rounded-full bg-[#F7931A]" />
+                  Average Tip Size
+                </li>
+              </ul>
+            </div>
+          </section>
+
+          <Callout type="success" title="Instant Gratification">
+            Creators receive an instant notification for every tip, and supporters are celebrated with a confetti UI, creating a powerful feedback loop.
+          </Callout>
+        </div>
+      )
+    },
+    {
+      id: 'public-profile',
+      category: 'Creators',
+      title: 'Public Profiles',
+      content: (
+        <div className="space-y-12">
+          <section className="space-y-6">
+            <h1 className="text-5xl font-black font-outfit tracking-tighter uppercase">Your On-Chain <span className="text-[#F7931A]">HQ</span></h1>
+            <p className="text-lg text-slate-400 leading-relaxed font-medium">
+              The Profile Section is your primary landing page where fans and creators connect. It is a high-end, visual &quot;Link-in-Bio&quot; replacement that directly integrates blockchain payments.
+            </p>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">1. What is Shown</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              <FeatureItem title="Visual Branding" desc="Custom Banner and Avatar (Profile Picture) to represent your brand." />
+              <FeatureItem title="Creator Stats" desc="Real-time counters for Followers, Posts, and Total MUSD Earned." />
+              <FeatureItem title="Social Connections" desc="Clickable icons for X (Twitter), Discord, GitHub, and Website." />
+              <FeatureItem title="Support Card" desc="A prominent section for fans to tip you or join a subscription tier." />
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">2. Fan Engagement</h2>
+            <div className="space-y-4">
+              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                <h4 className="font-black text-white uppercase tracking-widest text-xs mb-2">Follow & Support</h4>
+                <p className="text-sm text-slate-500 font-medium">Fans can follow you to stay updated with your latest &quot;Drops&quot; or send direct MUSD support with personalized messages.</p>
+              </div>
+              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+                <h4 className="font-black text-white uppercase tracking-widest text-xs mb-2">Explore Content</h4>
+                <p className="text-sm text-slate-500 font-medium">Followers and subscribers can toggle between your Posts, Videos, and Audio tracks seamlessly.</p>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">3. Profile Management</h2>
+            <p className="text-slate-400 font-medium mb-6">As the owner, you have exclusive management features directly on your profile:</p>
+            <div className="space-y-4">
+              <Step number="01" title="Customize Your Identity">
+                Edit your username, display name, bio, and social links instantly at any time.
+              </Step>
+              <Step number="02" title="Visual Refresh">
+                Upload new banners and avatars to keep your brand looking fresh and modern.
+              </Step>
+              <Step number="03" title="Manage Tipping">
+                Customize the &quot;Support&quot; button text (e.g., &quot;Buy me a Coffee&quot;) and set suggested amounts.
+              </Step>
+            </div>
+          </section>
+        </div>
+      )
+    },
+    {
+      id: 'subscriptions-model',
+      category: 'Creators',
+      title: 'Subscriptions Model',
+      content: (
+        <div className="space-y-12">
+          <section className="space-y-6">
+            <h1 className="text-5xl font-black font-outfit tracking-tighter uppercase">The <span className="text-[#F7931A]">Subscription</span> Engine</h1>
+            <p className="text-lg text-slate-400 leading-relaxed font-medium">
+              The Subscriptions Model is a powerful recurring revenue engine that allows creators to gate exclusive content and build a loyal membership base using on-chain smart contracts.
+            </p>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">1. Technical Architecture</h2>
+            <div className="grid md:grid-cols-2 gap-6">
+              <div className="p-6 border border-white/10 bg-black/40 rounded-2xl">
+                <h4 className="text-[#F7931A] font-black uppercase tracking-widest text-xs mb-4">⛓️ On-Chain (Smart Contract)</h4>
+                <ul className="space-y-2 text-[11px] text-slate-400 font-medium">
+                  <li>• **Plan Creation**: Tiers are registered on the SUBSCRIPTION contract on Mezo.</li>
+                  <li>• **Vault Security**: Contract handles secure MUSD transfers to creator wallets.</li>
+                  <li>• **Plan ID**: Every tier has a unique, immutable chain_plan_id.</li>
+                </ul>
+              </div>
+              <div className="p-6 border border-white/10 bg-black/40 rounded-2xl">
+                <h4 className="text-cyan-400 font-black uppercase tracking-widest text-xs mb-4">🗄️ Off-Chain (Supabase)</h4>
+                <ul className="space-y-2 text-[11px] text-slate-400 font-medium">
+                  <li>• **Metadata**: Descriptions, perks, and notes are stored for fast rendering.</li>
+                  <li>• **State Tracking**: Real-time tracking of start_date and end_date for members.</li>
+                  <li>• **Active Check**: Instant validation of membership status via database triggers.</li>
+                </ul>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">2. How Gating Works</h2>
+            <div className="bg-[#0A0A0C] p-6 rounded-2xl border border-white/5">
+              <p className="text-sm text-slate-400 mb-6 font-medium">Content gating is enforced at the UI and API levels based on visibility settings:</p>
+              <div className="grid md:grid-cols-3 gap-4">
+                <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-center">
+                  <div className="text-[10px] font-black text-emerald-400 uppercase mb-1">Public</div>
+                  <div className="text-[9px] text-slate-500">Visible to everyone</div>
+                </div>
+                <div className="p-4 bg-white/5 rounded-xl border border-white/5 text-center">
+                  <div className="text-[10px] font-black text-blue-400 uppercase mb-1">Followers</div>
+                  <div className="text-[9px] text-slate-500">Only for your followers</div>
+                </div>
+                <div className="p-4 bg-[#F7931A]/10 rounded-xl border border-[#F7931A]/20 text-center">
+                  <div className="text-[10px] font-black text-[#F7931A] uppercase mb-1">Members</div>
+                  <div className="text-[9px] text-slate-500">Only for active subscribers</div>
+                </div>
+              </div>
+              <p className="mt-6 text-xs text-slate-500 leading-relaxed font-medium">
+                If a user lacks access, content is replaced with a **Locked Overlay** and an &quot;Unlock Now&quot; button, driving them directly to your subscription plans.
+              </p>
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">3. Creator Experience</h2>
+            <div className="space-y-4">
+              <Step number="01" title="Manage Tiers">
+                Limit of **3 active tiers** to keep choices simple for your fans. Customize price, duration, and perks list.
+              </Step>
+              <Step number="02" title="Members Zone">
+                Dedicated analytics showing retention stats, specific subscription revenue, and real-time join logs.
+              </Step>
+            </div>
+          </section>
+        </div>
+      )
+    },
+    {
+      id: 'messaging-social',
+      category: 'Social & Growth',
+      title: 'Messaging & Social',
+      content: (
+        <div className="space-y-12">
+          <section className="space-y-6">
+            <h1 className="text-5xl font-black font-outfit tracking-tighter uppercase">Real-Time <span className="text-[#F7931A]">Social</span></h1>
+            <p className="text-lg text-slate-400 leading-relaxed font-medium">
+              TipHive isn&apos;t just about payments—it&apos;s a social hub. Our messaging system allows creators to build deep relationships with their fans through secure, instant communication.
+            </p>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">1. Messaging Logic</h2>
+            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+              <div className="flex gap-4 items-start mb-6">
+                <div className="w-10 h-10 rounded-lg bg-emerald-500/10 flex items-center justify-center border border-emerald-500/20">
+                  <Zap className="w-5 h-5 text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white mb-1">Instant Real-time</h4>
+                  <p className="text-sm text-slate-400">Powered by Supabase Realtime (WebSockets), messages appear instantly without page refreshes.</p>
+                </div>
+              </div>
+              <div className="flex gap-4 items-start">
+                <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/20">
+                  <Shield className="w-5 h-5 text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white mb-1">Privacy & Security</h4>
+                  <p className="text-sm text-slate-400">Database-level RLS policies ensure that only the sender and receiver can ever read a message thread.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">2. Inbox Features</h2>
+            <div className="grid md:grid-cols-2 gap-4">
+              <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
+                <h4 className="text-[10px] font-black text-[#F7931A] uppercase tracking-[0.2em] mb-2">Infinite Scroll</h4>
+                <p className="text-xs text-slate-500">Smooth history loading that scales to thousands of messages per thread.</p>
+              </div>
+              <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
+                <h4 className="text-[10px] font-black text-[#F7931A] uppercase tracking-[0.2em] mb-2">Media Support</h4>
+                <p className="text-xs text-slate-500">Easily share links to your latest drops or tips directly within the chat.</p>
+              </div>
+            </div>
+          </section>
+        </div>
+      )
+    },
+    {
+      id: 'referral-program',
+      category: 'Social & Growth',
+      title: 'Referral System',
+      content: (
+        <div className="space-y-12">
+          <section className="space-y-6">
+            <h1 className="text-5xl font-black font-outfit tracking-tighter uppercase">Grow <span className="text-[#F7931A]">Together</span></h1>
+            <p className="text-lg text-slate-400 leading-relaxed font-medium">
+              The Referral Program incentivizes our community to bring in new talent. Share your link and earn rewards for every creator who joins through you.
+            </p>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">How it Works</h2>
+            <div className="space-y-4">
+              <Step number="01" title="Get Your Code">
+                Every user has a unique referral code generated on account creation, linked directly to their DID.
+              </Step>
+              <Step number="02" title="Share the Link">
+                Use your personalized dashboard to share your link on Twitter, Telegram, or Farcaster.
+              </Step>
+              <Step number="03" title="Track Conversions">
+                When a new user connects their wallet using your link, the database permanently links them to your account as a &quot;Referral.&quot;
               </Step>
             </div>
           </section>
@@ -350,10 +587,10 @@ export default function DocsPage() {
           <section className="space-y-8">
             <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">Content Types (Drops)</h2>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-               <FeatureItem title="Text Posts" desc="Write articles, updates, or long-form thoughts for your fans." />
-               <FeatureItem title="Photo Albums" desc="Share high-quality galleries, art, or behind-the-scenes shots." />
-               <FeatureItem title="Audio Drops" desc="Upload music, podcasts, or voice notes directly to Mezo." />
-               <FeatureItem title="Video Feed" desc="Share exclusive video content and tutorials with your inner circle." />
+              <FeatureItem title="Text Posts" desc="Write articles, updates, or long-form thoughts for your fans." />
+              <FeatureItem title="Photo Albums" desc="Share high-quality galleries, art, or behind-the-scenes shots." />
+              <FeatureItem title="Audio Drops" desc="Upload music, podcasts, or voice notes directly to Mezo." />
+              <FeatureItem title="Video Feed" desc="Share exclusive video content and tutorials with your inner circle." />
             </div>
           </section>
 
@@ -364,25 +601,25 @@ export default function DocsPage() {
             </p>
             <div className="space-y-4">
               <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                 <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-xs">PUB</div>
-                    <h4 className="font-black text-white uppercase tracking-widest text-xs">Public Access</h4>
-                 </div>
-                 <p className="text-sm text-slate-500 font-medium">Available to everyone. Use public drops to showcase your work and attract new supporters from the Explore feed.</p>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 font-black text-xs">PUB</div>
+                  <h4 className="font-black text-white uppercase tracking-widest text-xs">Public Access</h4>
+                </div>
+                <p className="text-sm text-slate-500 font-medium">Available to everyone. Use public drops to showcase your work and attract new supporters from the Explore feed.</p>
               </div>
               <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                 <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 font-black text-xs">FOL</div>
-                    <h4 className="font-black text-white uppercase tracking-widest text-xs">Follower Exclusive</h4>
-                 </div>
-                 <p className="text-sm text-slate-500 font-medium">Visible only to your followers. This is a great way to reward your community and encourage users to follow your profile for more updates.</p>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-blue-500/10 flex items-center justify-center text-blue-500 font-black text-xs">FOL</div>
+                  <h4 className="font-black text-white uppercase tracking-widest text-xs">Follower Exclusive</h4>
+                </div>
+                <p className="text-sm text-slate-500 font-medium">Visible only to your followers. This is a great way to reward your community and encourage users to follow your profile for more updates.</p>
               </div>
               <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                 <div className="flex items-center gap-3 mb-2">
-                    <div className="w-8 h-8 rounded-lg bg-[#F7931A]/10 flex items-center justify-center text-[#F7931A] font-black text-xs">SUB</div>
-                    <h4 className="font-black text-white uppercase tracking-widest text-xs">Subscriber Exclusive</h4>
-                 </div>
-                 <p className="text-sm text-slate-500 font-medium">Locked behind a subscription. Only fans in your active tiers can view this content. This is your primary driver for recurring revenue.</p>
+                <div className="flex items-center gap-3 mb-2">
+                  <div className="w-8 h-8 rounded-lg bg-[#F7931A]/10 flex items-center justify-center text-[#F7931A] font-black text-xs">SUB</div>
+                  <h4 className="font-black text-white uppercase tracking-widest text-xs">Subscriber Exclusive</h4>
+                </div>
+                <p className="text-sm text-slate-500 font-medium">Locked behind a subscription. Only fans in your active tiers can view this content. This is your primary driver for recurring revenue.</p>
               </div>
             </div>
           </section>
@@ -393,12 +630,12 @@ export default function DocsPage() {
               Tagging your drops correctly ensures they appear in the right feeds on the **Explore** page. Common categories include:
             </p>
             <div className="flex flex-wrap gap-2">
-               {['Art', 'Music', 'Gaming', 'Technology', 'Education', 'Lifestyle'].map(cat => (
-                 <span key={cat} className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400">{cat}</span>
-               ))}
+              {['Art', 'Music', 'Gaming', 'Technology', 'Education', 'Lifestyle'].map(cat => (
+                <span key={cat} className="px-4 py-2 bg-white/5 border border-white/10 rounded-full text-[10px] font-black uppercase tracking-widest text-slate-400">{cat}</span>
+              ))}
             </div>
             <Callout type="check" title="Pro Tip">
-               Creators who post exclusive &quot;Subscriber-only&quot; content at least twice a week earn 4x more on average than those who only post publicly.
+              Creators who post exclusive &quot;Subscriber-only&quot; content at least twice a week earn 4x more on average than those who only post publicly.
             </Callout>
           </section>
         </div>
@@ -469,18 +706,18 @@ export default function DocsPage() {
               Perfect for print media, streaming overlays, or business cards. Generate a fancy, branded QR code that opens your profile instantly when scanned.
             </p>
             <div className="grid md:grid-cols-3 gap-4">
-               <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
-                  <h4 className="text-[10px] font-black text-white uppercase mb-2">PNG Format</h4>
-                  <p className="text-[10px] text-slate-500">3000x3000px High-Res for printing.</p>
-               </div>
-               <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
-                  <h4 className="text-[10px] font-black text-white uppercase mb-2">SVG Vector</h4>
-                  <p className="text-[10px] text-slate-500">Infinite scaling for large billboards.</p>
-               </div>
-               <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
-                  <h4 className="text-[10px] font-black text-white uppercase mb-2">Branded</h4>
-                  <p className="text-[10px] text-slate-500">Auto-injects TipHive logo for trust.</p>
-               </div>
+              <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
+                <h4 className="text-[10px] font-black text-white uppercase mb-2">PNG Format</h4>
+                <p className="text-[10px] text-slate-500">3000x3000px High-Res for printing.</p>
+              </div>
+              <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
+                <h4 className="text-[10px] font-black text-white uppercase mb-2">SVG Vector</h4>
+                <p className="text-[10px] text-slate-500">Infinite scaling for large billboards.</p>
+              </div>
+              <div className="p-6 bg-white/5 border border-white/5 rounded-2xl">
+                <h4 className="text-[10px] font-black text-white uppercase mb-2">Branded</h4>
+                <p className="text-[10px] text-slate-500">Auto-injects TipHive logo for trust.</p>
+              </div>
             </div>
           </section>
         </div>
@@ -586,6 +823,14 @@ export default function DocsPage() {
                 <p className="font-black text-white uppercase text-sm">3. Fan Sends a Tip</p>
                 <p className="text-xs text-slate-500 font-medium">→ Fan clicks tip → Wagmi prepares tx → MUSD transferred on-chain → Smart contract logs event → Supabase updated</p>
               </div>
+              <div className="border-t border-white/10 pt-6 space-y-2">
+                <p className="font-black text-white uppercase text-sm">4. Real-time Messaging</p>
+                <p className="text-xs text-slate-500 font-medium">→ User sends message → Supabase Realtime pushes to socket → Receiver UI updates in &lt;100ms</p>
+              </div>
+              <div className="border-t border-white/10 pt-6 space-y-2">
+                <p className="font-black text-white uppercase text-sm">5. Automated Notifications</p>
+                <p className="text-xs text-slate-500 font-medium">→ On-chain event detected → Backend triggers Brevo API → Transactional email delivered to inbox</p>
+              </div>
             </div>
           </section>
 
@@ -597,6 +842,117 @@ export default function DocsPage() {
               <FeatureCard icon={Database} title="Supabase" desc="PostgreSQL database for profiles and analytics." />
               <FeatureCard icon={Shield} title="Mezo L2" desc="Bitcoin Economic Layer for fast, cheap settlements." />
             </div>
+          </section>
+        </div>
+      )
+    },
+    {
+      id: 'trust-security',
+      category: 'Trust & Security',
+      title: 'Security Architecture',
+      content: (
+        <div className="space-y-12">
+          <section className="space-y-6">
+            <h1 className="text-5xl font-black font-outfit tracking-tighter uppercase">Trust & <span className="text-[#F7931A]">Security</span></h1>
+            <p className="text-lg text-slate-400 leading-relaxed font-medium">
+              Security in TipHive is built on a &quot;Zero-Trust&quot; and &quot;Non-Custodial&quot; architecture. We design the system so that your private funds and sensitive data remain yours alone.
+            </p>
+          </section>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+              <h4 className="font-black text-white uppercase tracking-widest text-xs mb-4">🛡️ Non-Custodial</h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                We use Privy for wallet management. TipHive never sees your private keys or seed phrases. Only you can authorize transactions.
+              </p>
+            </div>
+            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+              <h4 className="font-black text-white uppercase tracking-widest text-xs mb-4">🔐 Database RLS</h4>
+              <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                Supabase Row Level Security ensures that every data request is verified. User A can never access User B&apos;s private data.
+              </p>
+            </div>
+          </div>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">Core Security Pillars</h2>
+            <div className="space-y-6">
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
+                  <Shield className="w-6 h-6 text-blue-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white mb-1">No Passwords Stored</h4>
+                  <p className="text-sm text-slate-400">Authentication via Privy eliminates password leak risks. Secure JWT tokens verify every request.</p>
+                </div>
+              </div>
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
+                  <Zap className="w-6 h-6 text-emerald-400" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white mb-1">On-Chain Transparency</h4>
+                  <p className="text-sm text-slate-400">All financial flows happen on Mezo Blockchain. Records are immutable, transparent, and verifiable by anyone.</p>
+                </div>
+              </div>
+              <div className="flex gap-6">
+                <div className="w-12 h-12 rounded-xl bg-[#F7931A]/10 flex items-center justify-center shrink-0 border border-[#F7931A]/20">
+                  <Lock className="w-6 h-6 text-[#F7931A]" />
+                </div>
+                <div>
+                  <h4 className="font-bold text-white mb-1">Input Validation</h4>
+                  <p className="text-sm text-slate-400">Strict regex validation and rate-limiting protect against injection attacks and bot abuse.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+        </div>
+      )
+    },
+    {
+      id: 'notifications',
+      category: 'Trust & Security',
+      title: 'Email Notifications',
+      content: (
+        <div className="space-y-12">
+          <section className="space-y-6">
+            <h1 className="text-5xl font-black font-outfit tracking-tighter uppercase">Stay <span className="text-[#F7931A]">Informed</span></h1>
+            <p className="text-lg text-slate-400 leading-relaxed font-medium">
+              Our notification system ensures you never miss a beat. We use Brevo to deliver high-priority alerts directly to your email.
+            </p>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">Automation Logic</h2>
+            <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
+              <p className="text-sm text-slate-400 mb-6 font-medium">We trigger automated emails for the following critical events:</p>
+              <div className="grid md:grid-cols-2 gap-4">
+                <div className="p-4 bg-black/20 rounded-xl border border-white/5">
+                  <h4 className="font-black text-white text-[10px] uppercase mb-1">Financial Alerts</h4>
+                  <p className="text-[10px] text-slate-500">Sent instantly when you receive a tip or a new subscriber joins.</p>
+                </div>
+                <div className="p-4 bg-black/20 rounded-xl border border-white/5">
+                  <h4 className="font-black text-white text-[10px] uppercase mb-1">Security Alerts</h4>
+                  <p className="text-[10px] text-slate-500">Login notifications from new devices or profile setting changes.</p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section className="space-y-8">
+            <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">Preference Management</h2>
+            <p className="text-slate-400 text-sm font-medium">You have total control over what you receive. Manage your settings in the **Account Settings** dashboard:</p>
+            <ul className="mt-4 space-y-3">
+              <li className="flex gap-3 text-xs text-slate-500 font-medium italic italic">
+                <span>•</span> &quot;I want to receive an email for every tip&quot; (Toggle)
+              </li>
+              <li className="flex gap-3 text-xs text-slate-500 font-medium italic italic">
+                <span>•</span> &quot;Daily digest of new followers&quot; (Toggle)
+              </li>
+              <li className="flex gap-3 text-xs text-slate-500 font-medium italic italic">
+                <span>•</span> &quot;Security & Account alerts only&quot; (Always On)
+              </li>
+            </ul>
           </section>
         </div>
       )
@@ -662,7 +1018,7 @@ export default function DocsPage() {
     }
   ], [handleSectionChange]);
 
-  const categories = ['Welcome', 'Creators', 'Technical', 'Architecture'] as const;
+  const categories = ['Welcome', 'Creators', 'Social & Growth', 'Technical', 'Architecture', 'Trust & Security'] as const;
 
   useEffect(() => {
     setIsMounted(true);
@@ -674,11 +1030,11 @@ export default function DocsPage() {
     }
   }, [urlSection, isMounted, sections]);
 
-  const filteredSections = sections.filter(s => 
-    s.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+  const filteredSections = sections.filter(s =>
+    s.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     s.category.toLowerCase().includes(searchQuery.toLowerCase())
   );
-  
+
   const currentSection = sections.find(s => s.id === activeSection) || sections[0];
 
   if (!isMounted) return <div className="min-h-screen bg-black" />;
@@ -691,9 +1047,11 @@ export default function DocsPage() {
           <div className="w-8 h-8 rounded-lg bg-[#F7931A] flex items-center justify-center font-black text-black">T</div>
           <span className="font-black text-sm uppercase tracking-tighter">TipHive <span className="text-slate-500 text-[10px]">Docs</span></span>
         </Link>
-        <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-white/5 rounded-lg">
-          {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        </button>
+        <div className="flex items-center gap-2">
+          <button onClick={() => setIsSidebarOpen(!isSidebarOpen)} className="p-2 bg-white/5 rounded-lg">
+            {isSidebarOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+          </button>
+        </div>
       </div>
 
       <div className="max-w-[1600px] mx-auto flex pt-16 lg:pt-0">
@@ -710,8 +1068,8 @@ export default function DocsPage() {
               </Link>
               <div className="relative">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
-                <input 
-                  type="text" 
+                <input
+                  type="text"
                   placeholder="Search docs..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
@@ -733,8 +1091,8 @@ export default function DocsPage() {
                         onClick={() => handleSectionChange(s.id)}
                         className={`
                           w-full flex items-center justify-between px-4 py-2.5 rounded-xl text-sm font-bold transition-all
-                          ${activeSection === s.id 
-                            ? 'bg-[#F7931A]/10 text-[#F7931A] border border-[#F7931A]/20' 
+                          ${activeSection === s.id
+                            ? 'bg-[#F7931A]/10 text-[#F7931A] border border-[#F7931A]/20'
                             : 'text-slate-400 hover:text-white hover:bg-white/5 border border-transparent'}
                         `}
                       >
@@ -749,13 +1107,13 @@ export default function DocsPage() {
 
             <div className="p-4 border-t border-white/5">
               <div className="flex items-center justify-between p-4 bg-white/5 rounded-2xl">
-                 <div className="flex items-center gap-3">
-                   <div className="w-8 h-8 rounded-full bg-[#F7931A]/20 flex items-center justify-center">
-                     <GithubIcon className="w-4 h-4 text-[#F7931A]" />
-                   </div>
-                   <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Open Source</div>
-                 </div>
-                 <Link href="https://github.com" className="text-[#F7931A] hover:underline text-[10px] font-black uppercase">View</Link>
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-[#F7931A]/20 flex items-center justify-center">
+                    <GithubIcon className="w-4 h-4 text-[#F7931A]" />
+                  </div>
+                  <div className="text-[10px] font-black uppercase tracking-widest text-slate-400">Open Source</div>
+                </div>
+                <Link href="https://github.com/mrarindam/TipHive" className="text-[#F7931A] hover:underline text-[10px] font-black uppercase">View</Link>
               </div>
             </div>
           </div>
@@ -763,13 +1121,62 @@ export default function DocsPage() {
 
         {/* Main Content */}
         <main className="flex-1 px-6 lg:px-20 py-12 lg:py-24 max-w-4xl min-h-screen">
-          <div className="mb-8 flex items-center gap-2 text-xs font-bold text-slate-500 uppercase tracking-widest">
-            <span>Docs</span>
-            <ChevronRight className="w-3 h-3" />
-            <span>{currentSection.category}</span>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-[#F7931A]">{currentSection.title}</span>
+          {/* Mobile TOC Dropdown */}
+          <div className="lg:hidden mb-8 sticky top-20 z-40">
+            <button
+              onClick={() => setIsTOCOpen(!isTOCOpen)}
+              className="w-full flex items-center justify-between p-4 bg-[#0A0A0C] border border-white/5 rounded-2xl shadow-2xl"
+            >
+              <div className="flex items-center gap-3">
+                {isTOCOpen ? <X className="w-4 h-4 text-slate-400" /> : <FileText className="w-4 h-4 text-[#F7931A]" />}
+                <span className="font-bold text-sm tracking-tight">Table of Contents</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{currentSection.title}</span>
+                <ChevronDown className={`w-4 h-4 text-slate-500 transition-transform duration-300 ${isTOCOpen ? 'rotate-180' : ''}`} />
+              </div>
+            </button>
+
+            <AnimatePresence>
+              {isTOCOpen && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="absolute top-full left-0 right-0 mt-2 bg-[#0A0A0C] border border-white/5 rounded-2xl overflow-hidden shadow-2xl z-50 max-h-[70dvh] overflow-y-auto custom-scrollbar"
+                >
+                  <div className="p-2">
+                    {categories.map(cat => {
+                      const catSections = sections.filter(s => s.category === cat);
+                      return (
+                        <div key={cat} className="mb-4 last:mb-0">
+                          <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em] px-4 py-2">{cat}</p>
+                          <div className="space-y-1">
+                            {catSections.map(s => (
+                              <button
+                                key={s.id}
+                                onClick={() => handleSectionChange(s.id)}
+                                className={`
+                                  w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-bold transition-all
+                                  ${activeSection === s.id
+                                    ? 'bg-[#F7931A]/10 text-[#F7931A]'
+                                    : 'text-slate-400 hover:bg-white/5'}
+                                `}
+                              >
+                                <div className={`w-1.5 h-1.5 rounded-full ${activeSection === s.id ? 'bg-[#F7931A] shadow-[0_0_10px_rgba(247,147,26,0.5)]' : 'bg-slate-700'}`} />
+                                {s.title}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
+
 
           <AnimatePresence mode="wait">
             <motion.div
@@ -783,34 +1190,7 @@ export default function DocsPage() {
             </motion.div>
           </AnimatePresence>
 
-          {/* Navigation Footer */}
-          <div className="mt-20 pt-10 border-t border-white/5 flex flex-wrap gap-4 justify-between">
-            {sections.indexOf(currentSection) > 0 ? (
-              <button 
-                onClick={() => handleSectionChange(sections[sections.indexOf(currentSection) - 1].id)}
-                className="flex items-center gap-4 p-6 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/8 transition-all text-left"
-              >
-                <ChevronLeft className="w-5 h-5 text-slate-500" />
-                <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Previous</p>
-                  <p className="font-black text-white uppercase text-xs">{sections[sections.indexOf(currentSection) - 1].title}</p>
-                </div>
-              </button>
-            ) : <div />}
 
-            {sections.indexOf(currentSection) < sections.length - 1 ? (
-              <button 
-                onClick={() => handleSectionChange(sections[sections.indexOf(currentSection) + 1].id)}
-                className="flex items-center gap-4 p-6 bg-white/5 border border-white/5 rounded-2xl hover:bg-white/8 transition-all text-right"
-              >
-                <div>
-                  <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-1">Next</p>
-                  <p className="font-black text-white uppercase text-xs">{sections[sections.indexOf(currentSection) + 1].title}</p>
-                </div>
-                <ChevronRight className="w-5 h-5 text-slate-500" />
-              </button>
-            ) : <div />}
-          </div>
         </main>
       </div>
 
