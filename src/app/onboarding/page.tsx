@@ -142,6 +142,17 @@ function OnboardingContent() {
 
   const submitProfile = async () => {
     if (!user?.id && !address) return;
+    // Validation logic
+    if (username.length < 3 || username.length > 15) {
+      return alert('Username must be between 3 and 15 characters.');
+    }
+    if (displayName.length < 3 || displayName.length > 20) {
+      return alert('Display name must be between 3 and 20 characters.');
+    }
+    if (bio.length < 10 || bio.length > 300) {
+      return alert('Bio must be between 10 and 300 characters.');
+    }
+
     setIsSubmitting(true);
     try {
       const links = {
@@ -154,7 +165,7 @@ function OnboardingContent() {
       const token = await getAccessToken();
       const response = await fetch('/api/profile', {
         method: 'PATCH',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -302,6 +313,7 @@ function OnboardingContent() {
                         type="text"
                         value={username}
                         onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_]/g, ''))}
+                        maxLength={15}
                         className="flex-1 bg-transparent py-6 px-5 text-2xl text-white focus:outline-none font-black placeholder:text-slate-800 h-[80px]"
                         placeholder="username"
                       />
@@ -453,6 +465,7 @@ function OnboardingContent() {
                           onChange={(e) => setDisplayName(e.target.value)}
                           className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-5 text-white focus:outline-none focus:ring-4 focus:ring-[#f7931a]/20 focus:border-[#f7931a] transition-all text-lg font-bold"
                           placeholder="Your Name"
+                          maxLength={12}
                         />
                       </div>
                       <div>
@@ -463,6 +476,7 @@ function OnboardingContent() {
                           onChange={(e) => setBio(e.target.value)}
                           className="w-full bg-black/40 border border-white/10 rounded-2xl py-4 px-5 text-white focus:outline-none focus:ring-4 focus:ring-[#f7931a]/20 focus:border-[#f7931a] transition-all resize-none text-lg font-medium"
                           placeholder="What are you creating?"
+                          maxLength={300}
                         />
                       </div>
                     </div>
@@ -543,7 +557,7 @@ function OnboardingContent() {
                 className="w-full h-full object-cover"
               />
               <div className="absolute inset-0 bg-black/60 backdrop-blur-[2px]" />
-              
+
               {/* Animated Glows */}
               <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] rounded-full bg-purple-600/20 blur-[120px] animate-pulse" />
               <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] rounded-full bg-blue-600/20 blur-[120px] animate-pulse" />
@@ -586,17 +600,16 @@ function OnboardingContent() {
                           {origin.replace(/^https?:\/\//, '')}/<span className="text-purple-400">{username}</span>
                         </p>
                       </div>
-                      <button 
+                      <button
                         onClick={() => {
                           navigator.clipboard.writeText(`${origin}/${username}`);
                           setCopied(true);
                           setTimeout(() => setCopied(false), 2000);
                         }}
-                        className={`flex items-center gap-2 px-5 py-3 rounded-xl border transition-all font-black uppercase tracking-wider text-xs md:text-sm ${
-                          copied 
-                            ? 'bg-green-500/20 border-green-500/50 text-green-400' 
+                        className={`flex items-center gap-2 px-5 py-3 rounded-xl border transition-all font-black uppercase tracking-wider text-xs md:text-sm ${copied
+                            ? 'bg-green-500/20 border-green-500/50 text-green-400'
                             : 'bg-white/5 border-white/10 text-slate-300 hover:bg-white/10 hover:border-white/20'
-                        }`}
+                          }`}
                       >
                         {copied ? <Check className="w-4 h-4" /> : <Copy className="w-4 h-4" />}
                         {copied ? 'Copied' : 'Copy'}

@@ -347,10 +347,6 @@ function EditorInner() {
               <ArrowLeft size={18} />
               Dashboard
             </button>
-            <div className="w-px h-5 bg-white/10" />
-            <span className="text-xs font-bold text-slate-500 uppercase tracking-widest">
-              {status === 'saving' ? '● Saving...' : status === 'success' ? '✓ Published!' : '● Draft'}
-            </span>
           </div>
 
           <div className="flex items-center gap-3">
@@ -518,15 +514,6 @@ function EditorInner() {
                     className="hidden" 
                     accept={postType === 'album' ? 'image/*' : postType === 'audio' ? 'audio/*' : 'video/*'} 
                   />
-                  {isUploading && (
-                    <div className="absolute inset-0 bg-black/60 backdrop-blur-md flex items-center justify-center rounded-3xl z-10 p-6">
-                      <FileUploadProgress 
-                        progress={uploadProgress} 
-                        fileName={uploadFileName} 
-                        status={uploadProgress === 100 ? 'success' : 'uploading'} 
-                      />
-                    </div>
-                  )}
                 </button>
               )}
             </div>
@@ -575,20 +562,10 @@ function EditorInner() {
                 {modalType === 'image' && (
                   <>
                     <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex flex-col items-center justify-center gap-3 w-full p-6 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 hover:bg-white/10 transition-all text-slate-400 hover:text-white overflow-hidden relative">
-                      {isUploading ? (
-                        <div className="w-full px-2 py-4">
-                           <FileUploadProgress 
-                            progress={uploadProgress} 
-                            fileName={uploadFileName} 
-                            status={uploadProgress === 100 ? 'success' : 'uploading'} 
-                          />
-                        </div>
-                      ) : (
-                        <>
-                          <UploadCloud size={32} />
-                          <span className="font-bold text-sm uppercase tracking-wide">Upload from gallery</span>
-                        </>
-                      )}
+                      <>
+                        <UploadCloud size={32} />
+                        <span className="font-bold text-sm uppercase tracking-wide">Upload from gallery</span>
+                      </>
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleInlineImageUpload} className="hidden" accept="image/*" />
                     <div className="relative">
@@ -625,6 +602,30 @@ function EditorInner() {
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+      
+      {/* Global Upload Progress Overlay */}
+      <AnimatePresence>
+        {isUploading && (
+          <motion.div 
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[300] bg-black/80 backdrop-blur-md flex items-center justify-center p-6"
+          >
+            <motion.div
+              initial={{ scale: 0.9, opacity: 0, y: 20 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.9, opacity: 0, y: 20 }}
+            >
+              <FileUploadProgress 
+                progress={uploadProgress} 
+                fileName={uploadFileName} 
+                status={uploadProgress === 100 ? 'success' : 'uploading'} 
+              />
+            </motion.div>
+          </motion.div>
         )}
       </AnimatePresence>
 

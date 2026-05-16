@@ -135,7 +135,7 @@ export default function CreatorHome() {
 
           const combinedTips = tipsData.map((t) => ({
             ...t,
-            sender_profile: senderProfiles?.find((p) => p.wallet_address.toLowerCase() === t.from_address.toLowerCase())
+            sender_profile: senderProfiles?.find((p) => p.wallet_address?.toLowerCase() === t.from_address.toLowerCase())
           }));
           setRecentTips(combinedTips as Tip[]);
         } else {

@@ -41,12 +41,15 @@ export async function GET(request: NextRequest) {
     const supabase = createServerSupabase();
     const identifiers = await getOwnedNotificationIdentifiers(supabase, verifiedDid);
 
+    const limit = parseInt(request.nextUrl.searchParams.get('limit') || '10');
+    const offset = parseInt(request.nextUrl.searchParams.get('offset') || '0');
+
     const { data, error } = await supabase
       .from('notifications')
       .select('*')
       .in('user_address', identifiers)
       .order('created_at', { ascending: false })
-      .limit(50);
+      .range(offset, offset + limit - 1);
 
     if (error) throw error;
 

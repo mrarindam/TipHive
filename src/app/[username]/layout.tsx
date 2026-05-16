@@ -151,20 +151,25 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
       }
 
       // Calculate network-specific earnings
-      const { data: tips } = await supabase
-        .from('tips')
-        .select('amount')
-        .eq('to_address', profile.wallet_address.toLowerCase())
-        .eq('chain_id', chainId);
-      
-      const { data: subs } = await supabase
-        .from('subscriptions')
-        .select('total_paid')
-        .eq('creator_address', profile.wallet_address.toLowerCase())
-        .eq('chain_id', chainId);
+      let tipsTotal = 0;
+      let subsTotal = 0;
 
-      const tipsTotal = (tips || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-      const subsTotal = (subs || []).reduce((acc, curr) => acc + (Number(curr.total_paid) || 0), 0);
+      if (profile.wallet_address) {
+        const { data: tips } = await supabase
+          .from('tips')
+          .select('amount')
+          .eq('to_address', profile.wallet_address.toLowerCase())
+          .eq('chain_id', chainId);
+        
+        const { data: subs } = await supabase
+          .from('subscriptions')
+          .select('total_paid')
+          .eq('creator_address', profile.wallet_address.toLowerCase())
+          .eq('chain_id', chainId);
+
+        tipsTotal = (tips || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
+        subsTotal = (subs || []).reduce((acc, curr) => acc + (Number(curr.total_paid) || 0), 0);
+      }
       setTotalEarned(tipsTotal + subsTotal);
     }
     setLoading(false);
@@ -259,9 +264,8 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     return <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center pt-24 text-white">Profile not found.</div>;
   }
 
-  const isOwner = userAddress && creator.wallet_address 
-    ? userAddress.toLowerCase() === creator.wallet_address.toLowerCase()
-    : false;
+  const isOwner = Boolean((userAddress && creator.wallet_address && userAddress.toLowerCase() === creator.wallet_address.toLowerCase()) || 
+                  (userId && creator.privy_did && userId === creator.privy_did));
   const isHome = pathname === `/${username}`;
 
   // Tab logic based on pathname

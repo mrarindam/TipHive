@@ -27,26 +27,40 @@ export default function TopCreatorsBubbles() {
       const thirtyDaysAgo = new Date();
       thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const { data: tips, error } = await supabase
-        .from('tips')
-        .select('to_address, amount')
-        .eq('chain_id', chainId)
-        .gt('created_at', thirtyDaysAgo.toISOString());
+      const [tipsRes, subsRes] = await Promise.all([
+        supabase
+          .from('tips')
+          .select('to_address, amount')
+          .eq('chain_id', chainId)
+          .gt('created_at', thirtyDaysAgo.toISOString()),
+        supabase
+          .from('subscriptions')
+          .select('creator_address, total_paid')
+          .eq('chain_id', chainId)
+          .gt('created_at', thirtyDaysAgo.toISOString())
+      ]);
 
-      if (error) {
-        console.error('Error fetching tips:', error);
+      if (tipsRes.error || subsRes.error) {
+        console.error('Error fetching data:', tipsRes.error || subsRes.error);
         setLoading(false);
         return;
       }
 
-      // Group and sum
       const earningsMap: Record<string, number> = {};
-      tips.forEach(tip => {
-        const addr = tip.to_address.toLowerCase();
-        earningsMap[addr] = (earningsMap[addr] || 0) + tip.amount;
+      
+      // Process Tips
+      (tipsRes.data || []).forEach(tip => {
+        const addr = tip.to_address?.toLowerCase();
+        if (addr) earningsMap[addr] = (earningsMap[addr] || 0) + tip.amount;
       });
 
-      // Get addresses
+      // Process Subscriptions
+      (subsRes.data || []).forEach(sub => {
+        const addr = sub.creator_address?.toLowerCase();
+        if (addr) earningsMap[addr] = (earningsMap[addr] || 0) + sub.total_paid;
+      });
+
+      // Get top 20 addresses
       const topAddresses = Object.entries(earningsMap)
         .sort(([, a], [, b]) => b - a)
         .slice(0, 20)
@@ -60,17 +74,18 @@ export default function TopCreatorsBubbles() {
       // Fetch profiles
       const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('wallet_address, username, display_name, avatar_url')
+        .select('wallet_address, privy_did, username, display_name, avatar_url')
         .in('wallet_address', topAddresses);
 
       if (profiles) {
         const sortedCreators = topAddresses.map(addr => {
-          const profile = profiles.find(p => p.wallet_address.toLowerCase() === addr);
+          const profile = profiles.find(p => p.wallet_address?.toLowerCase() === addr);
+          if (!profile) return null;
           return {
             ...profile,
             monthly_earned: earningsMap[addr]
           };
-        }).filter(c => c.username) as TopCreator[];
+        }).filter(c => c && c.username) as TopCreator[];
 
         setCreators(sortedCreators);
       }

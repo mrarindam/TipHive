@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase';
 import { SinglePostSkeleton } from '@/components/ui/Skeleton';
 import { Heart, ArrowLeft, Share2, MessageCircle, Zap, Lock, Globe2, Users } from 'lucide-react';
 import Link from 'next/link';
-import Image from 'next/image';
 import { useAccount } from 'wagmi';
 import { usePrivy } from '@privy-io/react-auth';
 import { motion } from 'framer-motion';
@@ -56,6 +55,7 @@ export default function PostPage() {
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
 
   useEffect(() => {
+    window.scrollTo(0, 0);
     async function fetchData() {
       if (!username || !slug) return;
       const title = decodeURIComponent(slug as string);
@@ -100,7 +100,7 @@ export default function PostPage() {
                 .select('id')
                 .eq('post_id', postData.id)
                 .eq('user_address', userAddress ? userAddress.toLowerCase() : userId!)
-                .single();
+                .maybeSingle();
               setIsLiked(!!userLike);
             }
           }
@@ -151,7 +151,7 @@ export default function PostPage() {
               .from('subscriptions')
               .select('id, end_date')
               .eq('fan_address', userAddress ? userAddress.toLowerCase() : userId!)
-              .eq('creator_address', profile.wallet_address.toLowerCase())
+              .eq('creator_address', profile.wallet_address?.toLowerCase())
               .eq('active', true);
 
             if (subs && subs.length > 0) {
@@ -326,9 +326,9 @@ export default function PostPage() {
 
           {/* Media Rendering */}
           {!!post.image_url && (
-            <div className="w-full relative rounded-3xl overflow-hidden mb-10 aspect-video bg-black shadow-2xl">
+            <div className="w-full relative rounded-3xl overflow-hidden mb-10 shadow-2xl border border-white/5">
               {isLocked ? (
-                <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center">
+                <div className="w-full aspect-video relative flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center">
                   <Lock className="w-16 h-16 text-[#F7931A] mb-4" />
                   <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">Members Only</h3>
                   <p className="text-slate-400 mb-8 max-w-sm font-medium">This visual content is exclusive for my amazing members. Subscribe to unlock full access!</p>
@@ -337,7 +337,7 @@ export default function PostPage() {
                   </Link>
                 </div>
               ) : (
-                <Image src={post.image_url as string} alt={post.title as string} fill className="object-contain" unoptimized />
+                <img src={post.image_url as string} alt={post.title as string} className="w-full h-auto block" />
               )}
             </div>
           )}

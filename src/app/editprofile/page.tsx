@@ -118,6 +118,20 @@ export default function ConnectedProfilePage() {
     event.preventDefault();
     if (!user?.id && !address) return;
 
+    // Validation logic
+    if (formData.username.length < 3 || formData.username.length > 15) {
+      return alert('Username must be between 3 and 15 characters.');
+    }
+    if (formData.display_name.length < 3 || formData.display_name.length > 20) {
+      return alert('Display name must be between 3 and 20 characters.');
+    }
+    if (formData.creator_description && (formData.creator_description.length < 6 || formData.creator_description.length > 50)) {
+      return alert('Headline must be between 6 and 50 characters.');
+    }
+    if (formData.bio && (formData.bio.length < 10 || formData.bio.length > 300)) {
+      return alert('About me must be between 10 and 300 characters.');
+    }
+
     setSaving(true);
     try {
       let avatarUrl = formData.avatar_url;
@@ -144,7 +158,7 @@ export default function ConnectedProfilePage() {
       const token = await getAccessToken();
       const response = await fetch('/api/profile', {
         method: 'PATCH',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
@@ -194,7 +208,7 @@ export default function ConnectedProfilePage() {
     const newLinks = [...formData.social_links];
     const index = newLinks.findIndex(l => l.toLowerCase().includes(platform));
     const fullUrl = value ? (value.startsWith('http') ? value : `${baseUrl}${value.replace('@', '')}`) : '';
-    
+
     if (index >= 0) {
       if (fullUrl) newLinks[index] = fullUrl;
       else newLinks.splice(index, 1);
@@ -209,7 +223,7 @@ export default function ConnectedProfilePage() {
   const discordVal = getSocialValue('discord.com');
   const websiteVal = formData.social_links.find(l => !l.includes('x.com') && !l.includes('twitter.com') && !l.includes('github.com') && !l.includes('discord.com')) || '';
 
-  const extraLinks = formData.social_links.filter(l => 
+  const extraLinks = formData.social_links.filter(l =>
     !l.includes('x.com') && !l.includes('twitter.com') && !l.includes('github.com') && !l.includes('discord.com')
   );
 
@@ -282,7 +296,7 @@ export default function ConnectedProfilePage() {
                     setFormData({ ...formData, username });
                   }}
                   className="profile-input pl-11"
-                  maxLength={24}
+                  maxLength={15}
                   required
                 />
               </div>
@@ -294,7 +308,7 @@ export default function ConnectedProfilePage() {
                 value={formData.display_name}
                 onChange={(event) => setFormData({ ...formData, display_name: event.target.value })}
                 className="profile-input"
-                maxLength={80}
+                maxLength={12}
                 required
               />
             </Field>
@@ -371,7 +385,7 @@ export default function ConnectedProfilePage() {
                   value={formData.creator_description}
                   onChange={(event) => setFormData({ ...formData, creator_description: event.target.value })}
                   className="profile-input"
-                  maxLength={100}
+                  maxLength={50}
                   placeholder="e.g. Piano Player"
                 />
               </Field>
@@ -392,7 +406,7 @@ export default function ConnectedProfilePage() {
                 value={formData.bio}
                 onChange={(event) => setFormData({ ...formData, bio: event.target.value })}
                 className="profile-input min-h-24 resize-none"
-                maxLength={500}
+                maxLength={300}
                 placeholder="Tell your supporters more about yourself..."
               />
             </Field>
@@ -402,7 +416,7 @@ export default function ConnectedProfilePage() {
                 <h3 className="text-sm font-black text-white uppercase tracking-widest">Connect Socials</h3>
                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Optional</span>
               </div>
-              
+
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-xs uppercase">X</span>
@@ -512,8 +526,8 @@ export default function ConnectedProfilePage() {
           {profile?.is_creator ? 'Creator Profile' : 'Become a Creator'}
         </h2>
         <p className="mt-4 max-w-xl text-sm font-medium text-slate-500">
-          {profile?.is_creator 
-            ? 'Manage your creator page, categories, and subscription settings.' 
+          {profile?.is_creator
+            ? 'Manage your creator page, categories, and subscription settings.'
             : 'Send value directly to your favorite creators. No middlemen, no waiting periods.'}
         </p>
         <div className="mt-8">
@@ -543,7 +557,7 @@ export default function ConnectedProfilePage() {
                 <h4 className="text-white font-black uppercase tracking-tight text-xl">Profile Saved</h4>
                 <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Changes are now live!</p>
               </div>
-              <button 
+              <button
                 onClick={() => setShowSuccess(false)}
                 className="text-slate-500 hover:text-white transition-colors p-2"
               >

@@ -11,7 +11,7 @@ import { extractFirstImage, TextThumbnail } from '../[username]/layout';
 import { useAccount } from 'wagmi';
 import { usePrivy } from '@privy-io/react-auth';
 import { Skeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
-import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
+
 
 interface Post {
   id: string;
@@ -26,6 +26,7 @@ interface Post {
 
 interface Creator {
   id: string;
+  privy_did: string;
   wallet_address: string;
   username: string;
   display_name: string;
@@ -97,7 +98,9 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
         </Link>
 
         <div className="flex items-center gap-4 flex-1">
-          {(!userAddress || !creator.wallet_address || userAddress.toLowerCase() !== creator.wallet_address.toLowerCase()) && (
+          {((userAddress && creator.wallet_address && userAddress.toLowerCase() !== creator.wallet_address.toLowerCase()) || 
+             (user?.id && creator.privy_did && user.id !== creator.privy_did) ||
+             (!userAddress && !user?.id)) && (
             <button 
               onClick={handleFollow}
               className={`px-6 py-2.5 rounded-2xl font-black text-xs uppercase tracking-widest transition-all ${
@@ -215,7 +218,7 @@ export default function Explore() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
-  const { chainId } = useNetworkConfig();
+
   
   const observer = useRef<IntersectionObserver | null>(null);
   const lastElementRef = useCallback((node: HTMLDivElement) => {
@@ -237,26 +240,10 @@ export default function Explore() {
     if (pageNum === 0) setLoading(true);
     else setLoadingMore(true);
 
-    // 1. Get top earners on this network first
-    const { data: topTips } = await supabase
-      .from('tips')
-      .select('to_address, amount')
-      .eq('chain_id', chainId);
-
-    const earningsMap: Record<string, number> = {};
-    (topTips || []).forEach(tip => {
-      const addr = tip.to_address.toLowerCase();
-      earningsMap[addr] = (earningsMap[addr] || 0) + (Number(tip.amount) || 0);
-    });
-
-    const topAddresses = Object.entries(earningsMap)
-      .sort(([, a], [, b]) => b - a)
-      .map(([addr]) => addr);
-
     // 2. Fetch profiles
     let query = supabase
       .from('user_profiles')
-      .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
+      .select('id, privy_did, wallet_address, username, display_name, bio, avatar_url, total_earned')
       .eq('is_creator', true);
     
     if (search) {
@@ -264,28 +251,61 @@ export default function Explore() {
     }
 
     let profileData = [];
-    if (!search && topAddresses.length > 0) {
-      // If no search, show top earners first
-      const { data } = await query.in('wallet_address', topAddresses.slice(from, to + 1));
-      // Sort them to match topAddresses order
-      profileData = (data || []).sort((a, b) => {
-        const indexA = topAddresses.indexOf(a.wallet_address.toLowerCase());
-        const indexB = topAddresses.indexOf(b.wallet_address.toLowerCase());
-        return indexA - indexB;
-      });
+    
+    if (!search) {
+      // 1. Get IDs of creators who recently posted (truly "Live")
+      const { data: recentPosts } = await supabase
+        .from('posts')
+        .select('creator_id, created_at')
+        .order('created_at', { ascending: false })
+        .limit(100);
       
-      // If we need more creators (not in top earners), fetch them
-      if (profileData.length < limit && pageNum === 0) {
-        const { data: others } = await supabase
+      const liveCreatorIds = Array.from(new Set(recentPosts?.map(p => p.creator_id) || []));
+      
+      // 2. Combine with top earners to form our priority list
+      // We'll prioritize people who recently posted, then top earners
+      const priorityIds = Array.from(new Set([...liveCreatorIds])); // In the future we can mix top earners here
+      
+      const toSkip = from;
+      const toTake = limit;
+      
+      // Fetch batch from priority list first
+      let currentBatch: Creator[] = [];
+      const batchPriorityIds = priorityIds.slice(toSkip, toSkip + toTake);
+      
+      if (batchPriorityIds.length > 0) {
+        const { data: priorityData } = await supabase
           .from('user_profiles')
-          .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
-          .eq('is_creator', true)
-          .not('wallet_address', 'in', `(${topAddresses.join(',')})`)
-          .limit(limit - profileData.length);
-        if (others) profileData = [...profileData, ...others];
+          .select('id, privy_did, wallet_address, username, display_name, bio, avatar_url, total_earned')
+          .in('id', batchPriorityIds);
+        
+        if (priorityData) {
+          // Sort to match priority order (recency of posts)
+          currentBatch = priorityData.sort((a, b) => priorityIds.indexOf(a.id) - priorityIds.indexOf(b.id));
+        }
       }
+      
+      // If we still need more (e.g. at the end of the recent posters list), get top earners or others
+      if (currentBatch.length < limit) {
+        const othersSkip = Math.max(0, from - priorityIds.length);
+        const othersTake = limit - currentBatch.length;
+        
+        const { data: othersData } = await supabase
+          .from('user_profiles')
+          .select('id, privy_did, wallet_address, username, display_name, bio, avatar_url, total_earned')
+          .eq('is_creator', true)
+          .not('id', 'in', `(${priorityIds.slice(0, 100).join(',')})`)
+          .order('total_earned', { ascending: false })
+          .range(othersSkip, othersSkip + othersTake - 1);
+          
+        if (othersData) {
+          currentBatch = [...currentBatch, ...othersData];
+        }
+      }
+      
+      profileData = currentBatch;
     } else {
-      // Regular search or fallback
+      // Regular search
       const { data } = await query
         .order('total_earned', { ascending: false })
         .range(from, to);
@@ -301,7 +321,7 @@ export default function Explore() {
 
     if (profileData.length < limit) setHasMore(false);
 
-    // Fetch recent posts
+    // Fetch recent posts for these specific creators
     const creatorIds = profileData.map(p => p.id);
     const { data: postsData } = await supabase
       .from('posts')
@@ -335,13 +355,13 @@ export default function Explore() {
     setCreators(prev => isNewSearch ? creatorsWithPosts : [...prev, ...creatorsWithPosts]);
     setLoading(false);
     setLoadingMore(false);
-  }, [search, userAddress, userId, chainId]);
+  }, [search, userAddress, userId]);
 
   useEffect(() => {
     setPage(0);
     setHasMore(true);
     fetchCreators(0, true);
-  }, [search, fetchCreators, chainId]);
+  }, [search, fetchCreators]);
 
   useEffect(() => {
     if (page > 0) {

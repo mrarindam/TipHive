@@ -245,10 +245,11 @@ export default function WalletProfileMenu() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed left-1/2 top-20 z-[120] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-white/5 bg-[#070707] text-white shadow-2xl shadow-black/60 backdrop-blur-3xl md:absolute md:left-auto md:right-0 md:top-16 md:w-[430px] md:translate-x-0 md:rounded-[2rem]"
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="fixed left-1/2 top-20 z-[120] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-white/5 bg-[#070707] text-white shadow-2xl shadow-black/60 backdrop-blur-3xl md:absolute md:left-auto md:right-0 md:top-16 md:w-[430px] md:translate-x-0 md:rounded-[2rem] transform-gpu"
           >
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(247,147,26,0.28),transparent_32%),radial-gradient(circle_at_95%_8%,rgba(34,211,238,0.2),transparent_26%),radial-gradient(circle_at_50%_100%,rgba(236,72,153,0.16),transparent_34%)]" />
             <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F7931A] to-transparent" />

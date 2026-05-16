@@ -31,12 +31,6 @@ export default function Navbar() {
             <Link
               href="/"
               className="flex items-center gap-2 md:gap-3 group"
-              onClick={(e) => {
-                if (window.innerWidth < 768) {
-                  e.preventDefault();
-                  window.dispatchEvent(new CustomEvent('toggle-wallet-menu'));
-                }
-              }}
             >
               <Image
                 src="/logo.png"

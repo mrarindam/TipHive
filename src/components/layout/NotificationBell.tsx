@@ -19,6 +19,9 @@ export default function NotificationBell() {
   const { authenticated, user, getAccessToken } = usePrivy();
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loading, setLoading] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
@@ -26,12 +29,18 @@ export default function NotificationBell() {
 
   const userId = user?.id;
 
-  const fetchNotifications = useCallback(async () => {
+  const fetchNotifications = useCallback(async (isLoadMore = false) => {
     if (!authenticated || (!address && !userId)) return;
+    if (isLoadMore) setLoading(true);
+    
     try {
+      const currentOffset = isLoadMore ? offset + 10 : 0;
       const params = new URLSearchParams();
       if (address) params.set('wallet', address);
       if (userId) params.set('did', userId);
+      params.set('limit', '10');
+      params.set('offset', currentOffset.toString());
+
       const token = await getAccessToken();
       const res = await fetch(`/api/notifications?${params.toString()}`, {
         headers: { 'Authorization': `Bearer ${token}` }
@@ -40,18 +49,51 @@ export default function NotificationBell() {
         throw new Error(`Notifications API failed: ${res.status}`);
       }
       const data = await res.json();
+      
       if (data.notifications) {
-        setNotifications(data.notifications);
+        const newNotifications = data.notifications;
+        
+        if (isLoadMore) {
+          setNotifications(prev => {
+            // Filter out any duplicates just in case
+            const existingIds = new Set(prev.map(n => n.id));
+            const filteredNew = newNotifications.filter((n: Notification) => !existingIds.has(n.id));
+            return [...prev, ...filteredNew];
+          });
+          setOffset(currentOffset);
+        } else {
+          setNotifications(prev => {
+            // If polling, merge with existing notifications to preserve those loaded via "Load More"
+            const newIds = new Set(newNotifications.map((n: Notification) => n.id));
+            const existingOthers = prev.filter(n => !newIds.has(n.id));
+            return [...newNotifications, ...existingOthers].sort((a, b) => 
+              new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+            );
+          });
+        }
+
+        if (newNotifications.length < 10) {
+          setHasMore(false);
+        } else {
+          setHasMore(true);
+        }
       }
     } catch (error) {
       console.error('Error fetching notifications:', error);
+    } finally {
+      if (isLoadMore) setLoading(false);
     }
-  }, [address, userId, authenticated, getAccessToken]);
+  }, [address, userId, authenticated, getAccessToken, offset]);
+
+  const handleLoadMore = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    fetchNotifications(true);
+  };
 
   useEffect(() => {
     if (authenticated) {
       fetchNotifications();
-      const interval = setInterval(fetchNotifications, 5000); // Poll every 5s
+      const interval = setInterval(() => fetchNotifications(false), 10000); // Poll every 10s
       return () => clearInterval(interval);
     }
   }, [authenticated, fetchNotifications]);
@@ -115,10 +157,11 @@ export default function NotificationBell() {
       <AnimatePresence>
         {isOpen && (
           <motion.div
-            initial={{ opacity: 0, y: -20 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -20 }}
-            className="fixed left-1/2 top-20 z-[150] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-white/5 bg-[#070707] text-white shadow-2xl shadow-black/60 backdrop-blur-3xl md:absolute md:left-auto md:right-0 md:top-full md:mt-3 md:w-[380px] md:translate-x-0 md:rounded-[2rem]"
+            initial={{ opacity: 0, y: -10, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -10, scale: 0.95 }}
+            transition={{ duration: 0.15, ease: "easeOut" }}
+            className="fixed left-1/2 top-20 z-[150] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-white/5 bg-[#070707] text-white shadow-2xl shadow-black/60 backdrop-blur-3xl md:absolute md:left-auto md:right-0 md:top-full md:mt-3 md:w-[380px] md:translate-x-0 md:rounded-[2rem] transform-gpu"
           >
             <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
               <div>
@@ -196,7 +239,17 @@ export default function NotificationBell() {
 
             {notifications.length > 0 && (
               <div className="p-4 bg-white/[0.02] border-t border-white/5 text-center">
-                 <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">End of feed</p>
+                {hasMore ? (
+                  <button 
+                    onClick={handleLoadMore}
+                    disabled={loading}
+                    className="text-[10px] font-black text-[#F7931A] uppercase tracking-[0.2em] hover:text-white transition-colors disabled:opacity-50"
+                  >
+                    {loading ? 'Loading...' : 'Read More'}
+                  </button>
+                ) : (
+                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">End of feed</p>
+                )}
               </div>
             )}
           </motion.div>

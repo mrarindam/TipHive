@@ -69,7 +69,11 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
       <div className="fixed inset-0 bg-[#050505] flex flex-col items-center justify-center z-[200]">
         <div className="relative">
           <div className="absolute inset-0 bg-[#F7931A]/20 blur-3xl rounded-full animate-pulse" />
-          <img src="/logo.png" alt="TipHive" className="w-16 h-16 relative mb-8 animate-bounce unoptimized" />
+          <img 
+            src="/logo.png" 
+            alt="TipHive" 
+            className="w-16 h-16 md:w-20 md:h-20 relative mb-8 animate-bounce mix-blend-screen object-contain" 
+          />
         </div>
         <div className="flex items-center gap-3 text-slate-400 font-bold tracking-widest uppercase text-sm">
           <div className="w-4 h-4 border-2 border-[#F7931A] border-t-transparent rounded-full animate-spin" />
