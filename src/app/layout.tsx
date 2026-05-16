@@ -12,6 +12,7 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://tiphive.xyz'),
   title: "TipHive | The Bitcoin-Native Tipping Platform",
   description: "Empowering the creator economy with instant, fee-less Bitcoin-native tips on Mezo L2.",
   icons: {

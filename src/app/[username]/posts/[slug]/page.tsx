@@ -47,7 +47,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
       ? post.content.replace(/<[^>]*>/g, '').substring(0, 160) + '...'
       : `Check out this post by ${profile.display_name} on TipHive`;
 
-    const imageUrl = post.image_url || profile.avatar_url || 'https://tiphive.app/og-image.png'; // Fallback to a default OG image
 
     return {
       title: pageTitle,

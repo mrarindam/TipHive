@@ -24,7 +24,6 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 
     const title = `${profile.display_name} (@${profile.username}) | TipHive`;
     const description = profile.bio || profile.creator_description || `Support ${profile.display_name} on TipHive - The ultimate creator monetization platform.`;
-    const imageUrl = profile.avatar_url || 'https://tiphive.app/og-image.png';
 
     return {
       title,

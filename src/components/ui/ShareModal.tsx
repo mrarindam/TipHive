@@ -30,8 +30,10 @@ interface ShareModalProps {
 export default function ShareModal({ isOpen, onClose, url, title }: ShareModalProps) {
   const [copied, setCopied] = useState(false);
 
+  const shareUrl = url ? (url.includes('?') ? `${url}&v=1` : `${url}?v=1`) : '';
+
   const copyToClipboard = () => {
-    navigator.clipboard.writeText(url);
+    navigator.clipboard.writeText(shareUrl);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
@@ -85,7 +87,7 @@ export default function ShareModal({ isOpen, onClose, url, title }: ShareModalPr
                   transition={{ delay: index * 0.05 }}
                 >
                   <option.Button 
-                    url={url} 
+                    url={shareUrl} 
                     title={title} 
                     className="w-full flex flex-col items-center justify-center group outline-none"
                   >
@@ -108,7 +110,7 @@ export default function ShareModal({ isOpen, onClose, url, title }: ShareModalPr
               <label className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] ml-1">Profile Link</label>
               <div className="flex gap-2">
                 <div className="flex-1 bg-white/5 border border-white/5 rounded-xl px-4 py-3 text-slate-400 text-sm font-mono truncate">
-                  {url}
+                  {shareUrl}
                 </div>
                 <button
                   onClick={copyToClipboard}
