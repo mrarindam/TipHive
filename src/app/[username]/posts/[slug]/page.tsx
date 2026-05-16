@@ -322,7 +322,10 @@ export default function PostPage() {
 
         {/* Post Content Body */}
         <div className="p-6 md:p-10">
-          <h1 className="text-3xl md:text-5xl font-black uppercase tracking-tight mb-8 leading-tight">{post.title as string}</h1>
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-4 font-outfit text-white leading-tight">
+            {post.title as string}
+          </h1>
+          <div className="w-20 h-1.5 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full mb-10 opacity-50" />
 
           {/* Media Rendering */}
           {!!post.image_url && (
@@ -465,7 +468,7 @@ export default function PostPage() {
             );
           })()}
 
-          <div className="prose prose-invert max-w-none">
+          <div className="tiptap-content min-h-[400px]">
             {isLocked ? (
               <div className="relative">
                 <div className="space-y-4 opacity-30 select-none">
@@ -486,7 +489,6 @@ export default function PostPage() {
               </div>
             ) : (
               <div
-                className="prose prose-invert max-w-none prose-headings:text-white prose-p:text-slate-300 prose-p:leading-relaxed prose-p:text-xl prose-h1:text-5xl prose-h1:font-black prose-h2:text-4xl prose-h2:font-extrabold prose-h3:text-3xl prose-h3:font-bold prose-blockquote:border-l-[#8A2BE2] prose-blockquote:text-slate-400 prose-blockquote:bg-white/5 prose-blockquote:p-6 prose-blockquote:rounded-r-2xl prose-a:text-[#8A2BE2] prose-strong:text-white prose-ul:list-disc prose-ol:list-decimal prose-li:text-slate-300 prose-img:rounded-3xl prose-img:shadow-2xl prose-pre:bg-[#011627] prose-pre:border prose-pre:border-white/5"
                 dangerouslySetInnerHTML={{ __html: post.content as string }}
               />
             )}

@@ -58,7 +58,7 @@ export function PrivyProviderWrapper({ children }: { children: React.ReactNode }
         appearance: {
           theme: 'dark',
           accentColor: '#F7931A',
-          logo: 'https://tiphive.vercel.app/logo.png',
+          logo: 'https://tiphive.xyz/logo.png',
         },
         embeddedWallets: {
           ethereum: {

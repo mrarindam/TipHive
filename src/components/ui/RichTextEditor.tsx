@@ -109,7 +109,7 @@ const RichTextEditor = ({
     },
     editorProps: {
       attributes: {
-        class: 'prose prose-invert max-w-none focus:outline-none min-h-[500px] text-slate-300 font-medium px-8 sm:px-12 md:px-16 pb-16 text-lg leading-relaxed selection:bg-[#8A2BE2]/30',
+        class: 'tiptap-content prose prose-invert max-w-none focus:outline-none min-h-[500px] text-slate-300 font-medium px-8 sm:px-12 md:px-16 pb-16 text-lg leading-relaxed selection:bg-[#8A2BE2]/30',
       },
     },
   });
@@ -319,22 +319,6 @@ const RichTextEditor = ({
           </div>
         )}
       </AnimatePresence>
-
-      <style jsx global>{`
-        .ProseMirror { min-height: 500px; outline: none !important; padding-top: 2rem; }
-        .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #1e293b; pointer-events: none; height: 0; }
-        .ProseMirror h1 { font-size: 2.5rem; font-weight: 900; margin-bottom: 1.5rem; color: white; line-height: 1.2; }
-        .ProseMirror h2 { font-size: 2rem; font-weight: 800; margin-bottom: 1.25rem; color: white; margin-top: 2rem; }
-        .ProseMirror h3 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: rgba(255,255,255,0.9); margin-top: 1.5rem; }
-        .ProseMirror p { margin-bottom: 1.5rem; font-size: 1.125rem; line-height: 1.75; color: #cbd5e1; }
-        .ProseMirror blockquote { border-left: 4px solid #8A2BE2; padding-left: 1.5rem; font-style: italic; color: #94a3b8; background: rgba(255,255,255,0.05); padding-top: 0.5rem; padding-bottom: 0.5rem; border-radius: 0 0.75rem 0.75rem 0; margin: 2rem 0; }
-        .ProseMirror ul { list-style-type: disc !important; padding-left: 2rem !important; margin-bottom: 1.5rem !important; }
-        .ProseMirror ol { list-style-type: decimal !important; padding-left: 2rem !important; margin-bottom: 1.5rem !important; }
-        .ProseMirror li { margin-bottom: 0.5rem; color: #cbd5e1; display: list-item !important; }
-        .ProseMirror pre { background: #011627 !important; border: 1px solid rgba(255,255,255,0.05); padding: 1.5rem; border-radius: 1rem; margin: 2rem 0; }
-        .ProseMirror a { color: #8A2BE2; text-decoration: underline; }
-        .ProseMirror mark { background-color: #8A2BE2; color: white; border-radius: 4px; padding: 0 4px; }
-      `}</style>
     </div>
   );
 };
