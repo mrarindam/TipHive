@@ -51,6 +51,36 @@ export default async function Image({ params }: { params: Promise<{ username: st
   const avatarUrl = profile.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(profile.display_name)}`;
   const postImage = post?.image_url;
 
+  if (postImage) {
+    return new ImageResponse(
+      (
+        <div
+          style={{
+            height: '100%',
+            width: '100%',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            backgroundColor: '#0B0F19',
+          }}
+        >
+          <img
+            src={postImage}
+            alt={postTitle}
+            style={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'cover',
+            }}
+          />
+        </div>
+      ),
+      {
+        ...size,
+      }
+    );
+  }
+
   return new ImageResponse(
     (
       <div
