@@ -60,109 +60,124 @@ export default function PostDetailClient() {
       if (!username || !slug) return;
       const title = decodeURIComponent(slug as string);
 
-      const { data: profile } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .ilike('username', username as string)
-        .single();
-
-      if (profile) {
-        setCreator(profile);
-        const { data: postData } = await supabase
-          .from('posts')
+      try {
+        const { data: profile } = await supabase
+          .from('user_profiles')
           .select('*')
-          .eq('creator_id', profile.id)
-          .ilike('title', title)
-          .order('created_at', { ascending: false })
-          .limit(1)
+          .ilike('username', username as string)
           .single();
 
-        if (postData) {
-          setPost(postData);
-
-          // Fetch Likes
-          const { count: likesCount } = await supabase
-            .from('post_likes')
-            .select('*', { count: 'exact', head: true })
-            .eq('post_id', postData.id);
-          setLikes(likesCount || 0);
-
-          if (userAddress || userId) {
-            const { data: currentUserProfile } = await supabase
-              .from('user_profiles')
-              .select('id')
-              .or(userAddress ? `wallet_address.eq.${userAddress.toLowerCase()}` : `privy_did.eq.${userId!}`)
-              .single();
-
-            if (currentUserProfile) {
-              const { data: userLike } = await supabase
-                .from('post_likes')
-                .select('id')
-                .eq('post_id', postData.id)
-                .eq('user_address', userAddress ? userAddress.toLowerCase() : userId!)
-                .maybeSingle();
-              setIsLiked(!!userLike);
-            }
-          }
-
-          // Fetch Comments
-          const { data: commentsData } = await supabase
-            .from('post_comments')
+        if (profile) {
+          setCreator(profile);
+          const { data: postData } = await supabase
+            .from('posts')
             .select('*')
-            .eq('post_id', postData.id)
-            .order('created_at', { ascending: false });
+            .eq('creator_id', profile.id)
+            .ilike('title', title)
+            .order('created_at', { ascending: false })
+            .limit(1)
+            .single();
 
-          if (commentsData && commentsData.length > 0) {
-            // Fetch profiles for commenters
-            const commenterIds = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
-            
-            // This is a bit tricky: user_address in post_comments could be a wallet OR a DID.
-            // We'll fetch profiles that match either wallet_address or privy_did.
-            const { data: commenterProfiles } = await supabase
-              .from('user_profiles')
-              .select('wallet_address, privy_did, username, display_name, avatar_url')
-              .or(`wallet_address.in.(${commenterIds.join(',')}),privy_did.in.(${commenterIds.join(',')})`);
+          if (postData) {
+            setPost(postData);
 
-            const profileMap = new Map();
-            commenterProfiles?.forEach(p => {
-              if (p.wallet_address) profileMap.set(p.wallet_address.toLowerCase(), p);
-              if (p.privy_did) profileMap.set(p.privy_did.toLowerCase(), p);
-            });
+            const identifier = userAddress ? userAddress.toLowerCase() : userId;
+            const promises: PromiseLike<void>[] = [];
 
-            setComments(commentsData.map(c => ({
-              ...c,
-              sender: profileMap.get(c.user_address.toLowerCase())
-            })));
-          }
-        }
+            let likesCountResult = 0;
+            let isLikedResult = false;
+            let commentsResult: PostComment[] = [];
+            let isSubscribedResult = false;
 
-        // Check subscription if post is exclusive
-        if ((userAddress || userId) && profile) {
-          let profileQuery = supabase.from('user_profiles').select('id');
-          if (userAddress) {
-            profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
-          } else {
-            profileQuery = profileQuery.eq('privy_did', userId!);
-          }
-          const { data: currentUserProfile } = await profileQuery.single();
+            // 1. Fetch Likes Count
+            promises.push(
+              supabase
+                .from('post_likes')
+                .select('*', { count: 'exact', head: true })
+                .eq('post_id', postData.id)
+                .then(({ count }) => {
+                  likesCountResult = count || 0;
+                })
+            );
 
-          if (currentUserProfile && profile.wallet_address) {
-            const { data: subs } = await supabase
-              .from('subscriptions')
-              .select('id, end_date')
-              .eq('fan_address', userAddress ? userAddress.toLowerCase() : userId!)
-              .eq('creator_address', profile.wallet_address?.toLowerCase())
-              .eq('active', true);
-
-            if (subs && subs.length > 0) {
-              const now = new Date();
-              const activeSub = subs.find(s => new Date(s.end_date) > now);
-              if (activeSub) setIsSubscribed(true);
+            // 2. Fetch User Like Status
+            if (identifier) {
+              promises.push(
+                supabase
+                  .from('post_likes')
+                  .select('id')
+                  .eq('post_id', postData.id)
+                  .eq('user_address', identifier)
+                  .maybeSingle()
+                  .then(({ data }) => {
+                    isLikedResult = !!data;
+                  })
+              );
             }
+
+            // 3. Fetch Comments & Commenter Profiles
+            promises.push(
+              supabase
+                .from('post_comments')
+                .select('*')
+                .eq('post_id', postData.id)
+                .order('created_at', { ascending: false })
+                .then(async ({ data: commentsData }) => {
+                  if (commentsData && commentsData.length > 0) {
+                    const commenterIds = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
+                    const { data: commenterProfiles } = await supabase
+                      .from('user_profiles')
+                      .select('wallet_address, privy_did, username, display_name, avatar_url')
+                      .or(`wallet_address.in.(${commenterIds.join(',')}),privy_did.in.(${commenterIds.join(',')})`);
+
+                    const profileMap = new Map();
+                    commenterProfiles?.forEach(p => {
+                      if (p.wallet_address) profileMap.set(p.wallet_address.toLowerCase(), p);
+                      if (p.privy_did) profileMap.set(p.privy_did.toLowerCase(), p);
+                    });
+
+                    commentsResult = commentsData.map(c => ({
+                      ...c,
+                      sender: profileMap.get(c.user_address.toLowerCase())
+                    }));
+                  }
+                })
+            );
+
+            // 4. Fetch Subscription Status if post is exclusive and user is logged in
+            if (identifier && profile.wallet_address) {
+              promises.push(
+                supabase
+                  .from('subscriptions')
+                  .select('id, end_date')
+                  .eq('fan_address', identifier)
+                  .eq('creator_address', profile.wallet_address.toLowerCase())
+                  .eq('active', true)
+                  .then(({ data: subs }) => {
+                    if (subs && subs.length > 0) {
+                      const now = new Date();
+                      const activeSub = subs.find(s => new Date(s.end_date) > now);
+                      if (activeSub) isSubscribedResult = true;
+                    }
+                  })
+              );
+            }
+
+            // Await all parallel fetches
+            await Promise.all(promises);
+
+            // Batch state updates to avoid separate re-renders
+            setLikes(likesCountResult);
+            setIsLiked(isLikedResult);
+            setComments(commentsResult);
+            setIsSubscribed(isSubscribedResult);
           }
         }
+      } catch (err) {
+        console.error('Error fetching post details:', err);
+      } finally {
+        setLoading(false);
       }
-      setLoading(false);
     }
     fetchData();
   }, [username, slug, userAddress, userId]);
@@ -373,15 +388,13 @@ export default function PostDetailClient() {
                         {[1, 2].map(i => (
                           <div key={i} className="relative w-24 h-24 md:w-32 md:h-32">
                             <div className="absolute inset-0 bg-[#0B0F19] rounded-full border-4 border-white/5 shadow-inner" />
-                            <motion.div
-                              animate={{ rotate: 360 }}
-                              transition={{ duration: 4, repeat: Infinity, ease: "linear" }}
-                              className="absolute inset-2 border-4 border-dashed border-[#8A2BE2]/40 rounded-full flex items-center justify-center"
+                            <div
+                              className="absolute inset-2 border-4 border-dashed border-[#8A2BE2]/40 rounded-full flex items-center justify-center animate-cassette-spin"
                             >
                               <div className="w-8 h-8 md:w-12 md:h-12 bg-[#1A2234] rounded-full border-2 border-white/10 flex items-center justify-center">
                                 <div className="w-2 h-2 bg-white/20 rounded-full" />
                               </div>
-                            </motion.div>
+                            </div>
                           </div>
                         ))}
                       </div>
@@ -389,10 +402,8 @@ export default function PostDetailClient() {
                       {/* Tape View Window */}
                       <div className="mt-auto h-8 bg-black/40 rounded-full border border-white/5 flex items-center justify-center px-6">
                         <div className="w-full h-1 bg-[#8A2BE2]/20 rounded-full overflow-hidden">
-                          <motion.div
-                            animate={{ x: ["-100%", "100%"] }}
-                            transition={{ duration: 3, repeat: Infinity, ease: "linear" }}
-                            className="w-1/3 h-full bg-gradient-to-r from-transparent via-[#8A2BE2] to-transparent"
+                          <div
+                            className="w-1/3 h-full bg-gradient-to-r from-transparent via-[#8A2BE2] to-transparent animate-tape-shimmer"
                           />
                         </div>
                       </div>
@@ -416,6 +427,20 @@ export default function PostDetailClient() {
                       }
                       .custom-audio-player::-webkit-media-controls-panel {
                         padding: 0 20px;
+                      }
+                      @keyframes cassette-spin {
+                        from { transform: rotate(0deg); }
+                        to { transform: rotate(360deg); }
+                      }
+                      @keyframes tape-shimmer {
+                        0% { transform: translateX(-100%); }
+                        100% { transform: translateX(300%); }
+                      }
+                      .animate-cassette-spin {
+                        animation: cassette-spin 4s linear infinite;
+                      }
+                      .animate-tape-shimmer {
+                        animation: tape-shimmer 3s linear infinite;
                       }
                     `}</style>
                 </div>

@@ -284,10 +284,29 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
     return <Globe className="w-4 h-4" />;
   };
 
+  const segments = pathname.split('/').filter(Boolean);
+  const isPostPage = 
+    (segments.length >= 3 && segments[1] === 'posts') ||
+    (segments.length >= 2 && !['members', 'subscriptions', 'posts'].includes(segments[1]));
+
+  if (isPostPage) {
+    return (
+      <ProfileContext.Provider value={{ creator, loading, followersCount, postsCount, isFollowing, isOwner, totalEarned, handleFollow, fetchData }}>
+        <div className="min-h-screen bg-[#000] text-white selection:bg-[#F7931A]/30 pb-20 pt-20 md:pt-24">
+          <div className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
+            <div className="min-h-[50vh]">
+              {children}
+            </div>
+          </div>
+        </div>
+      </ProfileContext.Provider>
+    );
+  }
+
   return (
     <ProfileContext.Provider value={{ creator, loading, followersCount, postsCount, isFollowing, isOwner, totalEarned, handleFollow, fetchData }}>
       <div className="min-h-screen bg-[#000] text-white selection:bg-[#F7931A]/30 pb-20 pt-28">
-        <div className="w-full space-y-8 px-4 md:px-6 lg:px-8">
+        <div className="w-full space-y-8 px-4 md:px-6 lg:px-8 flex flex-col">
 
           {/* Main Creator Card */}
           <motion.div
