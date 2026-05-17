@@ -1,0 +1,26 @@
+# TipHive robots.txt - Optimized for Google, Bing, DuckDuckGo & Web3 Search Engines
+User-agent: *
+Allow: /
+Allow: /about
+Allow: /contact
+Allow: /docs
+Allow: /docs/*
+Allow: /explore
+Allow: /mezo-toolkit
+Allow: /privacy
+Allow: /terms
+Allow: /cookies
+
+# Disallow private user-dashboard and settings panels to maximize crawl efficiency
+Disallow: /dashboard
+Disallow: /dashboard/*
+Disallow: /settings
+Disallow: /settings/*
+Disallow: /editprofile
+Disallow: /editprofile/*
+Disallow: /onboarding
+Disallow: /onboarding/*
+Disallow: /embed/*
+
+# Sitemap Location
+Sitemap: https://tiphive.xyz/sitemap.xml
