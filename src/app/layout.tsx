@@ -106,6 +106,9 @@ export const metadata: Metadata = {
     icon: "/favicon.png",
     apple: "/icon-192x192.png",
   },
+  verification: {
+    google: "fYSEPpJGJxuk1YKUmqtSfjlNQ_HUYFRoV2s5ThSCPeE",
+  },
 };
 
 const jsonLd = {

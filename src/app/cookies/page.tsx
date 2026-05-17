@@ -14,71 +14,69 @@ export default function CookiePolicyPage() {
   const sections = [
     {
       icon: Info,
-      title: '1. What Are Cookies?',
+      title: '1. What Are Cookies & Local Storage?',
       content: [
-        'Cookies are small text files that are stored on your device (computer, tablet, or smartphone) when you visit a website. They help websites remember your preferences, understand how you use the site, and improve your overall experience.',
-        'TipHive uses cookies and similar technologies (like local storage) sparingly and only when necessary to provide you with a smooth, functional experience on the platform.',
+        'Cookies are small text files stored on your device when you visit a website. Along with cookies, modern web apps use **Local Storage** and **Cache Storage** (part of our Progressive Web App system) to cache code, remember preferences, and keep you authenticated securely.',
+        'TipHive uses these tools sparingly and strictly to deliver a smooth, responsive, and secure experience on our decentralized tipping and membership platform.',
       ]
     },
     {
       icon: Settings,
-      title: '2. Types of Cookies We Use',
+      title: '2. Types of Storage & Cookies We Use',
       content: [
-        '**Essential Cookies**: These are strictly necessary for the Platform to function. They include:',
-        '• **Wallet Connection State**: Remembers your connected wallet session so you don\'t need to reconnect every time you navigate between pages.',
-        '• **Theme & UI Preferences**: Stores your interface preferences for a consistent experience.',
-        '• **Session Management**: Maintains your authentication state while you\'re actively using the Platform.',
-        'These cookies cannot be disabled as the Platform would not function properly without them.',
+        '**Essential Storage & Cookies**: These are strictly necessary for the platform to function. They include:',
+        '• **Privy Session Caching**: Persists your secure cryptographic authentication status so you remain logged in as you navigate between pages or close the PWA.',
+        '• **UI Preferences**: Caches theme preferences (such as dark mode defaults) for a consistent layout presentation.',
+        '• **PWA Offline Assets**: Uses the browser\'s Cache Storage API to store page bundles, icons, and fonts, allowing the app to open instantly and function offline on mobile devices.',
+        'These storage tokens cannot be disabled, as the decentralized app would not function properly without them.',
         '',
-        '**Functional Cookies**: These enhance your experience but are not strictly required:',
-        '• **Language & Region**: Remembers your preferred language and regional settings.',
-        '• **Recent Activity**: Caches recent profile views and search history locally for faster navigation.',
+        '**Functional Storage**: These enhance your browsing experience but are not strictly required:',
+        '• **Draft Cache**: Locally stores unsaved post contents in your editor to prevent work loss from unexpected refreshes.',
+        '• **Performance Optimization Cache**: Caches recent creator profile and metadata queries to maximize loading performance and minimize blockchain RPC requests.',
       ]
     },
     {
       icon: BarChart3,
       title: '3. Analytics & Performance',
       content: [
-        'TipHive currently does NOT use any third-party analytics cookies (such as Google Analytics, Mixpanel, or Hotjar).',
-        'If we introduce analytics in the future, we will:',
-        '• Update this Cookie Policy before implementation.',
-        '• Provide you with clear opt-in/opt-out controls.',
-        '• Choose privacy-respecting analytics tools that do not sell or share your data.',
-        'We believe in minimal data collection. We only track what\'s necessary to keep the Platform running smoothly.',
+        'TipHive currently does **NOT** use any third-party analytics cookies (such as Google Analytics, Mixpanel, or Hotjar). We do not record your browsing behavior, and your clicks are entirely private.',
+        'If analytics are introduced in the future, we will:',
+        '• Update this Cookie Policy prior to launch.',
+        '• Implement an explicit opt-in preference banner.',
+        '• Choose privacy-first, cookieless analytics alternatives that guarantee absolute compliance with data privacy regulations.',
       ]
     },
     {
       icon: Shield,
-      title: '4. Third-Party Cookies',
+      title: '4. Third-Party Services',
       content: [
-        'Some third-party services integrated into TipHive may set their own cookies:',
-        '**RainbowKit / WalletConnect**: The wallet connection interface may store session data to maintain your wallet connection across page loads.',
-        '**Blockchain RPC Providers**: Network providers may cache request data for performance optimization.',
-        'We do not control third-party cookies. Please refer to the respective privacy policies of these services for more information on their cookie practices.',
-        'TipHive does NOT use advertising cookies, tracking pixels, or any form of cross-site tracking.',
+        'Some third-party providers integrated into TipHive may set cookies or use storage:',
+        '• **Privy (Auth)**: Privy uses cookies and secure local storage mechanisms to persist your authenticated session and secure key-split signatures, allowing you to stay securely logged in across platform views.',
+        '• **Mezo Network RPC**: Nodes and RPC providers may cache basic network parameters locally to optimize smart contract query transactions.',
+        'We do not control third-party cookies. Please review the privacy policies of Mezo and Privy for details on their storage methods.',
+        'TipHive does **NOT** use advertising cookies, tracking pixels, or cross-site tracking profiles.',
       ]
     },
     {
       icon: ToggleLeft,
-      title: '5. Managing Your Cookies',
+      title: '5. Managing Your Storage Preferences',
       content: [
-        'You have full control over cookies stored on your device:',
-        '**Browser Settings**: Most modern browsers allow you to view, manage, and delete cookies through their settings. You can also configure your browser to block all cookies or only third-party cookies.',
-        '**Clear Local Storage**: You can clear your browser\'s local storage and session storage at any time. This will log you out of the Platform and reset any saved preferences.',
-        '**Wallet Disconnect**: You can disconnect your wallet at any time, which will clear the wallet connection cookies.',
-        '**Note**: Blocking essential cookies may prevent the Platform from functioning correctly. Features like wallet connection and session persistence require these cookies to work.',
+        'You have full control over cookies and storage systems on your device:',
+        '• **PWA App Management**: If installed as a Progressive Web App on Android or desktop, you can clear the app\'s cache and cookies via your device\'s system settings.',
+        '• **Browser Settings**: Most modern browsers allow you to view, clear, or block cookies and local storage tokens via the browser settings panel.',
+        '• **Wallet & Account Disconnect**: Logging out of your TipHive profile will clear Privy session variables and remove all connected authentication states.',
+        '**Note**: Blocking all storage elements will break essential features, such as Privy authentication, embedded wallets, and smart contract connections.',
       ]
     },
     {
       icon: Cookie,
       title: '6. Updates to This Policy',
       content: [
-        'We may update this Cookie Policy from time to time to reflect changes in our cookie practices or applicable regulations.',
-        'When we make changes:',
+        'We may update this Cookie Policy from time to time to reflect changes in our storage practices, new integrations, or regulatory guidelines.',
+        'When changes are made:',
         '• The "Last Updated" date at the top of this page will be revised.',
-        '• For significant changes (e.g., introducing analytics cookies), we will provide prominent notice on the Platform.',
-        '• We will always ensure you have the ability to manage your cookie preferences.',
-        'We encourage you to check this page periodically to stay informed about how we use cookies.',
+        '• For material changes, a notification banner will be displayed inside the application UI.',
+        'We encourage you to review this page periodically to stay informed about our simple, privacy-focused storage philosophy.',
       ]
     },
   ];
@@ -114,7 +112,7 @@ export default function CookiePolicyPage() {
               We keep it simple. Here&apos;s how TipHive uses cookies and similar technologies.
             </p>
             <p className="text-sm text-slate-600 font-bold">
-              Last Updated: April 26, 2026
+              Last Updated: May 17, 2026
             </p>
           </motion.div>
         </div>

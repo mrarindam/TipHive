@@ -18,9 +18,10 @@ export default function PrivacyPolicyPage() {
       content: [
         'TipHive is designed to be privacy-first. We collect minimal data required to operate the platform:',
         '• **Wallet Address**: Your public blockchain address, used to identify your account and process transactions on the Mezo Network.',
-        '• **Profile Information**: Display name, bio, avatar, category, and username — all voluntarily provided when you register as a creator.',
-        '• **Transaction Data**: On-chain transaction records (tip amounts, timestamps, sender and receiver addresses) which are inherently public on the blockchain.',
-        'We do NOT collect passwords, private keys, seed phrases, or any sensitive financial information. Your wallet remains entirely under your control at all times.',
+        '• **Privy Authentication Data**: When you log in via Privy (our secure, non-custodial auth provider), we may receive your linked email or social profile identifiers depending on your login method.',
+        '• **Profile Information**: Display name, bio, avatar, category, and username — all voluntarily provided when you register or edit your creator profile.',
+        '• **Transaction Data**: On-chain transaction records (tip amounts, subscription statuses, referral connections, timestamps, sender and receiver addresses) which are inherently public on the Mezo Mainnet blockchain.',
+        'We do NOT collect passwords, private keys, seed phrases, or any sensitive financial information. Your wallet remains entirely under your control at all times through Privy\'s secure non-custodial protocol.',
       ]
     },
     {
@@ -28,10 +29,11 @@ export default function PrivacyPolicyPage() {
       title: '2. How We Use Your Information',
       content: [
         'The information we collect is used solely to provide and improve the TipHive platform:',
-        '• **Display your public creator profile** so fans can discover and support you.',
-        '• **Process and record tipping transactions** through smart contracts on the Mezo Network.',
-        '• **Generate aggregated, anonymous statistics** (e.g., total tips received) to display on your dashboard.',
-        '• **Communicate important platform updates** if you have opted in to notifications.',
+        '• **Display your public creator profile and posts** so fans can discover, tip, and subscribe to your content.',
+        '• **Process and record tipping, subscription, and referral transactions** through smart contracts on the Mezo Network.',
+        '• **Generate dynamic Open Graph metadata** for rich social media sharing previews (on platforms like Discord and Telegram).',
+        '• **Provide Progressive Web App (PWA) features**, enabling offline caching and instant loading on Android and other mobile devices.',
+        '• **Send email notifications** regarding tips, active subscriptions, and referral updates (only if you have opted in).',
         'We never sell, rent, or share your personal data with third parties for advertising or marketing purposes.',
       ]
     },
@@ -40,10 +42,10 @@ export default function PrivacyPolicyPage() {
       title: '3. Data Security',
       content: [
         'Security is at the core of our architecture:',
-        '• **Smart Contract Security**: All tipping logic runs through audited, immutable smart contracts deployed on the Mezo Network. We cannot alter or access your funds.',
-        '• **No Custodial Risk**: TipHive never holds your funds. Tips flow directly from the sender to the creator via the smart contract. Withdrawals go straight to your wallet.',
-        '• **Database Protection**: Off-chain profile data stored in our database is protected using industry-standard encryption and access controls.',
-        '• **HTTPS Everywhere**: All data transmitted between your browser and our servers is encrypted using TLS/SSL.',
+        '• **Smart Contract Security**: All tipping and subscription logic runs through audited, immutable smart contracts deployed on the Mezo Network. We cannot alter or access your funds.',
+        '• **No Custodial Risk**: TipHive never holds your funds. Tips and subscriptions flow directly from the sender to the creator via smart contracts. Withdrawals go straight to your wallet.',
+        '• **Embedded Wallets**: If Privy creates an embedded wallet for you, the keys are secured and split so only you can access them, eliminating platform custodial risk.',
+        '• **Database Protection**: Off-chain profile and metadata stored in our database is protected using industry-standard encryption, SSL, and row-level security controls.',
       ]
     },
     {
@@ -51,10 +53,10 @@ export default function PrivacyPolicyPage() {
       title: '4. Your Rights & Control',
       content: [
         'You maintain full control over your data:',
-        '• **Profile Editing**: You can update or modify your profile information (name, bio, avatar, username) at any time from your Dashboard.',
-        '• **Account Deletion**: You may request the deletion of your off-chain profile data by contacting us. Please note that on-chain transaction records cannot be deleted as they are permanently recorded on the blockchain.',
+        '• **Profile Editing**: You can update or modify your profile information, social links, and notifications settings at any time from your settings panel.',
+        '• **Account Deletion**: You may request the deletion of your off-chain profile data. Please note that on-chain transaction records, subscriptions, and referral mappings cannot be deleted as they are permanently recorded on the blockchain.',
         '• **Data Portability**: Since your transaction history lives on-chain, you always have access to your complete transaction record via any blockchain explorer.',
-        '• **Opt-Out**: You can disconnect your wallet at any time to stop using the platform.',
+        '• **Opt-Out**: You can disconnect your wallet or social account at any time to stop using the platform.',
       ]
     },
     {
@@ -62,9 +64,9 @@ export default function PrivacyPolicyPage() {
       title: '5. Third-Party Services',
       content: [
         'TipHive integrates with the following third-party services:',
-        '• **Mezo Network**: The Layer 2 blockchain network where all transactions are processed. Subject to the Mezo Network\'s own terms and privacy policy.',
-        '• **RainbowKit / WalletConnect**: Used for wallet connection. These services may collect connection metadata. Please refer to their respective privacy policies.',
-        '• **Supabase**: Used for off-chain data storage (profiles, metadata). Data is stored securely with encryption at rest.',
+        '• **Mezo Network**: The Layer 2 blockchain network where all transactions are processed. Subject to Mezo Network\'s own terms and privacy policy.',
+        '• **Privy**: Used for secure authentication, embedded wallets, and login session management. Privy secures your credentials and handles keys without custodial risk.',
+        '• **Cloudinary / Supabase**: Used for secure off-chain media uploading (posts, avatars, banners) and metadata database storage.',
         'We carefully vet all third-party integrations to ensure they align with our privacy-first values.',
       ]
     },
@@ -74,9 +76,8 @@ export default function PrivacyPolicyPage() {
       content: [
         'We may update this Privacy Policy from time to time to reflect changes in our practices or applicable laws. When we make significant changes:',
         '• We will update the "Last Updated" date at the top of this page.',
-        '• For material changes, we will provide notice through the platform or via our official communication channels.',
+        '• For material changes, we will provide notice through the platform UI or via our official communication channels.',
         '• Continued use of TipHive after changes constitutes acceptance of the updated policy.',
-        'We encourage you to review this page periodically to stay informed about how we protect your information.',
       ]
     },
   ];
@@ -112,7 +113,7 @@ export default function PrivacyPolicyPage() {
               We believe in transparency. Here&apos;s exactly how TipHive handles your data.
             </p>
             <p className="text-sm text-slate-600 font-bold">
-              Last Updated: May 4, 2026
+              Last Updated: May 17, 2026
             </p>
           </motion.div>
         </div>

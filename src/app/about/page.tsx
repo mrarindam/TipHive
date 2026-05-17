@@ -1,8 +1,8 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { 
-  Rocket, Zap, Shield, Heart, Users, Globe, Bitcoin, 
+import {
+  Rocket, Zap, Shield, Heart, Users, Bitcoin,
   ArrowRight, Sparkles, Target, Eye
 } from 'lucide-react';
 import Link from 'next/link';
@@ -20,26 +20,26 @@ export default function AboutPage() {
   const values = [
     {
       icon: Shield,
-      title: 'Trustless & Secure',
-      description: 'Every tip flows through audited smart contracts on the Mezo Network. No middlemen, no hidden fees — just pure, transparent Bitcoin-backed transfers.',
+      title: 'Decentralized & Secure',
+      description: 'Every tip and subscription flows through audited, non-custodial smart contracts on Mezo Mainnet. With secure Privy-integrated logins and embedded wallets, you maintain 100% control of your funds.',
       color: '#F7931A'
     },
     {
       icon: Zap,
-      title: 'Instant Payouts',
-      description: 'Creators receive tips in real-time via MUSD. No waiting periods, no minimum thresholds. Your support reaches creators the moment you click.',
+      title: 'Instant MUSD Payouts',
+      description: 'Zero platform fees and near-instant settlement in Bitcoin-backed MUSD. No waiting weeks for payouts, no high cash-out minimums. Support reaches creators in real-time.',
       color: '#FFAB40'
     },
     {
       icon: Users,
-      title: 'Community First',
-      description: 'We believe creators deserve a fair, open platform. TipHive is built for the community — by someone who understands the creator economy.',
+      title: 'Tipping & Memberships',
+      description: 'Monetize your content beyond simple donations. Offer exclusive tiered memberships, gated media posts (TipTap-powered rich editor), and interactive feeds to build a recurring income stream.',
       color: '#F7931A'
     },
     {
-      icon: Globe,
-      title: 'Borderless Support',
-      description: 'Whether you are in Tokyo, Lagos, or Buenos Aires — anyone with a wallet can tip any creator. No banks, no borders, no barriers.',
+      icon: Rocket,
+      title: 'Referrals & Viral Growth',
+      description: 'Maximize your audience reach with our decentralized referral program. Reward your loyal supporters when they bring in new fans or creators, settled directly on-chain.',
       color: '#FFAB40'
     },
   ];
@@ -60,7 +60,7 @@ export default function AboutPage() {
         <div className="absolute bottom-0 right-1/4 w-64 h-64 bg-[#F7931A]/10 blur-[100px] rounded-full" />
 
         <div className="w-full px-[5%] md:px-[8%] relative z-10">
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, y: 40 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.8 }}
@@ -82,9 +82,8 @@ export default function AboutPage() {
               <span className="text-[#F7931A]">With Bitcoin</span>
             </h1>
             <p className="text-xl text-slate-400 max-w-2xl mx-auto leading-relaxed font-medium">
-              TipHive is a next-generation tipping platform built on the Mezo Network. 
-              We make it effortless for fans to support their favorite creators using 
-              Bitcoin-backed MUSD — instantly, securely, and without borders.
+              TipHive is a next-generation tipping, subscription, and viral growth platform built on Mezo Mainnet.
+              We empower creators and fans with secure social logins, rich content gating, on-chain referrals, and Progressive Web App installability — instantly, securely, and without borders.
             </p>
           </motion.div>
         </div>
@@ -103,23 +102,23 @@ export default function AboutPage() {
                 Tips Should Be <span className="text-[#F7931A]">Simple</span>
               </h2>
               <p className="text-lg text-slate-400 leading-relaxed mb-6">
-                The creator economy is broken. Platforms take up to 30% of tips. Payouts take weeks. 
-                Cross-border payments are a nightmare. We built TipHive to fix all of that.
+                The creator economy is broken. Platforms take up to 30% of tips. Payouts take weeks.
+                Cross-border payments are a nightmare, and users face complex wallet barriers. We built TipHive to fix all of that.
               </p>
               <p className="text-lg text-slate-400 leading-relaxed mb-8">
-                By leveraging the Mezo Network&apos;s Bitcoin L2 infrastructure and MUSD stablecoin, 
-                we created a system where tips are instant, fees are near-zero, and creators keep 
-                what they earn. It&apos;s that simple.
+                By leveraging the Mezo Network&apos;s Bitcoin L2 infrastructure, MUSD stablecoin, and secure Privy authentication (with embedded wallet support),
+                we created a system where transactions are instant, fees are zero at the platform level, and creators keep
+                what they earn. Combined with a referral engine and tiered memberships, it&apos;s the ultimate creator launchpad.
               </p>
-              <Link 
-                href="/discover" 
+              <Link
+                href="/discover"
                 className="btn-primary px-8 py-3 inline-flex items-center gap-2"
               >
                 Discover Creators <ArrowRight className="w-4 h-4" />
               </Link>
             </motion.div>
 
-            <motion.div 
+            <motion.div
               {...fadeUp}
               transition={{ duration: 0.6, delay: 0.2 }}
               className="relative"
@@ -136,10 +135,11 @@ export default function AboutPage() {
                   </div>
                 </div>
                 <p className="text-slate-400 leading-relaxed">
-                  We envision a world where every creator — from indie artists to open-source developers — 
-                  can receive direct, instant support from their audience without platform lock-in or 
-                  excessive fees. TipHive is the first step toward a fully decentralized creator economy 
-                  powered by Bitcoin.
+                  We envision a world where every creator — from indie artists to open-source developers —
+                  can receive direct support from their audience without platform lock-in or middleman fees.
+                  By packaging TipHive as an installable Progressive Web App (PWA) with offline support and
+                  dynamic Open Graph sharing previews for Discord & Telegram, we offer an independent Web3
+                  social experience powered entirely by Bitcoin.
                 </p>
                 <div className="mt-6 pt-6 border-t border-white/5">
                   <div className="flex items-center gap-3">
@@ -225,7 +225,7 @@ export default function AboutPage() {
       {/* CTA Section */}
       <section className="py-24">
         <div className="w-full px-[5%] md:px-[8%]">
-          <motion.div 
+          <motion.div
             {...fadeUp}
             className="glass-card p-12 text-center relative overflow-hidden"
           >
@@ -239,10 +239,7 @@ export default function AboutPage() {
                 Join TipHive today and start receiving Bitcoin-backed tips from your audience worldwide.
               </p>
               <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                <Link href="/dashboard" className="btn-primary px-10 py-4 text-lg inline-flex items-center justify-center gap-2">
-                  <Rocket className="w-5 h-5" /> Become a Creator
-                </Link>
-                <Link href="/discover" className="btn-secondary px-10 py-4 text-lg inline-flex items-center justify-center gap-2">
+                <Link href="/explore" className="btn-secondary px-10 py-4 text-lg inline-flex items-center justify-center gap-2">
                   Explore Creators
                 </Link>
               </div>

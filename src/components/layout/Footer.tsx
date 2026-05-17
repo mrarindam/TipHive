@@ -43,11 +43,11 @@ export default function Footer() {
           {/* Brand Section */}
           <div className="lg:col-span-2 space-y-8">
             <Link href="/" className="flex items-center gap-3 group w-fit">
-              <Image 
-                src="/logo.png" 
-                alt="TipHive" 
-                width={48} 
-                height={48} 
+              <Image
+                src="/logo.png"
+                alt="TipHive"
+                width={48}
+                height={48}
                 className="group-hover:rotate-12 transition-all mix-blend-screen"
                 style={{ height: 'auto' }}
                 unoptimized
@@ -65,9 +65,9 @@ export default function Footer() {
                 <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
                   <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                 </svg>
-              } href="https://x.com/ExeArindam" />
+              } href="https://x.com/tiphive" />
               <SocialLink icon={<Mail className="w-5 h-5" />} href="mailto:marindam342@gmail.com" />
-              <SocialLink icon={<Globe className="w-5 h-5" />} href="https://mrarindam.vercel.app/" />
+              <SocialLink icon={<Globe className="w-5 h-5" />} href="https://tiphive.xyz" />
             </div>
           </div>
 
@@ -78,8 +78,8 @@ export default function Footer() {
               <ul className="space-y-4">
                 {section.links.map((link, j) => (
                   <li key={j}>
-                    <Link 
-                      href={link.href} 
+                    <Link
+                      href={link.href}
                       className="text-slate-500 hover:text-[#F7931A] font-bold transition-colors flex items-center gap-2 group"
                     >
                       {link.name}
@@ -105,7 +105,7 @@ export default function Footer() {
 
 function SocialLink({ icon, href }: { icon: React.ReactNode, href: string }) {
   return (
-    <a 
+    <a
       href={href}
       target="_blank"
       rel="noopener noreferrer"
