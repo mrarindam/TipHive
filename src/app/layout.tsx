@@ -4,7 +4,6 @@ import "./globals.css";
 import { PrivyProviderWrapper } from "@/components/providers/PrivyProviderWrapper";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
-import SmoothScroll from "@/components/providers/SmoothScroll";
 import OnboardingGuard from "@/components/providers/onboarding-guard";
 import WalletSwitchGuard from "@/components/providers/WalletSwitchGuard";
 import PwaRegister from "@/components/providers/PwaRegister";
@@ -218,19 +217,17 @@ export default function RootLayout({
         />
         <PwaRegister />
         <PrivyProviderWrapper>
-          <SmoothScroll>
-            <OnboardingGuard>
-              <WalletSwitchGuard>
-                <div id="root-container" className="flex flex-col min-h-screen bg-[#050505]">
-                  <Navbar />
-                  <main className="flex-grow">
-                    {children}
-                  </main>
-                  <Footer />
-                </div>
-              </WalletSwitchGuard>
-            </OnboardingGuard>
-          </SmoothScroll>
+          <OnboardingGuard>
+            <WalletSwitchGuard>
+              <div id="root-container" className="flex flex-col min-h-screen bg-[#050505]">
+                <Navbar />
+                <main className="flex-grow">
+                  {children}
+                </main>
+                <Footer />
+              </div>
+            </WalletSwitchGuard>
+          </OnboardingGuard>
         </PrivyProviderWrapper>
       </body>
     </html>

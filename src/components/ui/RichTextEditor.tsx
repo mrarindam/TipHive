@@ -170,7 +170,6 @@ const RichTextEditor = ({
 
       {/* =====================================================
           FIXED TOOLBAR — uses position:fixed, NOT sticky
-          sticky doesn't work with Lenis SmoothScroll
           ===================================================== */}
       <div
         ref={toolbarRef}

@@ -1,5 +1,4 @@
 @import "tailwindcss";
-@import "lenis/dist/lenis.css";
 
 @theme {
   --color-primary-orange: #F7931A;
@@ -46,27 +45,6 @@ body {
   flex-direction: column;
 }
 
-/* Lenis Smooth Scroll */
-html.lenis,
-html.lenis body {
-  height: auto;
-}
-
-.lenis.lenis-smooth {
-  scroll-behavior: auto !important;
-}
-
-.lenis.lenis-smooth [data-lenis-prevent] {
-  overscroll-behavior: contain;
-}
-
-.lenis.lenis-stopped {
-  overflow: hidden;
-}
-
-.lenis.lenis-scrolling iframe {
-  pointer-events: none;
-}
 
 @utility glass-card {
   @apply bg-white/[0.03] backdrop-blur-xl border border-white/5 rounded-[2.5rem] shadow-2xl;

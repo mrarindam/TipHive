@@ -46,6 +46,7 @@ function OnboardingContent() {
   const [github, setGithub] = useState('');
   const [discord, setDiscord] = useState('');
   const [avatarUrl, setAvatarUrl] = useState('');
+  const [agreeTerms, setAgreeTerms] = useState(false);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
 
@@ -516,6 +517,40 @@ function OnboardingContent() {
                       />
                     </div>
                   </div>
+
+                  {/* Terms and Conditions */}
+                  <div className="pt-6 border-t border-white/5 flex items-center gap-3 px-1">
+                    <label className="flex items-center gap-3 cursor-pointer select-none group">
+                      <div className="relative flex items-center justify-center">
+                        <input
+                          type="checkbox"
+                          checked={agreeTerms}
+                          onChange={(e) => setAgreeTerms(e.target.checked)}
+                          className="sr-only"
+                        />
+                        <div className={`w-6 h-6 rounded-lg border flex items-center justify-center transition-all duration-200 ${
+                          agreeTerms 
+                            ? 'bg-[#f7931a] border-[#f7931a] shadow-[0_0_10px_rgba(247,147,26,0.4)]' 
+                            : 'border-white/20 bg-black/40 group-hover:border-white/40'
+                        }`}>
+                          {agreeTerms && (
+                            <Check className="w-4 h-4 text-black stroke-[3]" />
+                          )}
+                        </div>
+                      </div>
+                      <span className="text-sm font-medium text-slate-400 group-hover:text-slate-300 transition-colors">
+                        I agree to the{' '}
+                        <Link 
+                          href="/terms" 
+                          target="_blank" 
+                          onClick={(e) => e.stopPropagation()} 
+                          className="text-[#f7931a] hover:underline font-bold transition-all"
+                        >
+                          Terms and Conditions
+                        </Link>
+                      </span>
+                    </label>
+                  </div>
                 </div>
 
                 <div className="flex justify-between items-center pt-4">
@@ -528,7 +563,7 @@ function OnboardingContent() {
                   </button>
                   <button
                     onClick={submitProfile}
-                    disabled={!displayName || !bio || !avatarUrl || isSubmitting}
+                    disabled={!displayName || !bio || !avatarUrl || isSubmitting || !agreeTerms}
                     className="group relative flex items-center gap-3 bg-[#f7931a] text-black px-12 py-5 rounded-full font-black text-xl transition-all hover:scale-[1.02] active:scale-[0.98] disabled:opacity-30 disabled:grayscale disabled:cursor-not-allowed shadow-[0_20px_40px_rgba(247,147,26,0.2)]"
                   >
                     {isSubmitting ? <Loader2 className="w-6 h-6 animate-spin" /> : <Rocket className="w-6 h-6" />}
