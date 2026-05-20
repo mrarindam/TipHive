@@ -13,6 +13,9 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
     const [status, setStatus] = useState<'loading' | 'new' | 'existing'>('loading');
 
     useEffect(() => {
+      if (pathname?.startsWith('/docs')) {
+        return;
+      }
       if (!ready || !authenticated || !user?.id) {
         return;
       }
@@ -64,7 +67,7 @@ export default function OnboardingGuard({ children }: { children: React.ReactNod
   }, [address, ready, authenticated, user?.id, user?.wallet?.address, pathname, router, getAccessToken]);
 
   // Show loading screen while checking status to prevent flashes and race conditions
-  if (authenticated && (status === 'loading' || (status === 'new' && pathname !== '/onboarding'))) {
+  if (!pathname?.startsWith('/docs') && authenticated && (status === 'loading' || (status === 'new' && pathname !== '/onboarding'))) {
     return (
       <div className="fixed inset-0 bg-[#050505] flex flex-col items-center justify-center z-[200]">
         <div className="relative">

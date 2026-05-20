@@ -21,7 +21,7 @@ export default function Navbar() {
     { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard className="w-4 h-4" /> },
   ];
 
-  if (pathname?.includes('/dashboard/createposts')) return null;
+  if (pathname?.includes('/dashboard/createposts') || pathname?.startsWith('/docs')) return null;
   return (
     <nav className="fixed top-0 w-full z-[100] border-b border-white/5 bg-black/60 backdrop-blur-2xl">
       <div className="w-full px-[5%] md:px-[8%]">

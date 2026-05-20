@@ -5,25 +5,33 @@ import { useAccount } from 'wagmi';
 import { usePrivy } from '@privy-io/react-auth';
 import { motion, AnimatePresence } from 'framer-motion';
 import { ArrowRightLeft } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export default function WalletSwitchGuard({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const { address } = useAccount();
   const { ready, authenticated, logout } = usePrivy();
+
   const [linkedWallet, setLinkedWallet] = useState<string | undefined>(undefined);
   const [walletSwitched, setWalletSwitched] = useState(false);
   const [switchedToAddress, setSwitchedToAddress] = useState<string | undefined>(undefined);
 
   // Load the linked wallet from the user's TipHive profile once after login
   useEffect(() => {
+    if (pathname?.startsWith('/docs')) return;
     if (!ready || !authenticated || !address) return;
     // Only record the first address we see after login — that's the "canonical" account wallet
     if (!linkedWallet) {
       setLinkedWallet(address.toLowerCase());
     }
-  }, [ready, authenticated, address, linkedWallet]);
+  }, [ready, authenticated, address, linkedWallet, pathname]);
 
   // Detect mismatch between active wallet and the one recorded at login
   useEffect(() => {
+    if (pathname?.startsWith('/docs')) {
+      setWalletSwitched(false);
+      return;
+    }
     if (!linkedWallet || !address) {
       setWalletSwitched(false);
       return;
@@ -36,7 +44,7 @@ export default function WalletSwitchGuard({ children }: { children: React.ReactN
       setWalletSwitched(false);
       setSwitchedToAddress(undefined);
     }
-  }, [address, linkedWallet]);
+  }, [address, linkedWallet, pathname]);
 
   const handleSignOutAndSwitch = async () => {
     setWalletSwitched(false);
@@ -51,7 +59,7 @@ export default function WalletSwitchGuard({ children }: { children: React.ReactN
 
       {/* GLOBAL WALLET SWITCH BLOCKING MODAL - renders on top of everything */}
       <AnimatePresence>
-        {walletSwitched && switchedToAddress && (
+        {!pathname?.startsWith('/docs') && walletSwitched && switchedToAddress && (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}

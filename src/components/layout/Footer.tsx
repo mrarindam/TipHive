@@ -3,16 +3,22 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { Mail, ExternalLink, Globe, MessageCircle } from 'lucide-react';
+import { usePathname } from 'next/navigation';
 
 export default function Footer() {
+  const pathname = usePathname();
   const currentYear = new Date().getFullYear();
+
+  if (pathname?.startsWith('/docs')) {
+    return null;
+  }
 
   const footerLinks = [
     {
       title: 'Platform',
       links: [
         { name: 'Explore', href: '/explore' },
-        { name: 'Documentation', href: '/docs' },
+        { name: 'Documentation', href: '/docs', target: '_blank', rel: 'noopener noreferrer' },
         { name: 'Mezo Toolkit', href: '/mezo-toolkit' },
       ]
     },
@@ -80,6 +86,8 @@ export default function Footer() {
                   <li key={j}>
                     <Link
                       href={link.href}
+                      target={link.target}
+                      rel={link.rel}
                       className="text-slate-500 hover:text-[#F7931A] font-bold transition-colors flex items-center gap-2 group"
                     >
                       {link.name}
