@@ -13,7 +13,6 @@ import { TextStyle } from '@tiptap/extension-text-style';
 import { Color } from '@tiptap/extension-color';
 import { Highlight } from '@tiptap/extension-highlight';
 import { common, createLowlight } from 'lowlight';
-import { usePrivy } from '@privy-io/react-auth';
 import { useState, useRef, useMemo, useEffect } from 'react';
 import {
   Bold, Italic, Underline as UnderlineIcon, List, ListOrdered,
@@ -48,7 +47,6 @@ const RichTextEditor = ({
   const [toolbarHeight, setToolbarHeight] = useState(60);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
-  const { getAccessToken } = usePrivy();
   const pathname = usePathname();
   const isDropsPage = pathname?.includes('/dashboard/posts') || pathname?.includes('/dashboard/createposts');
 
@@ -139,13 +137,11 @@ const RichTextEditor = ({
     if (!file || !editor) return;
     setIsUploading(true);
     try {
-      const token = await getAccessToken();
       const formData = new FormData();
       formData.append('file', file);
       const res = await fetch(`/api/upload`, { 
         method: 'POST', 
         body: formData,
-        headers: { 'Authorization': `Bearer ${token}` }
       });
       const data = await res.json();
       if (data.url) {

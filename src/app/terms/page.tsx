@@ -28,7 +28,7 @@ export default function TermsPage() {
       icon: Wallet,
       title: '2. Wallet Connection & Authentication',
       content: [
-        '**Authentication via Privy**: To use TipHive, you must connect via Privy using either a social media account, email, or a compatible Web3 wallet (e.g. MetaMask, Coinbase Wallet, or an embedded wallet created for you). You are solely responsible for maintaining the security of your credentials and any private keys or seed phrases under your control.',
+        '**Authentication via Wallet**: To use TipHive, you must connect a compatible Web3 wallet (e.g. MetaMask, Rainbow, Coinbase Wallet, Phantom, or any wallet supported through WalletConnect) and sign a one-time Sign-In With Ethereum (SIWE) message. There is no email, social, or password-based login — your wallet IS your account. You are solely responsible for maintaining the security of your private keys and seed phrases.',
         '**Creator Registration**: To receive tips and offer subscriptions, you must register as a creator by providing a display name, bio, category, and unique username. You agree to provide accurate information and not impersonate others.',
         '**Username Policy**: Usernames must be unique, lowercase, and alphanumeric. We reserve the right to reclaim or reassign usernames that are inactive, misleading, or violate trademark rights.',
         '**No Custodial Relationship**: TipHive does not hold, store, or manage your funds. All tipping, subscription, and referral reward settlements occur directly on the Mezo Mainnet through secure smart contracts. We are not a bank, exchange, or custodial service.',

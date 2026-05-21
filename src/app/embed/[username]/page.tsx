@@ -69,6 +69,10 @@ export default function EmbedPage({ params: paramsPromise }: { params: Promise<{
     if (!isConnected || !userAddress) return;
     if (!creator) return;
 
+    if (userAddress.toLowerCase() === creator.wallet_address.toLowerCase()) {
+      return alert("Creators can't tip themselves! 🛡️");
+    }
+
     const val = customAmount || amount;
     const finalAmount = String(val || '0');
     

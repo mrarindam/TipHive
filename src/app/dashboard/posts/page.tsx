@@ -60,7 +60,7 @@ export default function DropsPage() {
       if (address) {
         profileQuery = profileQuery.eq('wallet_address', address.toLowerCase());
       } else if (user?.id) {
-        profileQuery = profileQuery.eq('privy_did', user.id);
+        profileQuery = profileQuery.eq('wallet_address', user.id);
       }
 
       const { data: profile } = await profileQuery.single();

@@ -6,7 +6,7 @@ import Image from 'next/image';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import { useAccount, useWriteContract, useConfig } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { parseEther } from 'viem';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { supabase } from '@/lib/supabase';
@@ -15,8 +15,8 @@ import { TIPPING_ABI, ERC20_ABI } from '@/lib/contracts';
 
 export interface Message {
   id: string;
-  sender_did: string;
-  receiver_did: string;
+  sender_wallet_address: string;
+  receiver_wallet_address: string;
   text: string;
   created_at: string;
   is_read: boolean;
@@ -52,7 +52,7 @@ export default function ChatWindow({
   const [prevScrollHeight, setPrevScrollHeight] = useState(0);
 
   const { address: userAddress, isConnected } = useAccount();
-  const { authenticated, login, getAccessToken } = usePrivy();
+  const { authenticated, login, getAccessToken } = useWalletAuth();
   const { writeContractAsync } = useWriteContract();
   const config = useConfig();
   const { contracts, chainId, explorerUrl } = useNetworkConfig();
@@ -101,6 +101,10 @@ export default function ChatWindow({
     if (!authenticated) return login();
     if (!isConnected || !userAddress) return alert('Please link a wallet to send tips');
     if (!otherUser?.wallet_address) return alert('Recipient has no wallet linked');
+
+    if (userAddress.toLowerCase() === otherUser.wallet_address.toLowerCase()) {
+      return alert("You can't tip yourself! 🛡️");
+    }
 
     try {
       const amountParsed = parseEther(tipAmount);
@@ -208,8 +212,8 @@ export default function ChatWindow({
         
         {/* Use a temporary reversed array for mapping in flex-col-reverse */}
         {([...messages].reverse() as Message[]).map((msg, idx, revArray) => {
-          const isMe = msg.sender_did === currentUserId;
-          const showAvatar = idx === 0 || revArray[idx-1].sender_did !== msg.sender_did;
+          const isMe = msg.sender_wallet_address === currentUserId;
+          const showAvatar = idx === 0 || revArray[idx-1].sender_wallet_address !== msg.sender_wallet_address;
 
           return (
             <motion.div

@@ -105,7 +105,7 @@ function EditorInner() {
       if (address) {
         profileQuery = profileQuery.eq('wallet_address', address.toLowerCase());
       } else if (user?.id) {
-        profileQuery = profileQuery.eq('privy_did', user.id);
+        profileQuery = profileQuery.eq('wallet_address', user.id);
       } else {
         throw new Error('Authentication required');
       }

@@ -1,90 +1,77 @@
 'use client';
 
-import { useEffect, useState } from 'react';
-import { useAccount } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
-import { useRouter, usePathname } from 'next/navigation';
+import { useEffect, useRef } from 'react';
+import { usePathname, useRouter } from 'next/navigation';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 
 export default function OnboardingGuard({ children }: { children: React.ReactNode }) {
-  const { address } = useAccount();
-    const { ready, authenticated, user, getAccessToken } = usePrivy();
-    const router = useRouter();
-    const pathname = usePathname();
-    const [status, setStatus] = useState<'loading' | 'new' | 'existing'>('loading');
+  const { ready, authenticated, user } = useWalletAuth();
+  const address = user?.wallet?.address;
+  const router = useRouter();
+  const pathname = usePathname();
+  const profileStatusRef = useRef<{ address: string; isCreator: boolean } | null>(null);
 
-    useEffect(() => {
-      if (pathname?.startsWith('/docs')) {
+  useEffect(() => {
+    const resetProfileStatus = () => {
+      profileStatusRef.current = null;
+    };
+
+    window.addEventListener('wallet-profile-updated', resetProfileStatus);
+    window.addEventListener('tiphive-auth-changed', resetProfileStatus);
+    return () => {
+      window.removeEventListener('wallet-profile-updated', resetProfileStatus);
+      window.removeEventListener('tiphive-auth-changed', resetProfileStatus);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (pathname?.startsWith('/docs')) return;
+    if (!ready || !authenticated || !address) return;
+
+    const walletAddress = address.toLowerCase();
+
+    const applyRedirect = (isCreator: boolean) => {
+      if (!isCreator && pathname !== '/onboarding') {
+        router.replace('/onboarding');
         return;
       }
-      if (!ready || !authenticated || !user?.id) {
-        return;
-      }
 
-      const checkProfile = async () => {
-        try {
-          const walletToQuery = address || user?.wallet?.address || '';
-          const token = await getAccessToken();
-          const res = await fetch(`/api/auth?did=${user.id}&wallet=${walletToQuery}&t=${Date.now()}`, {
-            headers: { 'Authorization': `Bearer ${token}` }
-          });
-          if (!res.ok) throw new Error(`Auth API failed: ${res.status}`);
-        
+      if (isCreator && pathname === '/onboarding') {
+        router.replace('/dashboard');
+      }
+    };
+
+    if (profileStatusRef.current?.address === walletAddress) {
+      applyRedirect(profileStatusRef.current.isCreator);
+      return;
+    }
+
+    const checkProfile = async () => {
+      try {
+        const res = await fetch(`/api/auth?wallet=${address}&t=${Date.now()}`, {
+          credentials: 'include',
+        });
+
+        // 401 = session cookie not ready yet (SIWE still in progress, or
+        // active wallet doesn't match the signed-in session). Stay quiet —
+        // a 'tiphive-auth-changed' event will retrigger this effect once
+        // the handshake settles.
+        if (res.status === 401) return;
+
+        if (!res.ok) throw new Error(`Auth API failed: ${res.status}`);
+
         const data = await res.json();
-        
-        if (!data?.user) {
-          setStatus('new');
-          return;
-        }
+        const isCreator = data?.user?.is_creator === true;
+        profileStatusRef.current = { address: walletAddress, isCreator };
 
-        // isNewUser flag from API = truly brand new account
-        // is_creator = false but has username/display_name = old user that didn't complete onboarding  
-        // is_creator = true OR has wallet_address with data = existing user, skip onboarding
-        const isCreator = data.user.is_creator === true;
-        console.log('ONBOARDING_GUARD:', { isCreator, pathname, did: user.id });
-
-        if (!isCreator) {
-          console.log('ONBOARDING_GUARD: User is NOT a creator, setting status to new');
-          setStatus('new');
-          if (pathname !== '/onboarding') {
-            console.log('ONBOARDING_GUARD: Triggering redirect to /onboarding');
-            router.replace('/onboarding');
-          }
-        } else {
-          console.log('ONBOARDING_GUARD: User IS a creator, setting status to existing');
-          setStatus('existing');
-          if (pathname === '/onboarding') {
-            router.replace('/dashboard');
-          }
-        }
+        applyRedirect(isCreator);
       } catch (err) {
-        console.error('ONBOARDING_GUARD: Error in checkProfile', err);
-        // On error, don't redirect — let user stay where they are
-        setStatus('existing');
+        console.error('ONBOARDING_GUARD: Error checking wallet profile', err);
       }
     };
 
     checkProfile();
-  }, [address, ready, authenticated, user?.id, user?.wallet?.address, pathname, router, getAccessToken]);
-
-  // Show loading screen while checking status to prevent flashes and race conditions
-  if (!pathname?.startsWith('/docs') && authenticated && (status === 'loading' || (status === 'new' && pathname !== '/onboarding'))) {
-    return (
-      <div className="fixed inset-0 bg-[#050505] flex flex-col items-center justify-center z-[200]">
-        <div className="relative">
-          <div className="absolute inset-0 bg-[#F7931A]/20 blur-3xl rounded-full animate-pulse" />
-          <img 
-            src="/logo.png" 
-            alt="TipHive" 
-            className="w-16 h-16 md:w-20 md:h-20 relative mb-8 animate-bounce mix-blend-screen object-contain" 
-          />
-        </div>
-        <div className="flex items-center gap-3 text-slate-400 font-bold tracking-widest uppercase text-sm">
-          <div className="w-4 h-4 border-2 border-[#F7931A] border-t-transparent rounded-full animate-spin" />
-          Securing Session...
-        </div>
-      </div>
-    );
-  }
+  }, [address, ready, authenticated, pathname, router]);
 
   return <>{children}</>;
 }

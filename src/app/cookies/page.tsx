@@ -25,7 +25,7 @@ export default function CookiePolicyPage() {
       title: '2. Types of Storage & Cookies We Use',
       content: [
         '**Essential Storage & Cookies**: These are strictly necessary for the platform to function. They include:',
-        '• **Privy Session Caching**: Persists your secure cryptographic authentication status so you remain logged in as you navigate between pages or close the PWA.',
+        '• **RainbowKit Session Caching**: Persists your secure cryptographic authentication status so you remain logged in as you navigate between pages or close the PWA.',
         '• **UI Preferences**: Caches theme preferences (such as dark mode defaults) for a consistent layout presentation.',
         '• **PWA Offline Assets**: Uses the browser\'s Cache Storage API to store page bundles, icons, and fonts, allowing the app to open instantly and function offline on mobile devices.',
         'These storage tokens cannot be disabled, as the decentralized app would not function properly without them.',
@@ -51,9 +51,9 @@ export default function CookiePolicyPage() {
       title: '4. Third-Party Services',
       content: [
         'Some third-party providers integrated into TipHive may set cookies or use storage:',
-        '• **Privy (Auth)**: Privy uses cookies and secure local storage mechanisms to persist your authenticated session and secure key-split signatures, allowing you to stay securely logged in across platform views.',
+        '• **RainbowKit (Auth)**: RainbowKit uses cookies and secure local storage mechanisms to persist your authenticated session and secure key-split signatures, allowing you to stay securely logged in across platform views.',
         '• **Mezo Network RPC**: Nodes and RPC providers may cache basic network parameters locally to optimize smart contract query transactions.',
-        'We do not control third-party cookies. Please review the privacy policies of Mezo and Privy for details on their storage methods.',
+        'We do not control third-party cookies. Please review the privacy policies of Mezo and RainbowKit for details on their storage methods.',
         'TipHive does **NOT** use advertising cookies, tracking pixels, or cross-site tracking profiles.',
       ]
     },
@@ -64,8 +64,8 @@ export default function CookiePolicyPage() {
         'You have full control over cookies and storage systems on your device:',
         '• **PWA App Management**: If installed as a Progressive Web App on Android or desktop, you can clear the app\'s cache and cookies via your device\'s system settings.',
         '• **Browser Settings**: Most modern browsers allow you to view, clear, or block cookies and local storage tokens via the browser settings panel.',
-        '• **Wallet & Account Disconnect**: Logging out of your TipHive profile will clear Privy session variables and remove all connected authentication states.',
-        '**Note**: Blocking all storage elements will break essential features, such as Privy authentication, embedded wallets, and smart contract connections.',
+        '• **Wallet & Account Disconnect**: Logging out of your TipHive profile will clear RainbowKit session variables and remove all connected authentication states.',
+        '**Note**: Blocking all storage elements will break essential features, such as RainbowKit authentication, embedded wallets, and smart contract connections.',
       ]
     },
     {

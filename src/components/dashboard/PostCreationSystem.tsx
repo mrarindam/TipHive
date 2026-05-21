@@ -6,7 +6,6 @@ import { supabase } from '@/lib/supabase';
 import { useAccount } from 'wagmi';
 import { Image as ImageIcon, Video, FileText, UploadCloud, X, Check, Globe2, Users, Lock, Tag, Save, Send, CheckCircle2 } from 'lucide-react';
 import Image from 'next/image';
-import { usePrivy } from '@privy-io/react-auth';
 import RichTextEditor from '@/components/ui/RichTextEditor';
 
 interface PostCreationSystemProps {
@@ -14,7 +13,6 @@ interface PostCreationSystemProps {
 }
 
 export default function PostCreationSystem({ onSuccess }: PostCreationSystemProps) {
-  const { getAccessToken } = usePrivy();
   const { address } = useAccount();
   const [postType, setPostType] = useState<'text' | 'album' | 'video'>('text');
   const [title, setTitle] = useState('');
@@ -36,11 +34,9 @@ export default function PostCreationSystem({ onSuccess }: PostCreationSystemProp
       const formData = new FormData();
       formData.append('file', file);
 
-      const token = await getAccessToken();
       const res = await fetch(`/api/upload`, {
         method: 'POST',
         body: formData,
-        headers: { 'Authorization': `Bearer ${token}` }
       });
 
       const data = await res.json();

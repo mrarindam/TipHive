@@ -21,7 +21,7 @@ export default function AboutPage() {
     {
       icon: Shield,
       title: 'Decentralized & Secure',
-      description: 'Every tip and subscription flows through audited, non-custodial smart contracts on Mezo Mainnet. With secure Privy-integrated logins and embedded wallets, you maintain 100% control of your funds.',
+      description: 'Every tip and subscription flows through audited, non-custodial smart contracts on Mezo Mainnet. With secure RainbowKit-integrated logins and embedded wallets, you maintain 100% control of your funds.',
       color: '#F7931A'
     },
     {
@@ -106,7 +106,7 @@ export default function AboutPage() {
                 Cross-border payments are a nightmare, and users face complex wallet barriers. We built TipHive to fix all of that.
               </p>
               <p className="text-lg text-slate-400 leading-relaxed mb-8">
-                By leveraging the Mezo Network&apos;s Bitcoin L2 infrastructure, MUSD stablecoin, and secure Privy authentication (with embedded wallet support),
+                By leveraging the Mezo Network&apos;s Bitcoin L2 infrastructure, MUSD stablecoin, and secure RainbowKit authentication (with embedded wallet support),
                 we created a system where transactions are instant, fees are zero at the platform level, and creators keep
                 what they earn. Combined with a referral engine and tiered memberships, it&apos;s the ultimate creator launchpad.
               </p>

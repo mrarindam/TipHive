@@ -2,7 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion';
 import { Wallet, X, AlertCircle } from 'lucide-react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 
 interface RequireWalletModalProps {
   isOpen: boolean;
@@ -10,7 +10,7 @@ interface RequireWalletModalProps {
 }
 
 export default function RequireWalletModal({ isOpen, onClose }: RequireWalletModalProps) {
-  const { linkWallet } = usePrivy();
+  const { linkWallet } = useWalletAuth();
 
   return (
     <AnimatePresence>

@@ -168,7 +168,7 @@ interface TipSettingsProps {
 }
 
 function TipSettings({ creator, onUpdate, onSuccess }: TipSettingsProps) {
-  const { user, address, linkWallet, getAccessToken } = useDashboard();
+  const { address, linkWallet, getAccessToken } = useDashboard();
   const [thankYouMsg, setThankYouMsg] = useState(creator?.thank_you_message || '');
   const [btnText, setBtnText] = useState(creator?.button_text || 'Buy Me a Coffee ☕');
 
@@ -190,19 +190,29 @@ function TipSettings({ creator, onUpdate, onSuccess }: TipSettingsProps) {
   ];
 
   const save = async () => {
-    if (!creator) return;
+    if (!creator) {
+      console.warn('[tipcircle/save] No creator profile loaded — skipping save.');
+      alert('Profile not loaded yet. Refresh the page and try again.');
+      return;
+    }
     setSaving(true);
     try {
       const finalAmounts = [Number(amt1), Number(amt2), Number(amt3)].filter(a => a > 0);
-      const token = await getAccessToken();
+      let token: string | null = null;
+      try {
+        token = await getAccessToken();
+      } catch (tokenErr) {
+        console.warn('[tipcircle/save] getAccessToken failed (continuing with cookie auth):', tokenErr);
+      }
+
+      const headers: Record<string, string> = { 'Content-Type': 'application/json' };
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+
       const res = await fetch('/api/profile', {
         method: 'PATCH',
-        headers: { 
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
+        credentials: 'include',
+        headers,
         body: JSON.stringify({
-          privy_did: user?.id,
           wallet_address: creator.address,
           username: creator.username,
           button_text: btnText,
@@ -210,14 +220,20 @@ function TipSettings({ creator, onUpdate, onSuccess }: TipSettingsProps) {
           suggested_amounts: finalAmounts
         }),
       });
-      if (!res.ok) throw new Error('API Error');
-      
+
+      if (!res.ok) {
+        const errBody = await res.json().catch(() => ({}));
+        const detail = errBody?.error || `HTTP ${res.status}`;
+        console.error(`[tipcircle/save] PATCH /api/profile failed: ${detail}`, errBody);
+        throw new Error(detail);
+      }
+
       onSuccess();
       await onUpdate();
-      
-    } catch (e) { 
-      console.error(e);
-      alert('Error saving settings.'); 
+    } catch (e) {
+      console.error('[tipcircle/save] Error:', e);
+      const detail = e instanceof Error ? e.message : 'Unknown error';
+      alert(`Error saving settings: ${detail}`);
     }
     finally { setSaving(false); }
   };

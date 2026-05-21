@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Heart, ChevronRight, Lock, Video, Music2 } from 'lucide-react';
+import { Heart, ChevronRight, Lock, Video, Music2, X, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useAccount, useWriteContract, useReadContract, useConfig } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther } from 'viem';
 import SubscriptionSection from '@/components/profile/SubscriptionSection';
@@ -51,7 +51,7 @@ export default function ProfileHomeClient() {
   const [lastTipAmount, setLastTipAmount] = useState('0');
 
   const { isConnected, address: userAddress } = useAccount();
-  const { authenticated, login, getAccessToken } = usePrivy();
+  const { authenticated, login, getAccessToken } = useWalletAuth();
   const config = useConfig();
 
   const [amount, setAmount] = useState('10');
@@ -62,6 +62,14 @@ export default function ProfileHomeClient() {
   const [recentTips, setRecentTips] = useState<Tip[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [hasMorePlans, setHasMorePlans] = useState(false);
+  const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
+
+  useEffect(() => {
+    if (notification) {
+      const timer = setTimeout(() => setNotification(null), 5000);
+      return () => clearTimeout(timer);
+    }
+  }, [notification]);
 
   const { writeContractAsync } = useWriteContract();
   const { data: allowance, refetch: refetchAllowance } = useReadContract({
@@ -158,6 +166,11 @@ export default function ProfileHomeClient() {
     if (!isConnected || !userAddress) return alert('Please link a wallet to send tips');
     if (!creator) return;
 
+    if (userAddress.toLowerCase() === creator.wallet_address.toLowerCase()) {
+      setNotification({ message: "Creators can't tip themselves! 🛡️", type: 'error' });
+      return;
+    }
+
     const val = customAmount || amount;
     const finalAmount = String(val || '0');
 
@@ -247,12 +260,41 @@ export default function ProfileHomeClient() {
   };
 
   return (
-    <motion.div 
-      initial={simplifyAnimations ? { opacity: 0 } : { opacity: 0, y: 15 }} 
-      animate={{ opacity: 1, y: 0 }} 
-      transition={{ duration: 0.2 }} 
+    <motion.div
+      initial={simplifyAnimations ? { opacity: 0 } : { opacity: 0, y: 15 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.2 }}
       className="space-y-12"
     >
+      <AnimatePresence>
+        {notification && (
+          <motion.div
+            initial={{ opacity: 0, y: -20, scale: 0.95 }}
+            animate={{ opacity: 1, y: 0, scale: 1 }}
+            exit={{ opacity: 0, y: -20, scale: 0.95 }}
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl max-md:px-4"
+          >
+            <div className={`glass-card p-4 flex items-center justify-between border ${notification.type === 'error' ? 'border-red-500/50 bg-red-500/10' : 'border-green-500/50 bg-green-500/10'} shadow-[0_20px_40px_rgba(0,0,0,0.4)]`}>
+              <div className="flex items-center gap-3">
+                {notification.type === 'error' ? (
+                  <X className="w-5 h-5 text-red-500" />
+                ) : (
+                  <CheckCircle2 className="w-5 h-5 text-green-500" />
+                )}
+                <p className="text-sm font-bold text-white tracking-tight">
+                  {notification.message}
+                </p>
+              </div>
+              <button
+                onClick={() => setNotification(null)}
+                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+              >
+                <X className="w-4 h-4 text-slate-400" />
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <div className="xl:col-span-4 space-y-8">

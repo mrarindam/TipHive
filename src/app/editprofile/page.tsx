@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import {
   AtSign,
   Crown,
@@ -41,7 +41,7 @@ interface Profile {
 
 export default function ConnectedProfilePage() {
   const { address } = useAccount();
-  const { ready, authenticated, user, getAccessToken } = usePrivy();
+  const { ready, authenticated, user, getAccessToken } = useWalletAuth();
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [profile, setProfile] = useState<Profile | null>(null);
@@ -83,7 +83,7 @@ export default function ConnectedProfilePage() {
     const loadProfile = async () => {
       try {
         const token = await getAccessToken();
-        const res = await fetch(`/api/auth?did=${encodeURIComponent(user?.id || '')}&wallet=${address || ''}`, {
+        const res = await fetch(`/api/auth?wallet=${address || user?.id || ''}`, {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();
@@ -163,8 +163,7 @@ export default function ConnectedProfilePage() {
           'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          privy_did: user?.id,
-          wallet_address: address || null,
+          wallet_address: address || user?.id || null,
           username: formData.username,
           display_name: formData.display_name,
           bio: formData.bio,

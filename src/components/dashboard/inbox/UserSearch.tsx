@@ -6,7 +6,7 @@ import { supabase } from '@/lib/supabase';
 import Image from 'next/image';
 
 interface UserProfile {
-  privy_did: string;
+  wallet_address: string;
   username: string;
   display_name: string;
   avatar_url: string;
@@ -25,7 +25,7 @@ export default function UserSearch({ onSelect }: { onSelect: (user: UserProfile)
 
       const { data, error } = await supabase
         .from('user_profiles')
-        .select('privy_did, username, display_name, avatar_url')
+        .select('wallet_address, username, display_name, avatar_url')
         .ilike('username', `%${query}%`)
         .limit(5);
 
@@ -60,7 +60,7 @@ export default function UserSearch({ onSelect }: { onSelect: (user: UserProfile)
         <div className="absolute top-full left-0 right-0 mt-2 bg-[#0f0f14] border border-white/10 rounded-2xl shadow-2xl overflow-hidden z-[70] backdrop-blur-xl">
           {results.map((user) => (
             <button
-              key={user.privy_did}
+              key={user.wallet_address}
               onClick={() => {
                 onSelect(user);
                 setQuery('');

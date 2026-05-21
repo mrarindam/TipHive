@@ -8,7 +8,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useAccount } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import ShareModal from '@/components/ui/ShareModal';
 import MUSDLogo from '@/components/ui/MUSDLogo';
@@ -46,7 +46,6 @@ export const TextThumbnail = ({ title, size = 'large' }: { title: string, size?:
 
 interface CreatorProfile {
   id: string;
-  privy_did: string;
   wallet_address: string;
   display_name: string;
   username: string;
@@ -98,7 +97,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const [totalEarned, setTotalEarned] = useState(0);
   const { chainId } = useNetworkConfig();
 
-  const { user, getAccessToken } = usePrivy();
+  const { user, getAccessToken } = useWalletAuth();
 
   const userId = user?.id;
   const { enableLayoutTransition, enableBlur, simplifyAnimations } = usePerformanceSettings();
@@ -134,7 +133,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
         if (userAddress) {
           profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
         } else {
-          profileQuery = profileQuery.eq('privy_did', userId!);
+          profileQuery = profileQuery.eq('wallet_address', userId!);
         }
 
         const { data: currentUserProfile } = await profileQuery.single();
@@ -194,7 +193,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
       if (userAddress) {
         profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
       } else {
-        profileQuery = profileQuery.eq('privy_did', user.id);
+        profileQuery = profileQuery.eq('wallet_address', user.id);
       }
 
       const { data: currentUserProfile } = await profileQuery.single();
@@ -232,7 +231,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           },
           body: JSON.stringify({
             wallet: creator.wallet_address,
-            did: creator.privy_did,
             action: 'create',
             type: 'follow',
             actor: userAddress || user.id
@@ -265,7 +263,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   }
 
   const isOwner = Boolean((userAddress && creator.wallet_address && userAddress.toLowerCase() === creator.wallet_address.toLowerCase()) || 
-                  (userId && creator.privy_did && userId === creator.privy_did));
+                  (userId && creator.wallet_address && userId === creator.wallet_address));
   const isHome = pathname === `/${username}`;
 
   // Tab logic based on pathname

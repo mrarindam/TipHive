@@ -7,9 +7,10 @@ import { SinglePostSkeleton } from '@/components/ui/Skeleton';
 import { Heart, ArrowLeft, Share2, MessageCircle, Zap, Lock, Globe2, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useAccount } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { motion } from 'framer-motion';
 import ShareModal from '@/components/ui/ShareModal';
+import { sanitizePostHtml } from '@/lib/sanitize';
 
 interface PostComment {
   id: string;
@@ -37,14 +38,20 @@ interface Post {
   created_at: string;
 }
 
+interface CreatorProfile {
+  id: string;
+  wallet_address: string;
+  username: string;
+}
+
 export default function PostDetailClient() {
   const { username, slug } = useParams();
   const { address: userAddress } = useAccount();
-  const { user, getAccessToken } = usePrivy();
+  const { user, getAccessToken } = useWalletAuth();
   const userId = user?.id;
   const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
-  const [creator, setCreator] = useState<Record<string, unknown> | null>(null);
+  const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [likes, setLikes] = useState(0);
@@ -127,13 +134,13 @@ export default function PostDetailClient() {
                     const commenterIds = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
                     const { data: commenterProfiles } = await supabase
                       .from('user_profiles')
-                      .select('wallet_address, privy_did, username, display_name, avatar_url')
-                      .or(`wallet_address.in.(${commenterIds.join(',')}),privy_did.in.(${commenterIds.join(',')})`);
+                      .select('wallet_address, username, display_name, avatar_url')
+                      .in('wallet_address', commenterIds);
 
                     const profileMap = new Map();
                     commenterProfiles?.forEach(p => {
                       if (p.wallet_address) profileMap.set(p.wallet_address.toLowerCase(), p);
-                      if (p.privy_did) profileMap.set(p.privy_did.toLowerCase(), p);
+                      if (p.wallet_address) profileMap.set(p.wallet_address.toLowerCase(), p);
                     });
 
                     commentsResult = commentsData.map(c => ({
@@ -207,7 +214,7 @@ export default function PostDetailClient() {
         setIsLiked(true);
 
         // Create notification for creator
-        if (creator && (creator.wallet_address || creator.privy_did)) {
+        if (creator?.wallet_address) {
           await fetch('/api/notifications', {
             method: 'POST',
             headers: {
@@ -216,7 +223,6 @@ export default function PostDetailClient() {
             },
             body: JSON.stringify({
               wallet: creator.wallet_address,
-              did: creator.privy_did,
               action: 'create',
               type: 'like',
               actor: identifier,
@@ -252,7 +258,11 @@ export default function PostDetailClient() {
       if (error) throw error;
 
       // Fetch user profile for the new comment
-      const { data: userProfile } = await supabase.from('user_profiles').select('wallet_address, privy_did, username, display_name, avatar_url').or(`wallet_address.eq.${identifier},privy_did.eq.${identifier}`).maybeSingle();
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('wallet_address, username, display_name, avatar_url')
+        .eq('wallet_address', identifier)
+        .maybeSingle();
 
       setComments(prev => [{
         ...newComment,
@@ -262,7 +272,7 @@ export default function PostDetailClient() {
       setCommentText('');
 
       // Create notification for creator
-      if (creator && (creator.wallet_address || creator.privy_did)) {
+      if (creator?.wallet_address) {
         await fetch('/api/notifications', {
           method: 'POST',
           headers: {
@@ -271,7 +281,6 @@ export default function PostDetailClient() {
           },
           body: JSON.stringify({
             wallet: creator.wallet_address,
-            did: creator.privy_did,
             action: 'create',
             type: 'comment',
             actor: identifier,
@@ -297,8 +306,8 @@ export default function PostDetailClient() {
 
   if (!post || !creator) return <div className="py-20 flex flex-col items-center justify-center text-white"><p className="mb-4">Post not found.</p><button onClick={() => router.back()} className="text-[#F7931A] hover:underline font-bold">Go Back</button></div>;
 
-  const isOwner = (userAddress || userId) && (creator?.wallet_address || creator?.privy_did)
-    ? (userAddress?.toLowerCase() === (creator?.wallet_address as string)?.toLowerCase()) || (userId === creator?.privy_did)
+  const isOwner = (userAddress || userId) && creator?.wallet_address
+    ? (userAddress?.toLowerCase() === creator.wallet_address.toLowerCase()) || (userId === creator.wallet_address)
     : false;
   const isLocked = post.visibility !== 'public' && !isOwner && !isSubscribed;
   const type = post.video_url ? 'video' : post.image_url ? 'image' : 'text';
@@ -514,7 +523,7 @@ export default function PostDetailClient() {
               </div>
             ) : (
               <div
-                dangerouslySetInnerHTML={{ __html: post.content as string }}
+                dangerouslySetInnerHTML={{ __html: sanitizePostHtml(post.content as string) }}
               />
             )}
           </div>

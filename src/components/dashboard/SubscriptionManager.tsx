@@ -61,14 +61,14 @@ interface Subscriber {
 
 
 
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { useDashboard } from '@/app/dashboard/layout';
 
 export default function SubscriptionManager() {
   const { address } = useAccount();
   const { contracts, chainId, explorerUrl } = useNetworkConfig();
   const { creatorProfile } = useDashboard();
-  const { linkWallet, authenticated } = usePrivy();
+  const { linkWallet, authenticated } = useWalletAuth();
   
   const [activeTab, setActiveTab] = useState<ViewMode>('manage');
   const [creating, setCreating] = useState(false);

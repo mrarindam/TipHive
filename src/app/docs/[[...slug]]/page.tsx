@@ -230,7 +230,7 @@ export default function DocsPage() {
                     <td className="p-4 text-slate-400 font-medium">A decentralized social feed highlighting posts, milestones, and on-chain tipping activities.</td>
                   </tr>
                   <tr>
-                    <td className="p-4 font-bold text-white uppercase tracking-tight text-sm">Web3 Identity (DID)</td>
+                    <td className="p-4 font-bold text-white uppercase tracking-tight text-sm">Web3 Identity (wallet address)</td>
                     <td className="p-4 text-slate-400 font-medium">Connect via wallet. Your address is your public identity; no emails or passwords required.</td>
                   </tr>
                   <tr>
@@ -364,7 +364,7 @@ export default function DocsPage() {
               Claim Your <span className="text-[#F7931A]">Creator</span> Profile
             </h1>
             <p className="text-lg text-slate-400 leading-relaxed font-medium">
-              Deploy your identity directly to the Mezo network in less than two minutes. Bypassing traditional email logins, TipHive leverages secure, non-custodial decentralized IDs (DID) so that you maintain 100% ownership over your brand, content, and audience relationships from day one.
+              Deploy your identity directly to the Mezo network in less than two minutes. Bypassing traditional email logins, TipHive leverages secure, non-custodial decentralized IDs (wallet address) so that you maintain 100% ownership over your brand, content, and audience relationships from day one.
             </p>
           </section>
 
@@ -373,7 +373,7 @@ export default function DocsPage() {
             <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">Deployment Pipeline</h2>
             <div className="space-y-6">
               <Step number="01" title="Connect Wallet & Claim Username">
-                <p className="mb-2">Connect any Mezo-compatible Web3 wallet (such as MetaMask, Rainbow, or Coinbase Wallet) through our secure Privy authentication interface. Once connected, claim your unique, custom username (e.g., <code className="text-white font-bold bg-white/10 px-1.5 py-0.5 rounded">tiphive.com/alice</code>).</p>
+                <p className="mb-2">Connect any Mezo-compatible Web3 wallet (such as MetaMask, Rainbow, or Coinbase Wallet) through our secure RainbowKit authentication interface. Once connected, claim your unique, custom username (e.g., <code className="text-white font-bold bg-white/10 px-1.5 py-0.5 rounded">tiphive.com/alice</code>).</p>
                 <p className="text-sm text-slate-400 leading-relaxed font-medium">
                   This username acts as your immutable, on-chain handle. It maps directly to your public wallet address on the blockchain, forming a fully sovereign decentralized public identity without traditional emails or third-party gatekeepers.
                 </p>
@@ -735,7 +735,7 @@ export default function DocsPage() {
               </Step>
 
               <Step number="02" title="Confirm On-Chain Deployment">
-                <p className="mb-2 text-slate-400">Click &quot;Create Tier&quot; to authorize the transaction via Privy using your connected wallet. This transaction executes `createPlan` directly on the subscription contract registry on Mezo L2, creating an immutable on-chain record and returning a unique plan index.</p>
+                <p className="mb-2 text-slate-400">Click &quot;Create Tier&quot; to authorize the transaction via RainbowKit using your connected wallet. This transaction executes `createPlan` directly on the subscription contract registry on Mezo L2, creating an immutable on-chain record and returning a unique plan index.</p>
                 <p className="text-sm text-slate-400 leading-relaxed font-medium">
                   Once the L2 network confirms the block, TipHive instantly registers the tier metadata off-chain to keep database sync speeds fast, immediately displaying the active tier on your public storefront.
                 </p>
@@ -825,7 +825,7 @@ export default function DocsPage() {
                 </div>
                 <h4 className="text-lg font-bold text-white uppercase tracking-tight">On-Chain Multi-Contract Workflow</h4>
                 <p className="text-sm text-slate-400 leading-relaxed">
-                  The tipping component utilizes WAGMI hooks and Privy verification to execute a dual-contract transaction. It performs an ERC20 approval on the MUSD contract for the tipping address, then fires the secure on-chain tip contract call, routing tokens to the recipient wallet.
+                  The tipping component utilizes WAGMI hooks and RainbowKit verification to execute a dual-contract transaction. It performs an ERC20 approval on the MUSD contract for the tipping address, then fires the secure on-chain tip contract call, routing tokens to the recipient wallet.
                 </p>
               </div>
 
@@ -861,9 +861,9 @@ export default function DocsPage() {
                   <Shield className="w-6 h-6 text-blue-400" />
                 </div>
                 <div>
-                  <h4 className="text-lg font-bold text-white mb-1 uppercase tracking-tight">DID-Level Access Protection</h4>
+                  <h4 className="text-lg font-bold text-white mb-1 uppercase tracking-tight">wallet address-Level Access Protection</h4>
                   <p className="text-sm text-slate-400 leading-relaxed">
-                    Database security policies verify Privy Decentralized Identifiers (DIDs) at the query level. PostgreSQL Row Level Security (RLS) ensures that only the authenticated sender and recipient are authorized to query or mutate a chat thread.
+                    Database security policies verify RainbowKit Decentralized Identifiers (wallet addresss) at the query level. PostgreSQL Row Level Security (RLS) ensures that only the authenticated sender and recipient are authorized to query or mutate a chat thread.
                   </p>
                 </div>
               </div>
@@ -901,7 +901,7 @@ export default function DocsPage() {
             <h2 className="text-2xl font-black font-outfit uppercase tracking-tight border-b border-white/5 pb-4">How it Works</h2>
             <div className="space-y-4">
               <Step number="01" title="Get Your Code">
-                Every user has a unique referral code generated on account creation, linked directly to their DID.
+                Every user has a unique referral code generated on account creation, linked directly to their wallet address.
               </Step>
               <Step number="02" title="Share the Link">
                 Use your personalized dashboard to share your link on Twitter, Telegram, or Farcaster.
@@ -1858,20 +1858,20 @@ struct SubscriptionRecord {
               <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-3 h-3 rounded-full bg-pink-400" />
-                  <h4 className="font-bold text-white text-base">Privy Application</h4>
+                  <h4 className="font-bold text-white text-base">RainbowKit Application</h4>
                 </div>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                  An authorized application inside your Privy developer console (dashboard.privy.io) to enable non-custodial web3 login hooks and embedded wallets.
+                  An authorized application inside your RainbowKit developer console (dashboard.RainbowKit.io) to enable non-custodial web3 login hooks and embedded wallets.
                 </p>
               </div>
 
               <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all">
                 <div className="flex items-center gap-3 mb-2">
                   <div className="w-3 h-3 rounded-full bg-blue-400" />
-                  <h4 className="font-bold text-white text-base">Brevo Account (Optional)</h4>
+                  <h4 className="font-bold text-white text-base">No External Mailer Required</h4>
                 </div>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                  An active SMTP/Email API key from brevo.com to support high-priority email alerts for subscriptions, incoming tips, and security changes.
+                  TipHive uses in-app notifications only — there is no transactional email or external mailer integration. All creator alerts (tips, likes, comments, follows, subscriptions) surface in the notification bell.
                 </p>
               </div>
             </div>
@@ -1947,14 +1947,13 @@ NEXT_PUBLIC_CLOUDINARY_CLOUD_NAME=your-cloud-name
 CLOUDINARY_API_KEY=your-cloudinary-api-key
 CLOUDINARY_API_SECRET=your-cloudinary-api-secret
 
-# Privy Non-Custodial Authentication
-NEXT_PUBLIC_PRIVY_APP_ID=your-privy-app-id
-PRIVY_APP_SECRET=your-privy-app-secret
+# RainbowKit Non-Custodial Authentication
+NEXT_PUBLIC_RainbowKit_APP_ID=your-RainbowKit-app-id
+RainbowKit_APP_SECRET=your-RainbowKit-app-secret
 
-# Brevo Transactional Email Alerts
-BREVO_API_KEY=your-brevo-api-key
-BREVO_SENDER_EMAIL=notifications@tiphive.com
-BREVO_SENDER_NAME=TipHive`}
+# Wallet Session HMAC Secret (Required, 32+ random chars)
+# No email service env vars needed — TipHive sends no transactional email.
+WALLET_SESSION_SECRET=replace-with-32-plus-char-random-string`}
                 </pre>
               </Step>
 
@@ -1989,7 +1988,7 @@ BREVO_SENDER_NAME=TipHive`}
                   </div>
                 </div>
                 <Callout type="info" title="Authentication Integration">
-                  To sync user login sessions with your Supabase database, ensure that you configure Privy Webhooks or synchronizations inside your Privy Developer console to sync new authenticated user wallets directly with the <code className="text-white bg-white/15 px-1 py-0.5 rounded font-mono">user_profiles</code> database table.
+                  To sync user login sessions with your Supabase database, ensure that you configure RainbowKit Webhooks or synchronizations inside your RainbowKit Developer console to sync new authenticated user wallets directly with the <code className="text-white bg-white/15 px-1 py-0.5 rounded font-mono">user_profiles</code> database table.
                 </Callout>
               </Step>
 
@@ -2069,9 +2068,11 @@ npm run dev`}
         │   ├── profile/     # Public interactive tipping/subscribing boxes
         │   └── ui/          # Sleek premium glassmorphic UI controls
         └── lib/             # Shared client configs and integration scripts
-            ├── brevo.ts     # Transactional email service connector
-            ├── contracts.ts # Viem & Wagmi contract hooks integration
-            └── supabase.ts  # Supabase client instance and database types`}
+            ├── sanitize.ts        # DOMPurify wrapper for user-generated HTML
+            ├── wallet-session.ts  # SIWE + HMAC session cookies
+            ├── wallet-auth-shim.ts# Client-side auth hook (current wallet/session)
+            ├── contracts.ts       # Viem & Wagmi contract hooks integration
+            └── supabase.ts        # Supabase client instance and database types`}
             </pre>
           </section>
         </div>
@@ -2106,7 +2107,7 @@ npm run dev`}
                ▼ Web3 Interface                ▼ Web API Requests
 ┌──────────────────────────────┐┌───────────────────────────────┐
 │        Wallet (Wagmi)        ││       Next.js API Routes      │
-│   RainbowKit / Privy SDKs    ││           (/api/*)            │
+│   RainbowKit / RainbowKit SDKs    ││           (/api/*)            │
 └──────────────┬───────────────┘└──────────────┬────────────────┘
                │                               │
                ▼ RPC Calls                     ▼ DB Mutations & Alerts
@@ -2125,11 +2126,11 @@ npm run dev`}
                                 ┌───────────────────────────────┐
                                 │       External Services       │
                                 │  ┌───────────┐ ┌───────────┐  │
-                                │  │ Privy     │ │ Cloudinary│  │
+                                │  │ RainbowKit     │ │ Cloudinary│  │
                                 │  │ (Identity)│ │ (Media)   │  │
                                 │  ├───────────┤ ├───────────┤  │
-                                │  │ Brevo     │ │ Wallet    │  │
-                                │  │ (Email)   │ │ Connect   │  │
+                                │  │ Notif Bell│ │ Wallet    │  │
+                                │  │ (In-App)  │ │ Connect   │  │
                                 │  └───────────┘ └───────────┘  │
                                 └───────────────────────────────┘`}
             </pre>
@@ -2243,7 +2244,7 @@ npm run dev`}
                       <td className="p-4 text-slate-400">Unified profile database, real-time message sockets, and PostgreSQL row policies.</td>
                     </tr>
                     <tr>
-                      <td className="p-4 font-bold text-white">Privy Auth</td>
+                      <td className="p-4 font-bold text-white">RainbowKit Auth</td>
                       <td className="p-4 text-pink-400 font-mono">Identity Provider</td>
                       <td className="p-4 text-slate-400">Non-custodial, high-fidelity user wallet manager supporting social OAuths and OTPs.</td>
                     </tr>
@@ -2253,9 +2254,9 @@ npm run dev`}
                       <td className="p-4 text-slate-400">Optimized media uploading backend and delivery CDN encoding image & video contents.</td>
                     </tr>
                     <tr>
-                      <td className="p-4 font-bold text-white">Brevo Mailer</td>
-                      <td className="p-4 text-blue-400 font-mono">SMTP API</td>
-                      <td className="p-4 text-slate-400">High-priority transactional email delivery module distributing alert messages.</td>
+                      <td className="p-4 font-bold text-white">In-App Notifications</td>
+                      <td className="p-4 text-blue-400 font-mono">notifications table</td>
+                      <td className="p-4 text-slate-400">All alerts (tips, likes, comments, follows, subscriptions) are inserted into Supabase and surfaced via the in-app notification bell. No external mailer is used.</td>
                     </tr>
                   </tbody>
                 </table>
@@ -2293,7 +2294,7 @@ npm run dev`}
                 <pre className="p-4 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
 {`Client POST/PATCH/DELETE
   → Next.js Route Handler (/api/profile)
-    → Session Authenticator Checks (Privy SDK verifying JWT headers)
+    → Session Authenticator Checks (RainbowKit SDK verifying JWT headers)
     → Data Input Validation & Sanitization
     → Supabase Postgres Mutation
   ← JSON Success Response`}
@@ -2313,7 +2314,7 @@ npm run dev`}
         → Smart contract emits TipSent event
         → Client API POST /api/tips registers transaction in Supabase PostgreSQL
         → Real-time subscription updates creator's profile dashboard
-        → Brevo automated transactional email arrives in creator's inbox`}
+        → In-app notification appears in the creator's notification bell`}
                 </pre>
               </div>
 
@@ -2364,9 +2365,9 @@ export const sbAdmin = createClient(
               </div>
 
               <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all">
-                <h4 className="font-bold text-white text-base mb-2">Why Privy?</h4>
+                <h4 className="font-bold text-white text-base mb-2">Why Wallet-Only SIWE?</h4>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                  Traditional web3 wallets introduce high friction for mainstream users. Privy allows supporters to instantly create a non-custodial embedded wallet utilizing standard social accounts (Google, Twitter, GitHub) or simple email OTPs, bridging the gap between web2 ease and web3 ownership.
+                  TipHive uses Sign-In With Ethereum (EIP-4361). Visitors connect any browser extension wallet (MetaMask, Rainbow, Coinbase, Phantom) or scan a WalletConnect QR from a mobile wallet, then sign a single message to prove ownership. There are no email logins, no Google OAuth, and no embedded wallets — your wallet is your identity, and TipHive never sees a password.
                 </p>
               </div>
 
@@ -2463,7 +2464,7 @@ export const sbAdmin = createClient(
                 user_profiles
               </h3>
               <p className="text-sm text-slate-400 leading-relaxed font-medium">
-                Unified fan and creator identities mapping Privy-authenticated user IDs, wallet addresses, handles, customize preferences, and social details.
+                Unified fan and creator identities mapping RainbowKit-authenticated user IDs, wallet addresses, handles, customize preferences, and social details.
               </p>
               
               <div className="border border-white/10 rounded-2xl bg-white/5 overflow-hidden">
@@ -2482,7 +2483,7 @@ export const sbAdmin = createClient(
                         <td className="p-4 font-bold text-white font-mono text-sm">id</td>
                         <td className="p-4 text-[#3ECF8E] font-mono text-sm">UUID</td>
                         <td className="p-4 text-[#F7931A] font-mono text-sm">PRIMARY KEY</td>
-                        <td className="p-4 text-slate-400 text-sm">Unique profile identifier, matching Privy authenticated DID or Supabase user identifier.</td>
+                        <td className="p-4 text-slate-400 text-sm">Unique profile identifier, matching RainbowKit authenticated wallet address or Supabase user identifier.</td>
                       </tr>
                       <tr>
                         <td className="p-4 font-bold text-white font-mono text-sm">wallet_address</td>
@@ -2591,36 +2592,6 @@ export const sbAdmin = createClient(
                         <td className="p-4 text-[#3ECF8E] font-mono text-sm">TEXT</td>
                         <td className="p-4 text-slate-400 text-sm">-</td>
                         <td className="p-4 text-slate-400 text-sm">Wallet address of the referral agent who referred the user.</td>
-                      </tr>
-                      <tr>
-                        <td className="p-4 font-bold text-white font-mono text-sm">notification_email</td>
-                        <td className="p-4 text-[#3ECF8E] font-mono text-sm">TEXT</td>
-                        <td className="p-4 text-slate-400 text-sm">-</td>
-                        <td className="p-4 text-slate-400 text-sm">Specified email address chosen to receive transactional notifications.</td>
-                      </tr>
-                      <tr>
-                        <td className="p-4 font-bold text-white font-mono text-sm">email_notifications_enabled</td>
-                        <td className="p-4 text-[#3ECF8E] font-mono text-sm">BOOLEAN</td>
-                        <td className="p-4 text-slate-400 text-sm">DEFAULT: true</td>
-                        <td className="p-4 text-slate-400 text-sm">Global switch managing outgoing transactional email alerts.</td>
-                      </tr>
-                      <tr>
-                        <td className="p-4 font-bold text-white font-mono text-sm">email_notif_likes</td>
-                        <td className="p-4 text-[#3ECF8E] font-mono text-sm">BOOLEAN</td>
-                        <td className="p-4 text-slate-400 text-sm">DEFAULT: true</td>
-                        <td className="p-4 text-slate-400 text-sm">Enables email alerts when social actions register a like on user posts.</td>
-                      </tr>
-                      <tr>
-                        <td className="p-4 font-bold text-white font-mono text-sm">email_notif_comments</td>
-                        <td className="p-4 text-[#3ECF8E] font-mono text-sm">BOOLEAN</td>
-                        <td className="p-4 text-slate-400 text-sm">DEFAULT: true</td>
-                        <td className="p-4 text-slate-400 text-sm">Enables email alerts when social actions record comments on user posts.</td>
-                      </tr>
-                      <tr>
-                        <td className="p-4 font-bold text-white font-mono text-sm">email_notif_follows</td>
-                        <td className="p-4 text-[#3ECF8E] font-mono text-sm">BOOLEAN</td>
-                        <td className="p-4 text-slate-400 text-sm">DEFAULT: true</td>
-                        <td className="p-4 text-slate-400 text-sm">Enables email alerts when social profiles log new followers.</td>
                       </tr>
                       <tr>
                         <td className="p-4 font-bold text-white font-mono text-sm">created_at</td>
@@ -3399,7 +3370,7 @@ export const sbAdmin = createClient(
               <div>
                 <h4 className="font-bold text-white text-base mb-2">1. Profile Sync Trigger (handle_new_user)</h4>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed mb-4">
-                  When a user registers or logs in with Privy for the first time, a new database record is logged in the Supabase <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">auth.users</code> database. An automated database trigger propagates the wallet address, DID token, and system defaults directly into the <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">public.user_profiles</code> directory:
+                  When a user registers or logs in with RainbowKit for the first time, a new database record is logged in the Supabase <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">auth.users</code> database. An automated database trigger propagates the wallet address, wallet address token, and system defaults directly into the <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">public.user_profiles</code> directory:
                 </p>
                 <pre className="p-4 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
 {`CREATE OR REPLACE FUNCTION public.handle_new_user()
@@ -3411,7 +3382,7 @@ BEGIN
     username,
     display_name,
     avatar_url,
-    privy_did,
+    RainbowKit_wallet address,
     suggested_amounts,
     button_text,
     thank_you_message,
@@ -3721,7 +3692,7 @@ CREATE TRIGGER update_profiles_modtime
               Internal API Suite
             </h2>
             <p className="text-slate-300 font-medium leading-relaxed">
-              These APIs run under the primary dashboard environment. Tipping mutations, notifications settings, and profile updates use standard Next.js API Routes. Endpoints that require user authentication check the <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">Authorization: Bearer &lt;token&gt;</code> header with a valid Privy wallet access token.
+              These APIs run under the primary dashboard environment. Tipping mutations, notifications settings, and profile updates use standard Next.js API Routes. Endpoints that require user authentication check the <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">Authorization: Bearer &lt;token&gt;</code> header with a valid RainbowKit wallet access token.
             </p>
             <div className="p-4 bg-black/60 border border-white/10 rounded-xl font-mono text-sm text-[#F7931A] font-bold">
               https://tiphive.com/api
@@ -3742,7 +3713,7 @@ CREATE TRIGGER update_profiles_modtime
                     <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-black rounded">GET</span></td>
                     <td className="px-4 py-3 font-mono text-white">/profile</td>
                     <td className="px-4 py-3 text-slate-400">Optional</td>
-                    <td className="px-4 py-3 text-slate-300">Retrieves a creator's public profile data (custom suggested amounts, on-chain verification flags, total earnings) using their Privy DID or wallet address.</td>
+                    <td className="px-4 py-3 text-slate-300">Retrieves a creator's public profile data (custom suggested amounts, on-chain verification flags, total earnings) using their RainbowKit wallet address or wallet address.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-blue-500/20 border border-blue-500/30 text-blue-400 text-xs font-black rounded">PATCH</span></td>
@@ -3760,31 +3731,19 @@ CREATE TRIGGER update_profiles_modtime
                     <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-black rounded">GET</span></td>
                     <td className="px-4 py-3 font-mono text-white">/notifications</td>
                     <td className="px-4 py-3 text-[#F7931A] font-bold">Required</td>
-                    <td className="px-4 py-3 text-slate-300">Fetches a paginated, reverse-chronological stream of creator alerts and notifications based on the user's active wallet or DID.</td>
+                    <td className="px-4 py-3 text-slate-300">Fetches a paginated, reverse-chronological stream of creator alerts and notifications based on the user's active wallet or wallet address.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-black rounded">POST</span></td>
                     <td className="px-4 py-3 font-mono text-white">/notifications</td>
                     <td className="px-4 py-3 text-[#F7931A] font-bold">Required</td>
-                    <td className="px-4 py-3 text-slate-300">Executes alert state mutations. Supports <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">markAllRead</code> to dismiss alerts, or <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">create</code> to publish a follow, like, or comment notification. Integrates with Brevo to automatically dispatch emails to recipients.</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-black rounded">GET</span></td>
-                    <td className="px-4 py-3 font-mono text-white">/notifications/settings</td>
-                    <td className="px-4 py-3 text-[#F7931A] font-bold">Required</td>
-                    <td className="px-4 py-3 text-slate-300">Retrieves the user's current mail notification toggles and designated alert email address.</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-black rounded">POST</span></td>
-                    <td className="px-4 py-3 font-mono text-white">/notifications/settings</td>
-                    <td className="px-4 py-3 text-[#F7931A] font-bold">Required</td>
-                    <td className="px-4 py-3 text-slate-300">Updates preference toggles for receiving specific email categories (likes, comments, follows) and updates the user's notification email address.</td>
+                    <td className="px-4 py-3 text-slate-300">Executes alert state mutations. Supports <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">markAllRead</code> to dismiss alerts, or <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">create</code> to insert a follow, like, or comment notification row. Notifications are in-app only — the alert surfaces in the recipient's notification bell. No email is sent.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-black rounded">GET</span></td>
                     <td className="px-4 py-3 font-mono text-white">/referrals</td>
                     <td className="px-4 py-3 text-[#F7931A] font-bold">Required</td>
-                    <td className="px-4 py-3 text-slate-300">Retrieves the collection of users referred by the authenticated DID, alongside total counts and referral signup timestamps.</td>
+                    <td className="px-4 py-3 text-slate-300">Retrieves the collection of users referred by the authenticated wallet address, alongside total counts and referral signup timestamps.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-black rounded">POST</span></td>
@@ -3793,22 +3752,28 @@ CREATE TRIGGER update_profiles_modtime
                     <td className="px-4 py-3 text-slate-300">Handles media assets. Generates secure, signed Cloudinary signature hashes for authenticated client-side uploads, or proxies small files directly into Cloudinary CDN.</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-black rounded">GET</span></td>
-                    <td className="px-4 py-3 font-mono text-white">/email</td>
-                    <td className="px-4 py-3 text-[#F7931A] font-bold">Required</td>
-                    <td className="px-4 py-3 text-slate-300">Fetches the user's currently configured and active notification email address.</td>
+                    <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-black rounded">POST</span></td>
+                    <td className="px-4 py-3 font-mono text-white">/auth/nonce</td>
+                    <td className="px-4 py-3 text-slate-400">Optional</td>
+                    <td className="px-4 py-3 text-slate-300">Issues a one-time SIWE nonce that the client embeds into the EIP-4361 message before requesting the wallet signature.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-black rounded">POST</span></td>
-                    <td className="px-4 py-3 font-mono text-white">/email</td>
-                    <td className="px-4 py-3 text-[#F7931A] font-bold">Required</td>
-                    <td className="px-4 py-3 text-slate-300">Validates email formats, updates the profile's notification email, and automatically dispatches an onboarding confirmation email via Brevo.</td>
+                    <td className="px-4 py-3 font-mono text-white">/auth/verify</td>
+                    <td className="px-4 py-3 text-slate-400">Optional</td>
+                    <td className="px-4 py-3 text-slate-300">Verifies the signed SIWE message, upserts the wallet into <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">user_profiles</code>, and sets an HMAC-signed session cookie keyed off <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">WALLET_SESSION_SECRET</code>.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-green-500/20 border border-green-500/30 text-green-400 text-xs font-black rounded">GET</span></td>
-                    <td className="px-4 py-3 font-mono text-white">/auth</td>
+                    <td className="px-4 py-3 font-mono text-white">/auth/session</td>
+                    <td className="px-4 py-3 text-slate-400">Optional</td>
+                    <td className="px-4 py-3 text-slate-300">Returns the currently authenticated wallet address by validating the session cookie's HMAC signature, or <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">null</code> if no valid cookie is present.</td>
+                  </tr>
+                  <tr>
+                    <td className="px-4 py-3"><span className="px-2.5 py-0.5 bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs font-black rounded">POST</span></td>
+                    <td className="px-4 py-3 font-mono text-white">/auth/logout</td>
                     <td className="px-4 py-3 text-[#F7931A] font-bold">Required</td>
-                    <td className="px-4 py-3 text-slate-300">Validates token signatures, retrieves linked wallets, registers new user profiles upon identity creation, automatically resolves legacy wallet accounts, populates initial greeting alerts, and dispatches welcome emails.</td>
+                    <td className="px-4 py-3 text-slate-300">Clears the session cookie. The wallet itself is never disconnected — only the server-side session is invalidated.</td>
                   </tr>
                 </tbody>
               </table>
@@ -3848,7 +3813,7 @@ CREATE TRIGGER update_profiles_modtime
                   <tr>
                     <td className="px-4 py-3 font-mono font-bold text-[#F7931A]">401</td>
                     <td className="px-4 py-3 text-white">Unauthorized</td>
-                    <td className="px-4 py-3 text-slate-300">Returned when no Bearer session token is present in the request headers, or if the provided Privy access token has expired.</td>
+                    <td className="px-4 py-3 text-slate-300">Returned when no Bearer session token is present in the request headers, or if the provided RainbowKit access token has expired.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono font-bold text-[#F7931A]">403</td>
@@ -3906,37 +3871,39 @@ CREATE TRIGGER update_profiles_modtime
               Authentication & Session Management
             </h2>
             <p className="text-slate-300 font-medium leading-relaxed">
-              TipHive enforces a robust non-custodial login flow managed via <strong className="font-bold text-white">Privy</strong>. Users retain full ownership over their cryptographic keys and wallets, skipping central credential storage entirely.
+              TipHive enforces a robust non-custodial login flow using <strong className="font-bold text-white">Sign-In With Ethereum (EIP-4361)</strong>. Users retain full ownership over their cryptographic keys and wallets, skipping central credential storage entirely.
             </p>
 
             <div className="space-y-6">
               <div>
                 <h4 className="font-bold text-white text-base mb-2">1. Identity Verification Flow</h4>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed mb-4">
-                  Visitors connect their existing Web3 identity using external browser wallets (such as MetaMask, Coinbase Wallet, Phantom, Rainbow, or WalletConnect options) or instantiate a social-linked embedded Privy wallet (using Google, Apple, or email logins).
+                  Visitors connect any browser extension wallet (MetaMask, Rainbow, Coinbase, Phantom) or scan a WalletConnect QR from a mobile wallet, then sign a single SIWE message to prove ownership. There are no email logins, no Google or social OAuth, and no embedded wallets — your wallet is your identity.
                 </p>
               </div>
 
               <div>
-                <h4 className="font-bold text-white text-base mb-2">2. Token Verification & Handoff</h4>
+                <h4 className="font-bold text-white text-base mb-2">2. Server-Side Session Cookie</h4>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed mb-4">
-                  Once authenticated on the client, Privy issues a cryptographically-signed access token (JWT). This token is supplied in every first-party request inside the <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">Authorization: Bearer &lt;token&gt;</code> header. The server verifies this token against Privy's public keys via the Privy SDK, establishing a verified session:
+                  After the SIWE message is signed, the server verifies the signature, then issues an HMAC-SHA256 signed session cookie keyed off the <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">WALLET_SESSION_SECRET</code> environment variable. The cookie is HttpOnly, SameSite=Lax, and session-only (no <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">maxAge</code>) — closing the browser logs the user out:
                 </p>
                 <pre className="p-4 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
-{`const header = request.headers.get('authorization');
-const token = header?.replace('Bearer ', '');
-if (!token) throw new Error('Authentication required');
+{`// /api/auth/verify validates the SIWE signature
+const { address } = await verifySiweMessage(message, signature);
 
-// Cryptographic token signature check via Privy SDK
-const verified = await privy.utils().auth().verifyAccessToken(token);
-const verifiedDid = verified.user_id;`}
+// Server signs a session payload with HMAC-SHA256
+const cookie = signWalletSession(address, process.env.WALLET_SESSION_SECRET);
+response.cookies.set('tiphive_session', cookie, {
+  httpOnly: true,
+  sameSite: 'lax',
+});`}
                 </pre>
               </div>
 
               <div>
                 <h4 className="font-bold text-white text-base mb-2">3. Supabase Integration Sync</h4>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed mb-4">
-                  Upon verification, the system syncs the user's Privy Decentralized Identifier (DID) and primary connected wallet with the database profiles directory, initializing tipping layouts and creating welcome notifications.
+                  Upon verification, the system upserts the connected wallet address into the <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">user_profiles</code> table and routes the user to onboarding (for first-time wallets) or directly to the dashboard.
                 </p>
               </div>
             </div>
@@ -3966,8 +3933,8 @@ const verifiedDid = verified.user_id;`}
                   <tr>
                     <td className="px-4 py-3 font-mono text-white">user_profiles</td>
                     <td className="px-4 py-3 text-slate-300">Public — anyone can query and view active creator profiles.</td>
-                    <td className="px-4 py-3 text-slate-300">Authenticated — requires a matching Privy DID session check.</td>
-                    <td className="px-4 py-3 text-slate-300">Owner only — compares session DID directly to the record's ID.</td>
+                    <td className="px-4 py-3 text-slate-300">Authenticated — requires a matching RainbowKit wallet address session check.</td>
+                    <td className="px-4 py-3 text-slate-300">Owner only — compares session wallet address directly to the record's ID.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-white">posts</td>
@@ -3989,9 +3956,9 @@ const verifiedDid = verified.user_id;`}
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-white">notifications</td>
-                    <td className="px-4 py-3 text-slate-300">Recipient only — queried by matching recipient wallet or DID.</td>
+                    <td className="px-4 py-3 text-slate-300">Recipient only — queried by matching recipient wallet or wallet address.</td>
                     <td className="px-4 py-3 text-slate-300">Authenticated — anyone can create follow, like, or comment alerts.</td>
-                    <td className="px-4 py-3 text-slate-300">Recipient only — recipient matches session DID to dismiss or clear.</td>
+                    <td className="px-4 py-3 text-slate-300">Recipient only — recipient matches session wallet address to dismiss or clear.</td>
                   </tr>
                 </tbody>
               </table>
@@ -4022,11 +3989,6 @@ const verifiedDid = verified.user_id;`}
                     <td className="px-4 py-3 font-mono text-white">POST /api/upload</td>
                     <td className="px-4 py-3 text-slate-300">30 request calls per hour</td>
                     <td className="px-4 py-3 text-slate-300">Blocks asset uploading abuse, limiting signed signature requests.</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-white">POST /api/email</td>
-                    <td className="px-4 py-3 text-slate-300">5 request calls per hour</td>
-                    <td className="px-4 py-3 text-slate-300">Prevents SMTP mailer exhaustion and blocks registration spam.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-white">POST /api/notifications</td>
@@ -4084,7 +4046,7 @@ const verifiedDid = verified.user_id;`}
                       <tr>
                         <td className="px-4 py-3 font-bold text-white">Email Address</td>
                         <td className="px-4 py-3 font-mono text-[#F7931A]">/^[^\s@]+@[^\s@]+\.[^\s@]+$/</td>
-                        <td className="px-4 py-3 text-slate-300">Ensures correct syntax before triggering SMTP Brevo transactional pipelines.</td>
+                        <td className="px-4 py-3 text-slate-300">Ensures correct syntax for any optional contact email captured at the profile boundary.</td>
                       </tr>
                       <tr>
                         <td className="px-4 py-3 font-bold text-white">Link URLs</td>
@@ -4129,7 +4091,7 @@ Authorization: Bearer {CRON_SECRET}`}
               <div>
                 <h4 className="font-bold text-white text-base mb-2">2. Client vs Server Env Isolation</h4>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed mb-4">
-                  Client-exposed values are limited to the Supabase endpoint URL and anonymous keys, which are built to be public. Private keys (such as `SUPABASE_SERVICE_ROLE_KEY`, `PRIVY_APP_SECRET`, and `CLOUDINARY_API_SECRET`) are never packaged inside client bundles. The service role key is reserved strictly for backend administration tasks.
+                  Client-exposed values are limited to the Supabase endpoint URL and anonymous keys, which are built to be public. Private keys (such as `SUPABASE_SERVICE_ROLE_KEY`, `RainbowKit_APP_SECRET`, and `CLOUDINARY_API_SECRET`) are never packaged inside client bundles. The service role key is reserved strictly for backend administration tasks.
                 </p>
               </div>
             </div>
@@ -4160,7 +4122,7 @@ Authorization: Bearer {CRON_SECRET}`}
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-bold text-white">Session Hijacking & XSS exploits</td>
-                    <td className="px-4 py-3 text-slate-300">Privy-managed cryptographic JWTs. Social and external wallets utilize secure signature verification with short expiration times.</td>
+                    <td className="px-4 py-3 text-slate-300">RainbowKit-managed cryptographic JWTs. Social and external wallets utilize secure signature verification with short expiration times.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-bold text-white">Sybil Attacks & Registry Spam</td>
@@ -4215,7 +4177,7 @@ Authorization: Bearer {CRON_SECRET}`}
                 <strong className="font-bold text-white">Edge Functions for API Routing:</strong> Low-latency edge middleware handles geographical rate-limiting and session validations instantly.
               </li>
               <li>
-                <strong className="font-bold text-white">Serverless Execution Layer:</strong> Serverless functions handle heavier computation, Privy cryptographic signature verifications, and Brevo mailer interactions.
+                <strong className="font-bold text-white">Serverless Execution Layer:</strong> Serverless functions handle heavier computation and SIWE signature verification for wallet-based authentication.
               </li>
               <li>
                 <strong className="font-bold text-white">Global Asset Delivery:</strong> Vercel Global CDN handles fast static asset caching, while media uploads are optimized and served globally via Cloudinary.
@@ -4263,7 +4225,7 @@ Authorization: Bearer {CRON_SECRET}`}
                     <td className="px-4 py-3 font-mono text-white">NEXT_PUBLIC_SITE_URL</td>
                     <td className="px-4 py-3 text-green-400 font-bold">Yes</td>
                     <td className="px-4 py-3">Client & Server</td>
-                    <td className="px-4 py-3 text-slate-400">Determines host domains for CORS headers and Privy redirect URLs.</td>
+                    <td className="px-4 py-3 text-slate-400">Determines host domains for CORS headers and RainbowKit redirect URLs.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-white">SUPABASE_SERVICE_ROLE_KEY</td>
@@ -4272,16 +4234,16 @@ Authorization: Bearer {CRON_SECRET}`}
                     <td className="px-4 py-3 text-slate-400">Privileged bypass key. Used for backend cron operations. Never expose to clients.</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 font-mono text-white">NEXT_PUBLIC_PRIVY_APP_ID</td>
+                    <td className="px-4 py-3 font-mono text-white">NEXT_PUBLIC_RainbowKit_APP_ID</td>
                     <td className="px-4 py-3 text-green-400 font-bold">Yes</td>
                     <td className="px-4 py-3">Client & Server</td>
-                    <td className="px-4 py-3 text-slate-400">Binds connection modals with your Privy application dashboard.</td>
+                    <td className="px-4 py-3 text-slate-400">Binds connection modals with your RainbowKit application dashboard.</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 font-mono text-white">PRIVY_APP_SECRET</td>
+                    <td className="px-4 py-3 font-mono text-white">RainbowKit_APP_SECRET</td>
                     <td className="px-4 py-3 text-green-400 font-bold">Yes</td>
                     <td className="px-4 py-3 text-yellow-400">Server Only</td>
-                    <td className="px-4 py-3 text-slate-400">Decrypts and validates Privy-issued user identity JWT tokens.</td>
+                    <td className="px-4 py-3 text-slate-400">Decrypts and validates RainbowKit-issued user identity JWT tokens.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-white">NEXT_PUBLIC_TIPPING_CONTRACT</td>
@@ -4320,22 +4282,16 @@ Authorization: Bearer {CRON_SECRET}`}
                     <td className="px-4 py-3 text-slate-400">Redis authorization token checking client rate quotas.</td>
                   </tr>
                   <tr>
-                    <td className="px-4 py-3 font-mono text-white">BREVO_API_KEY</td>
-                    <td className="px-4 py-3 text-slate-400">No</td>
+                    <td className="px-4 py-3 font-mono text-white">WALLET_SESSION_SECRET</td>
+                    <td className="px-4 py-3 text-green-400 font-bold">Yes</td>
                     <td className="px-4 py-3 text-yellow-400">Server Only</td>
-                    <td className="px-4 py-3 text-slate-400">Brevo key triggering transactional supporter alerts.</td>
+                    <td className="px-4 py-3 text-slate-400">Random secret (≥32 chars) used to HMAC-sign SIWE session cookies. The server throws on boot if this is missing.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-white">CRON_SECRET</td>
                     <td className="px-4 py-3 text-green-400 font-bold">Yes</td>
                     <td className="px-4 py-3 text-yellow-400">Server Only</td>
                     <td className="px-4 py-3 text-slate-400">Validates cron invocations, securing administrative tasks.</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-white">NEXT_PUBLIC_GA_ID</td>
-                    <td className="px-4 py-3 text-slate-400">No</td>
-                    <td className="px-4 py-3">Client & Server</td>
-                    <td className="px-4 py-3 text-slate-400">Google Analytics identifier for client-side user behavior tracking.</td>
                   </tr>
                 </tbody>
               </table>
@@ -4359,9 +4315,9 @@ Authorization: Bearer {CRON_SECRET}`}
                 </p>
               </div>
               <div className="p-6 bg-white/5 border border-white/10 rounded-2xl">
-                <h4 className="font-bold text-white text-base mb-2">2. Privy Redirect Settings</h4>
+                <h4 className="font-bold text-white text-base mb-2">2. RainbowKit Redirect Settings</h4>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                  Inside the Privy developer console, define authorized redirection URLs (such as <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">http://localhost:3000</code> or your custom production site URL) to handle post-wallet authentication callbacks successfully.
+                  Inside the RainbowKit developer console, define authorized redirection URLs (such as <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">http://localhost:3000</code> or your custom production site URL) to handle post-wallet authentication callbacks successfully.
                 </p>
               </div>
             </div>
@@ -4409,9 +4365,6 @@ Authorization: Bearer {CRON_SECRET}`}
                 </li>
                 <li>
                   <strong className="font-bold text-white">/api/cron/github-sync:</strong> Syncs registered Github repository contribution metrics for active builders.
-                </li>
-                <li>
-                  <strong className="font-bold text-white">/api/cron/streak-warning:</strong> Triggers emails and notifications for users whose streaks are at risk of expiring.
                 </li>
               </ul>
             </div>
@@ -4501,8 +4454,7 @@ Authorization: Bearer {CRON_SECRET}`}
               </p>
               <pre className="p-4 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
 {`*.supabase.co                 // Supabase storage media
-avatars.githubusercontent.com   // GitHub social avatars
-lh3.googleusercontent.com      // Google social avatars
+api.dicebear.com               // DiceBear generated avatars
 res.cloudinary.com             // Cloudinary media delivery`}
               </pre>
             </div>
@@ -4516,13 +4468,7 @@ res.cloudinary.com             // Cloudinary media delivery`}
             </h2>
             <div className="space-y-6">
               <div>
-                <h4 className="font-bold text-white text-base mb-2">1. Google Analytics Integration</h4>
-                <p className="text-sm text-slate-400 font-medium leading-relaxed">
-                  Optional analytical tracking is backed by <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">NEXT_PUBLIC_GA_ID</code>, monitoring page views, dashboard navigation flows, and supporter feature adoption metrics safely.
-                </p>
-              </div>
-              <div>
-                <h4 className="font-bold text-white text-base mb-2">2. Defensive Error Boundaries</h4>
+                <h4 className="font-bold text-white text-base mb-2">1. Defensive Error Boundaries</h4>
                 <p className="text-sm text-slate-400 font-medium leading-relaxed">
                   Client React views use nested Error Boundaries for graceful degradation, isolating client failures to specific components without rendering the entire page blank. API routes return structured error JSON formats, while Redis outages degrade gracefully to allow requests through unblocked.
                 </p>
@@ -4591,11 +4537,6 @@ res.cloudinary.com             // Cloudinary media delivery`}
                     <td className="px-4 py-3 font-mono text-white">Compute Nodes</td>
                     <td className="px-4 py-3 text-slate-300">Vercel Serverless Platform</td>
                     <td className="px-4 py-3 text-slate-400">Transition to Vercel Enterprise or orchestrate containerized cloud systems.</td>
-                  </tr>
-                  <tr>
-                    <td className="px-4 py-3 font-mono text-white">Email Mailers</td>
-                    <td className="px-4 py-3 text-slate-300">Brevo Transactional API</td>
-                    <td className="px-4 py-3 text-slate-400">Transition to high-volume dedicated server mail routing plans.</td>
                   </tr>
                   <tr>
                     <td className="px-4 py-3 font-mono text-white">Blockchain RPC Gateway</td>

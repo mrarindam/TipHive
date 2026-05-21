@@ -10,89 +10,152 @@ import ChatWindow, { Message } from '@/components/dashboard/inbox/ChatWindow';
 export default function InboxPage() {
   const { user } = useDashboard();
   const [chats, setChats] = useState<ChatPreview[]>([]);
-  const [activeChatDid, setActiveChatDid] = useState<string | null>(null);
+  const [activeChatAddress, setActiveChatAddress] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [otherUser, setOtherUser] = useState<{ username: string, display_name: string, avatar_url: string } | null>(null);
 
-  const currentDid = user?.id;
+  const currentAddress = user?.id;
   const searchParams = useSearchParams();
   const chatFromQuery = searchParams.get('chat');
 
   useEffect(() => {
     if (chatFromQuery) {
-      setActiveChatDid(chatFromQuery);
+      setActiveChatAddress(chatFromQuery.toLowerCase());
     }
   }, [chatFromQuery]);
 
   const fetchConversations = useCallback(async () => {
-    if (!currentDid) return;
+    if (!currentAddress) return;
 
-    try {
-      // Query messages where current user is sender or receiver via secure RPC
-      const { data: messagesData, error: messagesError } = await supabase
-        .rpc('fetch_direct_messages', { user_did: currentDid });
+    // Pull a unified list of DMs involving the current user. Try the RPC first
+    // (correct path when the DB function exists); fall back to a direct table
+    // query so a missing/broken RPC doesn't kill the inbox UI.
+    let messagesData: Message[] | null = null;
 
-      if (messagesError) throw messagesError;
+    const rpcResult = await supabase
+      .rpc('fetch_direct_messages', { p_wallet_address: currentAddress });
 
-      // Group by other user and get unique DIDs
-      const otherUserDids = Array.from(new Set(
-        (messagesData as Message[]).map((m: Message) => m.sender_did === currentDid ? m.receiver_did : m.sender_did)
-      )) as string[];
+    if (rpcResult.error) {
+      const e = rpcResult.error;
+      console.warn(
+        `[inbox/fetchConversations] RPC fetch_direct_messages failed — falling back to direct query. ` +
+        `code=${e.code} message=${e.message} details=${e.details} hint=${e.hint}`
+      );
 
-      if (otherUserDids.length === 0) {
-        setChats([]);
+      const fallback = await supabase
+        .from('direct_messages')
+        .select('id, sender_wallet_address, receiver_wallet_address, text, created_at, is_read')
+        .or(`sender_wallet_address.eq.${currentAddress},receiver_wallet_address.eq.${currentAddress}`)
+        .order('created_at', { ascending: false });
+
+      if (fallback.error) {
+        const fe = fallback.error;
+        console.error(
+          `[inbox/fetchConversations] Fallback query failed too. ` +
+          `code=${fe.code} message=${fe.message} details=${fe.details} hint=${fe.hint}`
+        );
         return;
       }
-
-      // Fetch profile info for all other users
-      const { data: profiles, error: profilesError } = await supabase
-        .from('user_profiles')
-        .select('privy_did, username, display_name, avatar_url, wallet_address')
-        .in('privy_did', otherUserDids);
-
-      if (profilesError) throw profilesError;
-
-      const profileMap = new Map(profiles.map(p => [p.privy_did, p]));
-
-      // Build chat previews
-      const chatPreviews: ChatPreview[] = otherUserDids.map((did: string) => {
-        const lastMsg = (messagesData as Message[]).find((m: Message) => m.sender_did === did || m.receiver_did === did);
-        const profile = profileMap.get(did) as { username: string, display_name: string, avatar_url: string };
-        return {
-          other_user_did: did,
-          username: profile?.username || 'unknown',
-          display_name: profile?.display_name || 'Unknown User',
-          avatar_url: profile?.avatar_url || 'https://api.dicebear.com/9.x/shapes/svg?seed=unknown',
-          last_message: lastMsg?.text || '',
-          last_message_at: lastMsg?.created_at || new Date().toISOString(),
-          is_read: lastMsg?.sender_did === currentDid ? true : lastMsg?.is_read || false
-        };
-      });
-
-      setChats(chatPreviews);
-    } catch (err) {
-      console.error('Error fetching conversations:', err);
+      messagesData = fallback.data as Message[];
+    } else {
+      messagesData = (rpcResult.data || []) as Message[];
     }
-  }, [currentDid]);
+
+    // Group by other user and get unique wallet addresses (preserve recency
+    // order — `messagesData` is newest-first).
+    const otherUserAddresses = Array.from(new Set(
+      messagesData.map((m) => m.sender_wallet_address === currentAddress ? m.receiver_wallet_address : m.sender_wallet_address)
+    ));
+
+    if (otherUserAddresses.length === 0) {
+      setChats([]);
+      return;
+    }
+
+    const { data: profiles, error: profilesError } = await supabase
+      .from('user_profiles')
+      .select('wallet_address, username, display_name, avatar_url')
+      .in('wallet_address', otherUserAddresses);
+
+    if (profilesError) {
+      const pe = profilesError;
+      console.error(
+        `[inbox/fetchConversations] Failed to load profiles. ` +
+        `code=${pe.code} message=${pe.message} details=${pe.details} hint=${pe.hint}`
+      );
+      return;
+    }
+
+    const profileMap = new Map((profiles || []).map(p => [p.wallet_address, p]));
+
+    const chatPreviews: ChatPreview[] = otherUserAddresses.map((walletAddress: string) => {
+      const lastMsg = messagesData!.find((m) => m.sender_wallet_address === walletAddress || m.receiver_wallet_address === walletAddress);
+      const profile = profileMap.get(walletAddress) as { username: string, display_name: string, avatar_url: string } | undefined;
+      return {
+        other_user_wallet_address: walletAddress,
+        username: profile?.username || 'unknown',
+        display_name: profile?.display_name || 'Unknown User',
+        avatar_url: profile?.avatar_url || 'https://api.dicebear.com/9.x/shapes/svg?seed=unknown',
+        last_message: lastMsg?.text || '',
+        last_message_at: lastMsg?.created_at || new Date().toISOString(),
+        is_read: lastMsg?.sender_wallet_address === currentAddress ? true : lastMsg?.is_read || false
+      };
+    });
+
+    setChats(chatPreviews);
+  }, [currentAddress]);
 
   const [hasMore, setHasMore] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const PAGE_SIZE = 10;
 
-  const fetchMessages = useCallback(async (otherDid: string, beforeTimestamp?: string) => {
-    if (!currentDid) return;
+  const fetchMessages = useCallback(async (otherAddress: string, beforeTimestamp?: string) => {
+    if (!currentAddress) return;
 
-    const { data, error } = await supabase
-      .rpc('get_conversation_messages', { 
-        p_current_user: currentDid,
-        p_other_user: otherDid,
+    let data: Message[] | null = null;
+    const rpcResult = await supabase
+      .rpc('get_conversation_messages', {
+        p_current_user: currentAddress,
+        p_other_user: otherAddress,
         p_limit: PAGE_SIZE,
         p_before: beforeTimestamp || null
       });
 
-    if (!error && data) {
-      // Sort oldest to newest for the array state
-      const sortedData = [...data].sort((a: Message, b: Message) => 
+    if (rpcResult.error) {
+      const e = rpcResult.error;
+      console.warn(
+        `[inbox/fetchMessages] RPC get_conversation_messages failed — falling back. ` +
+        `code=${e.code} message=${e.message} details=${e.details} hint=${e.hint}`
+      );
+
+      let q = supabase
+        .from('direct_messages')
+        .select('id, sender_wallet_address, receiver_wallet_address, text, created_at, is_read')
+        .or(
+          `and(sender_wallet_address.eq.${currentAddress},receiver_wallet_address.eq.${otherAddress}),` +
+          `and(sender_wallet_address.eq.${otherAddress},receiver_wallet_address.eq.${currentAddress})`
+        )
+        .order('created_at', { ascending: false })
+        .limit(PAGE_SIZE);
+
+      if (beforeTimestamp) q = q.lt('created_at', beforeTimestamp);
+
+      const fallback = await q;
+      if (fallback.error) {
+        const fe = fallback.error;
+        console.error(
+          `[inbox/fetchMessages] Fallback failed. ` +
+          `code=${fe.code} message=${fe.message} details=${fe.details} hint=${fe.hint}`
+        );
+      } else {
+        data = fallback.data as Message[];
+      }
+    } else {
+      data = (rpcResult.data || []) as Message[];
+    }
+
+    if (data) {
+      const sortedData = [...data].sort((a: Message, b: Message) =>
         new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
       );
 
@@ -109,7 +172,7 @@ export default function InboxPage() {
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('username, display_name, avatar_url, wallet_address')
-        .eq('privy_did', otherDid)
+        .eq('wallet_address', otherAddress)
         .single();
 
       if (profile) {
@@ -120,17 +183,17 @@ export default function InboxPage() {
       await supabase
         .from('direct_messages')
         .update({ is_read: true })
-        .eq('sender_did', otherDid)
-        .eq('receiver_did', currentDid);
+        .eq('sender_wallet_address', otherAddress)
+        .eq('receiver_wallet_address', currentAddress);
       
       setTimeout(fetchConversations, 500);
     }
-  }, [currentDid, fetchConversations]);
+  }, [currentAddress, fetchConversations]);
 
   const loadMoreMessages = async () => {
-    if (!activeChatDid || !hasMore || isLoadingMore || messages.length === 0) return;
+    if (!activeChatAddress || !hasMore || isLoadingMore || messages.length === 0) return;
     setIsLoadingMore(true);
-    await fetchMessages(activeChatDid, messages[0].created_at);
+    await fetchMessages(activeChatAddress, messages[0].created_at);
     setIsLoadingMore(false);
   };
 
@@ -139,16 +202,16 @@ export default function InboxPage() {
   }, [fetchConversations]);
 
   useEffect(() => {
-    if (activeChatDid) {
+    if (activeChatAddress) {
       setMessages([]);
       setHasMore(true);
-      fetchMessages(activeChatDid);
+      fetchMessages(activeChatAddress);
     }
-  }, [activeChatDid, fetchMessages]);
+  }, [activeChatAddress, fetchMessages]);
 
   // Real-time subscription
   useEffect(() => {
-    if (!currentDid) return;
+    if (!currentAddress) return;
 
     const channel = supabase
       .channel('inbox-realtime')
@@ -158,12 +221,12 @@ export default function InboxPage() {
           event: 'INSERT',
           schema: 'public',
           table: 'direct_messages',
-          filter: `receiver_did=eq.${currentDid}`
+          filter: `receiver_wallet_address=eq.${currentAddress}`
         },
         (payload) => {
           const newMsg = payload.new as Message;
           // ONLY add to UI if it's from the person I'm currently chatting with
-          if (activeChatDid === newMsg.sender_did) {
+          if (activeChatAddress === newMsg.sender_wallet_address) {
             setMessages(prev => {
               // Prevent duplicate messages
               if (prev.find(m => m.id === newMsg.id)) return prev;
@@ -178,15 +241,15 @@ export default function InboxPage() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentDid, activeChatDid, fetchConversations]);
+  }, [currentAddress, activeChatAddress, fetchConversations]);
 
   const handleSendMessage = async (text: string) => {
-    if (!currentDid || !activeChatDid) return;
+    if (!currentAddress || !activeChatAddress) return;
 
     const { data, error } = await supabase
       .rpc('send_direct_message', {
-        p_sender_did: currentDid,
-        p_receiver_did: activeChatDid,
+        p_sender_wallet_address: currentAddress,
+        p_receiver_wallet_address: activeChatAddress,
         p_text: text
       });
 
@@ -206,16 +269,17 @@ export default function InboxPage() {
 
   const [isMobileChatOpen, setIsMobileChatOpen] = useState(false);
 
-  const handleSelectChat = async (did: string) => {
-    setActiveChatDid(did);
+  const handleSelectChat = async (walletAddress: string) => {
+    const nextAddress = walletAddress.toLowerCase();
+    setActiveChatAddress(nextAddress);
     setIsMobileChatOpen(true);
     // If it's a new chat (not in current list), we need to fetch profile first
-    const existingChat = chats.find(c => c.other_user_did === did);
+    const existingChat = chats.find(c => c.other_user_wallet_address === nextAddress);
     if (!existingChat) {
       const { data: profile } = await supabase
         .from('user_profiles')
         .select('username, display_name, avatar_url, wallet_address')
-        .eq('privy_did', did)
+        .eq('wallet_address', nextAddress)
         .single();
       if (profile) {
         setOtherUser(profile);
@@ -230,7 +294,7 @@ export default function InboxPage() {
         <div className="flex-1 overflow-y-auto overscroll-contain custom-scrollbar">
           <InboxSidebar 
             chats={chats} 
-            activeChatDid={activeChatDid} 
+            activeChatAddress={activeChatAddress} 
             onSelectChat={handleSelectChat} 
           />
         </div>
@@ -240,7 +304,7 @@ export default function InboxPage() {
       <div className={`${isMobileChatOpen ? 'block' : 'hidden md:block'} flex-1 h-full relative overflow-hidden bg-[#050507]`}>
         <ChatWindow 
           messages={messages} 
-          currentUserId={currentDid || ''} 
+          currentUserId={currentAddress || ''} 
           otherUser={otherUser}
           onSendMessage={handleSendMessage}
           onBack={() => setIsMobileChatOpen(false)}

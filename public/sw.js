@@ -1,4 +1,4 @@
-const CACHE_NAME = "tiphive-cache-v1";
+const CACHE_NAME = "tiphive-cache-v2";
 
 // Static assets to cache immediately on install
 const STATIC_ASSETS = [
@@ -47,12 +47,11 @@ self.addEventListener("fetch", (event) => {
 
   // 1. BYPASS Caching for:
   // - Non-GET requests (POST, PUT, DELETE, etc.)
-  // - Web3 RPC calls, WalletConnect, Privy authentication, and Supabase database requests
+  // - Web3 RPC calls, WalletConnect, RainbowKit authentication, and Supabase database requests
   // - WebSocket handshakes and API endpoints
   if (
     request.method !== "GET" ||
     url.pathname.startsWith("/api") ||
-    url.hostname.includes("privy.io") ||
     url.hostname.includes("supabase.co") ||
     url.hostname.includes("walletconnect") ||
     url.hostname.includes("infura") ||

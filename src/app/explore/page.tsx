@@ -9,7 +9,7 @@ import Link from 'next/link';
 import TopCreatorsBubbles from '@/components/ui/TopCreatorsBubbles';
 import { extractFirstImage, TextThumbnail } from '../[username]/layout';
 import { useAccount } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { Skeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
 
 
@@ -26,7 +26,6 @@ interface Post {
 
 interface Creator {
   id: string;
-  privy_did: string;
   wallet_address: string;
   username: string;
   display_name: string;
@@ -38,7 +37,7 @@ interface Creator {
 
 function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isFollowingInitial: boolean }) {
   const { address: userAddress } = useAccount();
-  const { user } = usePrivy();
+  const { user } = useWalletAuth();
   const [isFollowing, setIsFollowing] = useState(isFollowingInitial);
   const rowRef = useRef<HTMLDivElement>(null);
   
@@ -59,7 +58,7 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
       if (userAddress) {
         profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
       } else {
-        profileQuery = profileQuery.eq('privy_did', user.id);
+        profileQuery = profileQuery.eq('wallet_address', user.id);
       }
 
       const { data: currentUserProfile } = await profileQuery.single();
@@ -99,7 +98,7 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
 
         <div className="flex items-center gap-4 flex-1">
           {((userAddress && creator.wallet_address && userAddress.toLowerCase() !== creator.wallet_address.toLowerCase()) || 
-             (user?.id && creator.privy_did && user.id !== creator.privy_did) ||
+             (user?.id && creator.wallet_address && user.id !== creator.wallet_address) ||
              (!userAddress && !user?.id)) && (
             <button 
               onClick={handleFollow}
@@ -209,7 +208,7 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
 
 export default function Explore() {
   const { address: userAddress } = useAccount();
-  const { user } = usePrivy();
+  const { user } = useWalletAuth();
   const userId = user?.id;
   const [creators, setCreators] = useState<Creator[]>([]);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
@@ -243,7 +242,7 @@ export default function Explore() {
     // 2. Fetch profiles
     let query = supabase
       .from('user_profiles')
-      .select('id, privy_did, wallet_address, username, display_name, bio, avatar_url, total_earned')
+      .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
       .eq('is_creator', true);
     
     if (search) {
@@ -276,7 +275,7 @@ export default function Explore() {
       if (batchPriorityIds.length > 0) {
         const { data: priorityData } = await supabase
           .from('user_profiles')
-          .select('id, privy_did, wallet_address, username, display_name, bio, avatar_url, total_earned')
+          .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
           .in('id', batchPriorityIds);
         
         if (priorityData) {
@@ -292,7 +291,7 @@ export default function Explore() {
         
         const { data: othersData } = await supabase
           .from('user_profiles')
-          .select('id, privy_did, wallet_address, username, display_name, bio, avatar_url, total_earned')
+          .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
           .eq('is_creator', true)
           .not('id', 'in', `(${priorityIds.slice(0, 100).join(',')})`)
           .order('total_earned', { ascending: false })
@@ -336,7 +335,7 @@ export default function Explore() {
       if (userAddress) {
         profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
       } else {
-        profileQuery = profileQuery.eq('privy_did', userId!);
+        profileQuery = profileQuery.eq('wallet_address', userId!);
       }
 
       const { data: currentUser } = await profileQuery.single();

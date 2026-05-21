@@ -1,45 +1,25 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
-import { sendEmail } from '@/lib/brevo';
-import { notificationTemplate } from '@/lib/email-templates';
-import { privy } from '@/lib/privy';
-
-async function getVerifiedDid(request: NextRequest) {
-  const header = request.headers.get('authorization');
-  const token = header?.replace('Bearer ', '');
-  if (!token) return null;
-
-  const verified = await privy.utils().auth().verifyAccessToken(token);
-  return verified.user_id;
-}
-
-async function getOwnedNotificationIdentifiers(supabase: ReturnType<typeof createServerSupabase>, verifiedDid: string) {
-  const identifiers = [verifiedDid];
-  const { data: userProfile, error } = await supabase
-    .from('user_profiles')
-    .select('wallet_address')
-    .eq('privy_did', verifiedDid)
-    .maybeSingle();
-
-  if (error) throw error;
-  if (userProfile?.wallet_address) identifiers.push(userProfile.wallet_address.toLowerCase());
-  return identifiers;
-}
+import { requireWalletSession } from '@/lib/wallet-session';
 
 
 export async function GET(request: NextRequest) {
   try {
-    let verifiedDid: string;
+    let session;
     try {
-      const did = await getVerifiedDid(request);
-      if (!did) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
-      verifiedDid = did;
+      session = await requireWalletSession();
     } catch {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+      return NextResponse.json({ error: 'Auth required' }, { status: 401 });
     }
 
     const supabase = createServerSupabase();
-    const identifiers = await getOwnedNotificationIdentifiers(supabase, verifiedDid);
+    const requestedWallet = request.nextUrl.searchParams.get('wallet')?.toLowerCase();
+
+    if (requestedWallet && requestedWallet !== session.address) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
+    }
+
+    const identifiers = [session.address];
 
     const limit = parseInt(request.nextUrl.searchParams.get('limit') || '10');
     const offset = parseInt(request.nextUrl.searchParams.get('offset') || '0');
@@ -63,26 +43,19 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
-    const { wallet, did, action } = body;
+    const { wallet, action } = body;
 
     if (!action) {
       return NextResponse.json({ error: 'Action required' }, { status: 400 });
     }
 
-    let verifiedDid: string;
-    try {
-      const tokenDid = await getVerifiedDid(request);
-      if (!tokenDid) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
-      verifiedDid = tokenDid;
-    } catch {
-      return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
-    }
+    const session = await requireWalletSession();
 
     const supabase = createServerSupabase();
 
     if (action === 'markAllRead') {
-      const identifiers = await getOwnedNotificationIdentifiers(supabase, verifiedDid);
-      const requestedIdentifiers = [did, wallet?.toLowerCase()].filter((identifier): identifier is string => Boolean(identifier));
+      const identifiers = [session.address];
+      const requestedIdentifiers = [wallet?.toLowerCase()].filter((identifier): identifier is string => Boolean(identifier));
       if (requestedIdentifiers.some((identifier) => !identifiers.includes(identifier))) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
@@ -90,8 +63,7 @@ export async function POST(request: NextRequest) {
       const { error } = await supabase
         .from('notifications')
         .update({ is_read: true })
-        .in('user_address', identifiers)
-        .eq('is_read', false);
+        .in('user_address', identifiers);
 
       if (error) {
         console.error('Error marking notifications as read:', error);
@@ -102,15 +74,15 @@ export async function POST(request: NextRequest) {
 
     if (action === 'create') {
       const { type, content: manualContent, postTitle } = body;
-      const actor = body.actor || verifiedDid;
+      const actor = body.actor || session.address;
       
       if (!type) {
         return NextResponse.json({ error: 'Type required' }, { status: 400 });
       }
 
-      const targetIdentifier = wallet ? wallet.toLowerCase() : did;
+      const targetIdentifier = wallet ? wallet.toLowerCase() : null;
       if (!targetIdentifier) {
-        return NextResponse.json({ error: 'Target identifier (wallet/did) required' }, { status: 400 });
+        return NextResponse.json({ error: 'Target wallet required' }, { status: 400 });
       }
 
       let finalContent = manualContent;
@@ -120,7 +92,7 @@ export async function POST(request: NextRequest) {
         const { data: actorProfile } = await supabase
           .from('user_profiles')
           .select('display_name, username')
-          .or(`wallet_address.eq."${actor.toLowerCase()}",privy_did.eq."${actor}"`)
+          .eq('wallet_address', actor.toLowerCase())
           .maybeSingle();
 
         const identifier = actorProfile?.username || 'someone';
@@ -151,34 +123,6 @@ export async function POST(request: NextRequest) {
         console.error('Error creating notification:', error);
         throw error;
       }
-
-      // --- BREVO INTEGRATION ---
-      // Try to send email notification if the user has an email set
-      try {
-        const { data: userProfile } = await supabase
-          .from('user_profiles')
-          .select('notification_email, username, display_name, email_notifications_enabled, email_notif_likes, email_notif_comments, email_notif_follows')
-          .or(`wallet_address.eq."${targetIdentifier.toLowerCase()}",privy_did.eq."${targetIdentifier}"`)
-          .maybeSingle();
-
-        if (userProfile?.notification_email) {
-          // Check if user has disabled this type of notification or global notifications
-          const isEnabled = userProfile.email_notifications_enabled ?? true;
-          const prefKey = `email_notif_${type}s` as keyof typeof userProfile;
-          const typeEnabled = userProfile[prefKey] ?? true;
-
-          if (isEnabled && typeEnabled) {
-            await sendEmail({
-              to: userProfile.notification_email,
-              subject: `New Notification: ${type.charAt(0).toUpperCase() + type.slice(1)}`,
-              htmlContent: notificationTemplate(finalContent, `https://tiphive.xyz/dashboard`)
-            });
-          }
-        }
-      } catch (emailErr) {
-        console.error('Failed to send notification email:', emailErr);
-      }
-      // -------------------------
 
       return NextResponse.json({ success: true });
     }

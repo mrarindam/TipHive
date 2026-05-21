@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Check, Zap, Clock, Loader2, X, CheckCircle2 } from 'lucide-react';
 import { useAccount, useWriteContract, useReadContract, useConfig } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther } from 'viem';
 import { supabase } from '@/lib/supabase';
@@ -34,7 +34,7 @@ interface SubscriptionSectionProps {
 
 export default function SubscriptionSection({ creatorAddress, creatorName, limit, onSuccess }: SubscriptionSectionProps) {
   const { address: userAddress, isConnected } = useAccount();
-  const { authenticated, login, getAccessToken } = usePrivy();
+  const { authenticated, login, getAccessToken } = useWalletAuth();
   const { contracts, chainId } = useNetworkConfig();
   const [plans, setPlans] = useState<Plan[]>([]);
   const [loading, setLoading] = useState(true);

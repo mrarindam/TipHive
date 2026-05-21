@@ -8,6 +8,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import ShareModal from '@/components/ui/ShareModal';
 import { useAccount } from 'wagmi';
+import { sanitizePostHtml } from '@/lib/sanitize';
 
 export default function PostDetailClient() {
   const { username, slug } = useParams();
@@ -156,8 +157,8 @@ export default function PostDetailClient() {
                   <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#111827] z-10"></div>
                 </div>
               ) : (
-                <div 
-                  dangerouslySetInnerHTML={{ __html: post.content as string }} 
+                <div
+                  dangerouslySetInnerHTML={{ __html: sanitizePostHtml(post.content as string) }}
                 />
               )}
             </div>

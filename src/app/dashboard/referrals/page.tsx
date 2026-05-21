@@ -34,7 +34,7 @@ export default function ReferralsPage() {
       if (!user?.id) return;
       try {
         const token = await getAccessToken();
-        const res = await fetch(`/api/referrals?did=${user.id}`, {
+        const res = await fetch('/api/referrals', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         const data = await res.json();

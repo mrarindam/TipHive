@@ -2,11 +2,10 @@
 
 import { useState, useEffect, useRef, useCallback, Suspense } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAccount } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { Camera, CheckCircle2, ChevronLeft, ChevronRight, Loader2, Rocket, XCircle, Globe, Copy, Check } from 'lucide-react';
 import Link from 'next/link';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 
 export default function OnboardingPage() {
   return (
@@ -19,8 +18,8 @@ export default function OnboardingPage() {
 }
 
 function OnboardingContent() {
-  const { address } = useAccount();
-  const { ready, authenticated, user, getAccessToken } = usePrivy();
+  const { ready, authenticated, user } = useWalletAuth();
+  const address = user?.wallet?.address;
   const router = useRouter();
   const searchParams = useSearchParams();
   const referralCode = searchParams.get('ref');
@@ -55,17 +54,14 @@ function OnboardingContent() {
 
     if (!ready) return;
 
-    if (!authenticated) {
+    if (!authenticated || !address) {
       router.replace('/');
       return;
     }
 
     const loadProfile = async () => {
       try {
-        const token = await getAccessToken();
-        const res = await fetch(`/api/auth?did=${user?.id}&wallet=${address || ''}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`/api/auth?wallet=${address || ''}`);
         if (!res.ok) {
           throw new Error(`Auth API failed: ${res.status}`);
         }
@@ -94,7 +90,7 @@ function OnboardingContent() {
     };
 
     loadProfile();
-  }, [address, ready, authenticated, user?.id, getAccessToken, router]);
+  }, [address, ready, authenticated, router]);
 
   const checkUsername = useCallback(async (val: string) => {
     if (!val || val.length < 3) {
@@ -142,7 +138,7 @@ function OnboardingContent() {
   };
 
   const submitProfile = async () => {
-    if (!user?.id && !address) return;
+    if (!address) return;
     // Validation logic
     if (username.length < 3 || username.length > 15) {
       return alert('Username must be between 3 and 15 characters.');
@@ -163,15 +159,12 @@ function OnboardingContent() {
         website: website.startsWith('http') ? website : (website ? `https://${website}` : ''),
       };
 
-      const token = await getAccessToken();
       const response = await fetch('/api/profile', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
-          privy_did: user?.id,
           wallet_address: address || null,
           username,
           display_name: displayName,
@@ -189,7 +182,6 @@ function OnboardingContent() {
       window.dispatchEvent(
         new CustomEvent('wallet-profile-updated', {
           detail: {
-            privy_did: user?.id,
             wallet_address: address || null,
             username,
             display_name: displayName,
@@ -202,13 +194,12 @@ function OnboardingContent() {
       );
 
       // Create onboarding complete notification
-      const notifIdentifier = address?.toLowerCase() || user?.id;
+      const notifIdentifier = address?.toLowerCase();
       if (notifIdentifier) {
         await fetch('/api/notifications', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
-            'Authorization': `Bearer ${await getAccessToken()}`
           },
           body: JSON.stringify({
             wallet: notifIdentifier,

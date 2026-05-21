@@ -13,7 +13,7 @@ import { usePerformanceSettings } from '@/lib/hooks/usePerformanceSettings';
 
 
 interface Member {
-  privy_did: string;
+  wallet_address: string;
   follower_address: string;
   created_at: string;
   display_name?: string;
@@ -22,7 +22,6 @@ interface Member {
 }
 
 interface ProfileResult {
-  privy_did: string;
   wallet_address: string;
   display_name: string;
   avatar_url: string;
@@ -52,7 +51,6 @@ export default function CreatorMembers() {
         .select(`
           created_at,
           follower:user_profiles!follower_id (
-            privy_did,
             wallet_address,
             display_name,
             avatar_url,
@@ -63,9 +61,9 @@ export default function CreatorMembers() {
 
       if (membersData) {
         setMembers(membersData.map(m => {
-          const profile = m.follower as unknown as ProfileResult & { privy_did: string };
+          const profile = m.follower as unknown as ProfileResult & { wallet_address: string };
           return { 
-            privy_did: profile?.privy_did || profile?.wallet_address || '',
+            wallet_address: profile?.wallet_address || profile?.wallet_address || '',
             follower_address: profile?.wallet_address || '', 
             created_at: m.created_at, 
             display_name: profile?.display_name,
@@ -85,14 +83,14 @@ export default function CreatorMembers() {
         const uniqueAddrs = Array.from(new Set(tipsData.map(t => t.from_address)));
         const { data: profiles } = await supabase
           .from('user_profiles')
-          .select('privy_did, wallet_address, display_name, avatar_url, username')
+          .select('wallet_address, display_name, avatar_url, username')
           .in('wallet_address', uniqueAddrs);
 
         setSupporters(uniqueAddrs.map(addr => {
           const p = profiles?.find(pr => pr.wallet_address.toLowerCase() === addr.toLowerCase());
           const totalTipped = tipsData.filter(t => t.from_address.toLowerCase() === addr.toLowerCase()).reduce((sum, t) => sum + (t.amount || 0), 0);
           return {
-            privy_did: p?.privy_did || addr,
+            wallet_address: p?.wallet_address || addr,
             follower_address: addr,
             created_at: tipsData.filter(t => t.from_address.toLowerCase() === addr.toLowerCase())[0].created_at,
             total_tipped: totalTipped,
@@ -108,7 +106,6 @@ export default function CreatorMembers() {
         .select(`
           created_at,
           following:user_profiles!creator_id (
-            privy_did,
             wallet_address,
             display_name,
             avatar_url,
@@ -119,9 +116,9 @@ export default function CreatorMembers() {
 
       if (followingData) {
         setFollowingList(followingData.map(f => {
-          const profile = f.following as unknown as ProfileResult & { privy_did: string };
+          const profile = f.following as unknown as ProfileResult & { wallet_address: string };
           return { 
-            privy_did: profile?.privy_did || profile?.wallet_address || '',
+            wallet_address: profile?.wallet_address || profile?.wallet_address || '',
             follower_address: profile?.wallet_address || '', 
             created_at: f.created_at, 
             display_name: profile?.display_name,
@@ -221,7 +218,7 @@ export default function CreatorMembers() {
 
                   <div className="w-full mt-auto">
                     <Link 
-                      href={`/dashboard/inbox?chat=${member.privy_did}`}
+                      href={`/dashboard/inbox?chat=${member.wallet_address}`}
                       className="w-full py-3.5 bg-white/5 border border-white/5 rounded-2xl text-slate-300 hover:text-white hover:bg-white/10 hover:border-[#8A2BE2]/30 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all group/msg"
                     >
                       <MessageSquare className="w-3.5 h-3.5 group-hover/msg:scale-110 transition-transform" /> Message

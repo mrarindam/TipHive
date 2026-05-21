@@ -16,12 +16,12 @@ export default function PrivacyPolicyPage() {
       icon: Database,
       title: '1. Information We Collect',
       content: [
-        'TipHive is designed to be privacy-first. We collect minimal data required to operate the platform:',
+        'TipHive is designed to be privacy-first and wallet-native. We collect minimal data required to operate the platform:',
         '• **Wallet Address**: Your public blockchain address, used to identify your account and process transactions on the Mezo Network.',
-        '• **Privy Authentication Data**: When you log in via Privy (our secure, non-custodial auth provider), we may receive your linked email or social profile identifiers depending on your login method.',
+        '• **Sign-In With Ethereum (SIWE) Signature**: When you log in, you sign a one-time message proving wallet ownership. We never receive your private key — only the cryptographic signature is verified server-side and converted into a session cookie.',
         '• **Profile Information**: Display name, bio, avatar, category, and username — all voluntarily provided when you register or edit your creator profile.',
         '• **Transaction Data**: On-chain transaction records (tip amounts, subscription statuses, referral connections, timestamps, sender and receiver addresses) which are inherently public on the Mezo Mainnet blockchain.',
-        'We do NOT collect passwords, private keys, seed phrases, or any sensitive financial information. Your wallet remains entirely under your control at all times through Privy\'s secure non-custodial protocol.',
+        'We do NOT collect emails, passwords, private keys, seed phrases, or any third-party social identifiers. There is no Google login, no email magic links, no centralized authentication provider — only your wallet.',
       ]
     },
     {
@@ -33,8 +33,8 @@ export default function PrivacyPolicyPage() {
         '• **Process and record tipping, subscription, and referral transactions** through smart contracts on the Mezo Network.',
         '• **Generate dynamic Open Graph metadata** for rich social media sharing previews (on platforms like Discord and Telegram).',
         '• **Provide Progressive Web App (PWA) features**, enabling offline caching and instant loading on Android and other mobile devices.',
-        '• **Send email notifications** regarding tips, active subscriptions, and referral updates (only if you have opted in).',
-        'We never sell, rent, or share your personal data with third parties for advertising or marketing purposes.',
+        '• **Display in-app notifications** in your notification bell when you receive tips, new followers, comments, or likes. All notifications are stored in your own row and never broadcast to third parties.',
+        'We never sell, rent, or share your personal data with third parties for advertising or marketing purposes. TipHive does not send transactional or marketing emails of any kind — all alerts live inside the app itself.',
       ]
     },
     {
@@ -44,8 +44,8 @@ export default function PrivacyPolicyPage() {
         'Security is at the core of our architecture:',
         '• **Smart Contract Security**: All tipping and subscription logic runs through audited, immutable smart contracts deployed on the Mezo Network. We cannot alter or access your funds.',
         '• **No Custodial Risk**: TipHive never holds your funds. Tips and subscriptions flow directly from the sender to the creator via smart contracts. Withdrawals go straight to your wallet.',
-        '• **Embedded Wallets**: If Privy creates an embedded wallet for you, the keys are secured and split so only you can access them, eliminating platform custodial risk.',
-        '• **Database Protection**: Off-chain profile and metadata stored in our database is protected using industry-standard encryption, SSL, and row-level security controls.',
+        '• **Session-Only Authentication Cookies**: Your sign-in cookie is HMAC-signed using a server-side secret and lives only for the duration of your browser session. When you fully close your browser, the cookie is deleted and you re-sign with your wallet next visit. Stolen cookies become useless the moment you close the tab.',
+        '• **Database Protection**: Off-chain profile and metadata stored in Supabase are protected by Row-Level Security (RLS) policies, TLS in transit, and encryption at rest.',
       ]
     },
     {
@@ -64,9 +64,10 @@ export default function PrivacyPolicyPage() {
       title: '5. Third-Party Services',
       content: [
         'TipHive integrates with the following third-party services:',
-        '• **Mezo Network**: The Layer 2 blockchain network where all transactions are processed. Subject to Mezo Network\'s own terms and privacy policy.',
-        '• **Privy**: Used for secure authentication, embedded wallets, and login session management. Privy secures your credentials and handles keys without custodial risk.',
-        '• **Cloudinary / Supabase**: Used for secure off-chain media uploading (posts, avatars, banners) and metadata database storage.',
+        '• **Mezo Network**: The Layer 2 blockchain network where all tip, subscription, and withdrawal transactions are processed. Subject to Mezo Network\'s own terms and privacy policy.',
+        '• **RainbowKit + WalletConnect**: Used purely as a wallet connector and SIWE message signer. They never see your private key — only the public address you authorize.',
+        '• **Cloudinary**: Used for off-chain media uploading (avatars, banners, post images). Files are signed server-side and stored under a tightly-scoped upload preset.',
+        '• **Supabase**: PostgreSQL database for off-chain metadata (profiles, posts, comments, in-app notifications). Protected by Row-Level Security.',
         'We carefully vet all third-party integrations to ensure they align with our privacy-first values.',
       ]
     },

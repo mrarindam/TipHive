@@ -8,6 +8,7 @@ import { Menu, X, Compass, LayoutDashboard, Home, Search } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import WalletProfileMenu from '@/components/wallet/WalletProfileMenu';
 import NotificationBell from './NotificationBell';
+import NetworkSwitcher from './NetworkSwitcher';
 import GlobalSearch from './GlobalSearch';
 
 export default function Navbar() {
@@ -100,6 +101,7 @@ export default function Navbar() {
               <Search className="w-5 h-5" />
             </button>
             <NotificationBell />
+            <NetworkSwitcher />
             <WalletProfileMenu />
 
             <button

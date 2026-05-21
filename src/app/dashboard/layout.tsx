@@ -3,15 +3,15 @@
 import { useState, useEffect, useCallback, ReactNode, createContext, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
-import { usePrivy, type User } from '@privy-io/react-auth';
+import { useWalletAuth, type User } from '@/lib/wallet-auth-shim';
 import {
   Globe, Users, Calendar, Edit3,
-  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings, Heart, Gift, Mail
+  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings, Heart, Gift
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { TIPPING_ABI, SUBSCRIPTION_ABI } from '@/lib/contracts';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 
@@ -80,9 +80,10 @@ export default function DashboardLayoutWrapper({ children }: { children: ReactNo
 
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const { address } = useAccount();
-  const { ready, authenticated, user, linkWallet, logout, getAccessToken } = usePrivy();
+  const { ready, authenticated, user, linkWallet, logout, getAccessToken } = useWalletAuth();
   const { contracts, chainId } = useNetworkConfig();
   const pathname = usePathname();
+  const router = useRouter();
   const [loading, setLoading] = useState(true);
   const [creatorProfile, setCreatorProfile] = useState<CreatorProfile | null>(null);
   const [activities, setActivities] = useState<Activity[]>([]);
@@ -157,24 +158,23 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 
   const isAnyWithdrawing = isWithdrawingTips || isWithdrawingSub;
 
-  const userId = user?.id;
-
   const fetchData = useCallback(async () => {
-    if (!userId && !address) return;
+    if (!address) return;
     setLoading(true);
     const userAddr = address ? address.toLowerCase() : null;
-    const userEmail = user?.email?.address || user?.google?.email;
  
     try {
-      const token = await getAccessToken();
-      const authResponse = await fetch(`/api/auth?did=${userId || ''}&wallet=${userAddr || ''}&email=${userEmail || ''}&t=${Date.now()}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const authResponse = await fetch(`/api/auth?wallet=${userAddr || ''}&t=${Date.now()}`);
       if (!authResponse.ok) {
         throw new Error(`Auth API failed with status ${authResponse.status}`);
       }
       const authData = await authResponse.json();
       const dbWallet = authData.user?.wallet_address?.toLowerCase();
+
+      if (authData.isNewUser === true || authData.user?.is_creator !== true) {
+        router.replace('/onboarding');
+        return;
+      }
       
       setCreatorProfile(authData.user ? {
         address: authData.user.wallet_address,
@@ -257,7 +257,7 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
     } finally {
       setLoading(false);
     }
-  }, [userId, address, user?.email?.address, user?.google?.email, getAccessToken, chainId]);
+  }, [address, chainId, router]);
 
   useEffect(() => {
     if (ready && authenticated) fetchData();
@@ -351,7 +351,6 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Settings</div>
         <div className="space-y-1">
           <SidebarItem icon={<Settings size={18} />} label="Visual Toolkit" active={pathname === '/dashboard/visual-toolkit'} href="/dashboard/visual-toolkit" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<Mail size={18} />} label="Email Notifications" active={pathname === '/dashboard/email-notifications'} href="/dashboard/email-notifications" onClick={() => setIsSidebarOpen(false)} />
         </div>
       </div>
     </div>
@@ -456,8 +455,11 @@ function SidebarItem({ icon, label, active, href, external, onClick, disabled }:
   const className = `group relative flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${active ? 'bg-white/5' : 'hover:bg-white/[0.03]'} ${disabled ? 'blur-[1.5px] opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`;
 
   if (href) {
-    return <Link href={href} onClick={onClick} className={className} target={external ? "_blank" : "_self"}>{content}</Link>;
+    return (
+      <Link href={href} onClick={onClick} className={className} target={external ? "_blank" : undefined}>
+        {content}
+      </Link>
+    );
   }
   return <div className={className} onClick={onClick}>{content}</div>;
 }
-

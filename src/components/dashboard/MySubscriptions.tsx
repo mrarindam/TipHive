@@ -11,7 +11,7 @@ import MUSDLogo from '@/components/ui/MUSDLogo';
 import { SUBSCRIPTION_ABI } from '@/lib/contracts';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import { useDashboard } from '@/app/dashboard/layout';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { Plus } from 'lucide-react';
 
 interface Subscription {
@@ -43,7 +43,7 @@ export default function MySubscriptions() {
   const { address } = useAccount();
   const { creatorProfile, linkWallet } = useDashboard();
   const { contracts, chainId, explorerUrl } = useNetworkConfig();
-  const { authenticated } = usePrivy();
+  const { authenticated } = useWalletAuth();
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionStatus, setActionStatus] = useState<'idle' | 'processing' | 'success' | 'error'>('idle');

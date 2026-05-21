@@ -6,7 +6,7 @@ import UserSearch from './UserSearch';
 import { motion } from 'framer-motion';
 
 export interface ChatPreview {
-  other_user_did: string;
+  other_user_wallet_address: string;
   username: string;
   display_name: string;
   avatar_url: string;
@@ -17,18 +17,18 @@ export interface ChatPreview {
 
 export default function InboxSidebar({ 
   chats, 
-  activeChatDid, 
+  activeChatAddress, 
   onSelectChat
 }: { 
   chats: ChatPreview[], 
-  activeChatDid: string | null, 
-  onSelectChat: (did: string) => void
+  activeChatAddress: string | null, 
+  onSelectChat: (walletAddress: string) => void
 }) {
   return (
     <div className="h-full flex flex-col">
       <div className="p-6 pb-2">
         <h2 className="text-2xl font-black text-white mb-6 uppercase tracking-tighter">Messages</h2>
-        <UserSearch onSelect={(user) => onSelectChat(user.privy_did)} />
+        <UserSearch onSelect={(user) => onSelectChat(user.wallet_address)} />
       </div>
 
       <div className="flex-1 overflow-y-auto px-4 py-4 space-y-2">
@@ -39,10 +39,10 @@ export default function InboxSidebar({
         ) : (
           chats.map((chat) => (
             <button
-              key={chat.other_user_did}
-              onClick={() => onSelectChat(chat.other_user_did)}
+              key={chat.other_user_wallet_address}
+              onClick={() => onSelectChat(chat.other_user_wallet_address)}
               className={`w-full flex items-center gap-4 p-4 rounded-2xl transition-all relative group ${
-                activeChatDid === chat.other_user_did 
+                activeChatAddress === chat.other_user_wallet_address 
                   ? 'bg-[#f7931a]/10 border border-[#f7931a]/20' 
                   : 'hover:bg-white/[0.03] border border-transparent'
               }`}
@@ -58,7 +58,7 @@ export default function InboxSidebar({
 
               <div className="flex-1 min-w-0 text-left">
                 <div className="flex justify-between items-start mb-0.5">
-                  <p className={`text-sm font-bold truncate ${activeChatDid === chat.other_user_did ? 'text-[#f7931a]' : 'text-white'}`}>
+                  <p className={`text-sm font-bold truncate ${activeChatAddress === chat.other_user_wallet_address ? 'text-[#f7931a]' : 'text-white'}`}>
                     {chat.display_name}
                   </p>
                   <span className="text-[10px] text-slate-500 font-medium">
@@ -70,7 +70,7 @@ export default function InboxSidebar({
                 </p>
               </div>
 
-              {activeChatDid === chat.other_user_did && (
+              {activeChatAddress === chat.other_user_wallet_address && (
                 <motion.div 
                   layoutId="active-chat-indicator"
                   className="absolute left-0 top-1/2 -translate-y-1/2 w-1 h-8 bg-[#f7931a] rounded-r-full" 

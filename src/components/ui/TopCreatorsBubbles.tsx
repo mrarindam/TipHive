@@ -74,7 +74,7 @@ export default function TopCreatorsBubbles() {
       // Fetch profiles
       const { data: profiles } = await supabase
         .from('user_profiles')
-        .select('wallet_address, privy_did, username, display_name, avatar_url')
+        .select('wallet_address, username, display_name, avatar_url')
         .in('wallet_address', topAddresses);
 
       if (profiles) {

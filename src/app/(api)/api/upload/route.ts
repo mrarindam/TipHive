@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import crypto from 'crypto';
-import { privy } from '@/lib/privy';
+import { requireWalletSession } from '@/lib/wallet-session';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,14 +12,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Cloudinary credentials missing' }, { status: 500 });
     }
 
-    // --- SECURE AUTH CHECK ---
-    const header = req.headers.get('authorization');
-    const token = header?.replace('Bearer ', '');
-    if (!token) return NextResponse.json({ error: 'Auth required' }, { status: 401 });
-    try {
-      await privy.utils().auth().verifyAccessToken(token);
-    } catch { return NextResponse.json({ error: 'Invalid session' }, { status: 401 }); }
-    // -------------------------
+    await requireWalletSession();
 
     const formData = await req.formData();
     const action = formData.get('action') as string;

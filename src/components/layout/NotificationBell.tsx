@@ -3,8 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { Bell, BellRing, Info, Zap, Star, Heart, MessageCircle, UserPlus } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { useAccount } from 'wagmi';
-import { usePrivy } from '@privy-io/react-auth';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
 
 interface Notification {
   id: string;
@@ -15,36 +14,31 @@ interface Notification {
 }
 
 export default function NotificationBell() {
-  const { address } = useAccount();
-  const { authenticated, user, getAccessToken } = usePrivy();
+  const { ready, authenticated, user } = useWalletAuth();
+  const address = user?.wallet?.address;
   const [notifications, setNotifications] = useState<Notification[]>([]);
   const [isOpen, setIsOpen] = useState(false);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [loading, setLoading] = useState(false);
+  const [markingRead, setMarkingRead] = useState(false);
   const bellRef = useRef<HTMLDivElement>(null);
 
-  const unreadCount = notifications.filter(n => !n.is_read).length;
+  const unreadCount = notifications.filter(n => n.is_read !== true).length;
   const displayCount = unreadCount > 9 ? '9+' : unreadCount;
 
-  const userId = user?.id;
-
   const fetchNotifications = useCallback(async (isLoadMore = false) => {
-    if (!authenticated || (!address && !userId)) return;
+    if (!ready || !authenticated || !address) return;
     if (isLoadMore) setLoading(true);
     
     try {
       const currentOffset = isLoadMore ? offset + 10 : 0;
       const params = new URLSearchParams();
       if (address) params.set('wallet', address);
-      if (userId) params.set('did', userId);
       params.set('limit', '10');
       params.set('offset', currentOffset.toString());
 
-      const token = await getAccessToken();
-      const res = await fetch(`/api/notifications?${params.toString()}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-      });
+      const res = await fetch(`/api/notifications?${params.toString()}`);
       if (!res.ok) {
         throw new Error(`Notifications API failed: ${res.status}`);
       }
@@ -64,9 +58,11 @@ export default function NotificationBell() {
         } else {
           setNotifications(prev => {
             // If polling, merge with existing notifications to preserve those loaded via "Load More"
-            const newIds = new Set(newNotifications.map((n: Notification) => n.id));
-            const existingOthers = prev.filter(n => !newIds.has(n.id));
-            return [...newNotifications, ...existingOthers].sort((a, b) => 
+            const notificationById = new Map(prev.map(n => [n.id, n]));
+            newNotifications.forEach((notification: Notification) => {
+              notificationById.set(notification.id, notification);
+            });
+            return Array.from(notificationById.values()).sort((a, b) => 
               new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
             );
           });
@@ -83,7 +79,7 @@ export default function NotificationBell() {
     } finally {
       if (isLoadMore) setLoading(false);
     }
-  }, [address, userId, authenticated, getAccessToken, offset]);
+  }, [address, authenticated, offset, ready]);
 
   const handleLoadMore = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -91,12 +87,12 @@ export default function NotificationBell() {
   };
 
   useEffect(() => {
-    if (authenticated) {
+    if (ready && authenticated && address) {
       fetchNotifications();
       const interval = setInterval(() => fetchNotifications(false), 10000); // Poll every 10s
       return () => clearInterval(interval);
     }
-  }, [authenticated, fetchNotifications]);
+  }, [address, authenticated, fetchNotifications, ready]);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -109,31 +105,35 @@ export default function NotificationBell() {
   }, []);
 
   const markAllRead = async () => {
-    // Use wallet if available, otherwise use privy_did
-    const identifier = address || user?.id;
-    if (!identifier) return;
+    if (!address) return;
+    setMarkingRead(true);
     try {
       const res = await fetch('/api/notifications', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${await getAccessToken()}`
         },
         body: JSON.stringify({ 
           wallet: address, 
-          did: user?.id, 
           action: 'markAllRead' 
         }),
       });
-      if (res.ok) {
-        setNotifications(notifications.map(n => ({ ...n, is_read: true })));
+      if (!res.ok) {
+        const data = await res.json().catch(() => null);
+        throw new Error(data?.error || `Notifications API failed: ${res.status}`);
       }
+
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+      setOffset(0);
+      await fetchNotifications(false);
     } catch (error) {
       console.error('Error marking all as read:', error);
+    } finally {
+      setMarkingRead(false);
     }
   };
 
-  if (!authenticated) return null;
+  if (!ready || !authenticated || !address) return null;
 
   return (
     <div className="relative" ref={bellRef}>
@@ -173,9 +173,10 @@ export default function NotificationBell() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
+                  disabled={markingRead}
                   className="text-[10px] font-black text-[#F7931A] uppercase tracking-widest hover:text-white transition-colors"
                 >
-                  Mark All Read
+                  {markingRead ? 'Marking...' : 'Mark All Read'}
                 </button>
               )}
             </div>

@@ -3,33 +3,27 @@
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
-import { usePrivy, useLogin } from '@privy-io/react-auth';
-import { useAccount, useReadContract, useSwitchChain } from 'wagmi';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
+import { useAccount, useReadContract } from 'wagmi';
 import { formatEther } from 'viem';
 import {
   BadgeCheck,
   Bitcoin,
-  ChevronLeft,
+  BookOpen,
   ExternalLink,
   LogOut,
-  Mail,
-  Settings,
-  ShieldCheck,
   User,
   UserPen,
   Wallet,
-  Globe,
-  Info,
 } from 'lucide-react';
 import { BTC_TOKEN_ADDRESS, ERC20_ABI } from '@/lib/contracts';
 import MUSDLogo from '@/components/ui/MUSDLogo';
-import { mezoTestnet, mezoMainnet } from '@/components/providers/PrivyProviderWrapper';
+import { mezoTestnet, mezoMainnet } from '@/components/providers/WalletProviderWrapper';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 
 const ZERO = BigInt(0);
 
 export interface WalletProfile {
-  privy_did?: string;
   wallet_address: string | null;
   username: string | null;
   display_name: string | null;
@@ -48,12 +42,9 @@ function shortAddress(address?: string) {
 
 export default function WalletProfileMenu() {
   const { address, isConnected, chain } = useAccount();
-  const { switchChain } = useSwitchChain();
-  const { ready, authenticated, logout, user, linkGoogle, linkEmail, linkWallet, getAccessToken } = usePrivy();
-  const { login } = useLogin();
+  const { ready, authenticated, logout, user, login } = useWalletAuth();
   const menuRef = useRef<HTMLDivElement | null>(null);
   const [isOpen, setIsOpen] = useState(false);
-  const [view, setView] = useState<'main' | 'settings' | 'network'>('main');
   const [profile, setProfile] = useState<WalletProfile | null>(null);
   const [btcUsd, setBtcUsd] = useState(0);
   const networkConfig = useNetworkConfig();
@@ -76,52 +67,22 @@ export default function WalletProfileMenu() {
     query: { enabled: Boolean(queryTargetAddress && networkConfig.contracts.MUSD) },
   });
 
-  /*
-  const { data: mezoBalance } = useReadContract({
-    address: MEZO_TOKEN_ADDRESS,
-    abi: ERC20_ABI,
-    functionName: 'balanceOf',
-    args: [address as `0x${string}`],
-    query: { enabled: Boolean(isConnected && address && MEZO_TOKEN_ADDRESS) },
-  });
-  */
-
-  /*
-  const { data: tipBalance } = useReadContract({
-    address: TIPPING_CONTRACT,
-    abi: TIPPING_ABI,
-    functionName: 'getCreatorBalance',
-    args: [address as `0x${string}`],
-    query: { enabled: Boolean(isConnected && address && TIPPING_CONTRACT) },
-  });
-  */
-
-  /*
-  const { data: subBalance } = useReadContract({
-    address: SUBSCRIPTION_CONTRACT,
-    abi: SUBSCRIPTION_ABI,
-    functionName: 'getCreatorEarnings',
-    args: [address as `0x${string}`],
-    query: { enabled: Boolean(isConnected && address && SUBSCRIPTION_CONTRACT) },
-  });
-  */
-
   useEffect(() => {
     let cancelled = false;
 
     if (!ready) return;
 
-    const loadProfile = async () => {
-      const activeAddress = address;
-      const linkedAddress = user?.wallet?.address;
-      const walletToQuery = activeAddress || linkedAddress || '';
+    if (!authenticated || !address) {
+      setProfile(null);
+      return;
+    }
 
-      if (!user?.id && !walletToQuery) return;
+    const loadProfile = async () => {
+      const walletToQuery = address;
+
+      if (!walletToQuery) return;
       try {
-        const token = await getAccessToken();
-        const res = await fetch(`/api/auth?did=${user?.id || ''}&wallet=${walletToQuery}&t=${Date.now()}`, {
-          headers: { 'Authorization': `Bearer ${token}` }
-        });
+        const res = await fetch(`/api/auth?wallet=${walletToQuery}&t=${Date.now()}`);
         const data = await res.json();
         if (cancelled || data.error) return;
         setProfile(data.user || null);
@@ -135,9 +96,8 @@ export default function WalletProfileMenu() {
     const handleProfileUpdate = (event: Event) => {
       const detail = (event as CustomEvent<WalletProfile>).detail;
       const matchAddress = address && detail?.wallet_address && detail.wallet_address.toLowerCase() === address.toLowerCase();
-      const matchDid = user?.id && detail?.privy_did && detail.privy_did === user.id;
 
-      if (matchAddress || matchDid) {
+      if (matchAddress) {
         setProfile(detail);
       } else {
         loadProfile();
@@ -150,7 +110,7 @@ export default function WalletProfileMenu() {
       cancelled = true;
       window.removeEventListener('wallet-profile-updated', handleProfileUpdate);
     };
-  }, [address, user?.id, user?.wallet?.address, ready, getAccessToken]);
+  }, [address, authenticated, ready]);
 
 
 
@@ -205,14 +165,6 @@ export default function WalletProfileMenu() {
   // const totalAssets = (btcAmount * btcUsd) + musdAmount + (mezoAmount * mezoUsd) + Number(formatEther(claimable));
 
 
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const googleAccount = user?.linkedAccounts?.find((a: any) => a.type === 'google_oauth') as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const emailAccount = user?.linkedAccounts?.find((a: any) => a.type === 'email') as any;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const externalWalletAccount = user?.linkedAccounts?.find((a: any) => a.type === 'wallet' && a.walletClientType !== 'privy') as any;
-
-
   if (!ready) {
     return <div className="h-12 w-12 rounded-2xl bg-white/5 animate-pulse" />;
   }
@@ -254,15 +206,13 @@ export default function WalletProfileMenu() {
             <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(247,147,26,0.28),transparent_32%),radial-gradient(circle_at_95%_8%,rgba(34,211,238,0.2),transparent_26%),radial-gradient(circle_at_50%_100%,rgba(236,72,153,0.16),transparent_34%)]" />
             <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F7931A] to-transparent" />
             <div className="relative overflow-hidden p-5">
-              <AnimatePresence mode="wait">
-                {view === 'main' ? (
-                  <motion.div
-                    key="main"
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    transition={{ duration: 0.2 }}
-                  >
+              <motion.div
+                key="main"
+                initial={{ opacity: 0, x: -20 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -20 }}
+                transition={{ duration: 0.2 }}
+              >
                     <div className="relative flex items-center gap-4 pt-2">
                       <img src={avatar} alt="" className="h-14 w-14 rounded-2xl border-2 border-[#F7931A]/50 object-cover shadow-lg shadow-orange-500/25" />
                       <div className="min-w-0 flex-1">
@@ -300,52 +250,31 @@ export default function WalletProfileMenu() {
                       </Link>
                     </div>
 
-                    {!address && !profile?.wallet_address ? (
+                    {!address ? (
                       <div className="relative mt-6 border-y border-white/5 bg-white/[0.03] -mx-5 px-5 py-5 text-center">
                         <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
                           <Wallet className="h-6 w-6" />
                         </div>
-                        <h3 className="mb-2 text-lg font-black text-white uppercase tracking-tight">Connect Your Wallet</h3>
+                        <h3 className="mb-2 text-lg font-black text-white uppercase tracking-tight">Login with Wallet</h3>
                         <p className="mb-4 text-xs text-slate-400 font-medium">
-                          Link a Web3 wallet to unlock on-chain features like tipping and subscriptions.
+                          Select a wallet, connect, and sign to use TipHive.
                         </p>
                         <button
-                          onClick={linkWallet}
+                          onClick={login}
                           className="w-full btn-primary py-3 px-4 flex items-center justify-center gap-2 group text-sm"
                         >
                           <Wallet className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                          Link External Wallet
+                          Login
                         </button>
                       </div>
                     ) : (
                       <>
-                        {/* Show saved but disconnected wallet state */}
-                        {!address && profile?.wallet_address && (
-                          <div className="relative mt-6 border border-[#F7931A]/30 bg-[#F7931A]/5 -mx-5 px-5 py-4 flex flex-col items-center gap-3">
-                            <div className="flex items-center gap-3 w-full">
-                              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-[#F7931A]/10 text-[#F7931A]">
-                                <ShieldCheck className="h-5 w-5" />
-                              </div>
-                              <div className="flex-1 min-w-0">
-                                <p className="text-sm font-black text-white uppercase tracking-tight">Wallet Saved</p>
-                                <p className="text-[10px] font-mono text-slate-400 truncate">{profile.wallet_address}</p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={linkWallet}
-                              className="w-full py-2 bg-[#F7931A] hover:bg-[#F7931A]/90 text-black text-[11px] font-black uppercase tracking-[0.1em] rounded-xl transition-all"
-                            >
-                              Connect to use
-                            </button>
-                          </div>
-                        )}
-
                         {/* Network Warning if not on supported Mezo network */}
                         {isConnected && chain?.id !== mezoTestnet.id && chain?.id !== mezoMainnet.id && (
                           <div className="relative mt-6 border border-red-500/30 bg-red-500/5 -mx-5 px-5 py-4 flex items-center justify-between gap-3">
                             <div className="flex items-center gap-3">
                               <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
-                                <ShieldCheck className="h-4 w-4" />
+                                <Wallet className="h-4 w-4" />
                               </div>
                               <div>
                                 <p className="text-sm font-black text-white uppercase tracking-tight">Wrong Network</p>
@@ -353,7 +282,10 @@ export default function WalletProfileMenu() {
                               </div>
                             </div>
                             <button
-                              onClick={() => setView('network')}
+                              onClick={() => {
+                                setIsOpen(false);
+                                window.dispatchEvent(new Event('open-network-switcher'));
+                              }}
                               className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.1em] rounded-lg border border-red-500/20 transition-all"
                             >
                               FIX NOW
@@ -366,13 +298,12 @@ export default function WalletProfileMenu() {
                             icon={<img src="/mezo.png" alt="" className="h-4 w-4" />}
                             label="MEZO TOOLKIT"
                           />
-                          <button
-                            onClick={() => setView('network')}
-                            className="flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white transition-all hover:-translate-y-0.5 hover:bg-[#F7931A] hover:shadow-lg hover:shadow-orange-500/20"
-                          >
-                            <Globe className="h-4 w-4" />
-                            NETWORK
-                          </button>
+                          <MenuAction
+                            href="/docs"
+                            icon={<BookOpen className="h-4 w-4" />}
+                            label="DOCS"
+                            external
+                          />
                         </div>
 
                         <div className="relative mt-3 grid grid-cols-1">
@@ -395,7 +326,7 @@ export default function WalletProfileMenu() {
                                 <p className="font-mono text-sm text-slate-500">{shortAddress(address)}</p>
                               </div>
                             </div>
-                            <ShieldCheck className="h-5 w-5 text-lime-500" />
+                            <BadgeCheck className="h-5 w-5 text-lime-500" />
                           </div>
                         </div>
 
@@ -417,14 +348,7 @@ export default function WalletProfileMenu() {
                       </>
                     )}
 
-                    <div className="relative flex items-center justify-between border-t border-white/5 bg-black/40 -mx-5 mt-4 px-5 py-4">
-                      <button
-                        onClick={() => setView('settings')}
-                        className="flex items-center gap-2 rounded-xl px-2 py-1 text-sm font-black text-white hover:text-[#F7931A]"
-                      >
-                        <Settings className="h-4 w-4" />
-                        Settings
-                      </button>
+                    <div className="relative flex items-center justify-center border-t border-white/5 bg-black/40 -mx-5 mt-4 px-5 py-4">
                       <button
                         onClick={() => {
                           setIsOpen(false);
@@ -438,217 +362,11 @@ export default function WalletProfileMenu() {
                       </button>
                     </div>
                   </motion.div>
-                ) : view === 'settings' ? (
-                  <motion.div
-                    key="settings"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.2 }}
-                    className="min-h-[400px] flex flex-col pt-2"
-                  >
-                    <button
-                      onClick={() => setView('main')}
-                      className="flex items-center gap-2 text-slate-500 hover:text-white mb-6 font-bold text-sm"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      Back
-                    </button>
-
-                    <div className="flex items-start gap-4 mb-8">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F7931A]/10 text-[#F7931A] border border-[#F7931A]/20">
-                        <Mail className="h-7 w-7" />
-                      </div>
-                      <div>
-                        <h3 className="text-3xl font-black text-white font-outfit uppercase tracking-tighter leading-none text-left">Account<br />Settings</h3>
-                        <p className="text-slate-500 text-sm font-medium mt-2 text-left">Manage your linked accounts</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4 flex-1 max-h-[300px] overflow-y-auto custom-scrollbar pr-2 pb-4 text-left">
-                      {googleAccount ? (
-                        <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-white flex items-center justify-center rounded-full p-1.5">
-                              <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-white">Google</p>
-                              <p className="text-xs text-slate-400 truncate max-w-[150px]">{googleAccount.email || 'Connected'}</p>
-                            </div>
-                          </div>
-                          <BadgeCheck className="w-5 h-5 text-green-500" />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={linkGoogle}
-                          className="w-full flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors"
-                        >
-                          <div className="w-8 h-8 bg-white flex items-center justify-center rounded-full p-1.5 shadow-[0_0_15px_rgba(255,255,255,0.2)]">
-                            <img src="https://www.svgrepo.com/show/475656/google-color.svg" alt="Google" />
-                          </div>
-                          <span className="text-sm font-bold text-white">Link Google Account</span>
-                        </button>
-                      )}
-
-                      {emailAccount ? (
-                        <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl mt-2">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-[#F7931A] flex items-center justify-center rounded-full">
-                              <Mail className="w-4 h-4 text-black" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-white">Email</p>
-                              <p className="text-xs text-slate-400 truncate max-w-[150px]">{emailAccount.address || 'Connected'}</p>
-                            </div>
-                          </div>
-                          <BadgeCheck className="w-5 h-5 text-green-500" />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={linkEmail}
-                          className="w-full flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors mt-2"
-                        >
-                          <div className="w-8 h-8 bg-[#F7931A]/20 flex items-center justify-center rounded-full shadow-[0_0_15px_rgba(247,147,26,0.15)]">
-                            <Mail className="w-4 h-4 text-[#F7931A]" />
-                          </div>
-                          <span className="text-sm font-bold text-white">Link Email Address</span>
-                        </button>
-                      )}
-
-                      {externalWalletAccount ? (
-                        <div className="flex items-center justify-between p-4 bg-white/5 border border-white/10 rounded-2xl mt-2">
-                          <div className="flex items-center gap-3">
-                            <div className="w-8 h-8 bg-blue-500 flex items-center justify-center rounded-full">
-                              <Wallet className="w-4 h-4 text-white" />
-                            </div>
-                            <div className="min-w-0">
-                              <p className="text-sm font-bold text-white">External Wallet</p>
-                              <p className="text-xs text-slate-400 truncate max-w-[150px]">{shortAddress(externalWalletAccount.address)}</p>
-                            </div>
-                          </div>
-                          <BadgeCheck className="w-5 h-5 text-green-500" />
-                        </div>
-                      ) : (
-                        <button
-                          onClick={linkWallet}
-                          className="w-full flex items-center gap-3 p-4 bg-white/5 border border-white/10 rounded-2xl hover:bg-white/10 transition-colors mt-2"
-                        >
-                          <div className="w-8 h-8 bg-blue-500/20 flex items-center justify-center rounded-full shadow-[0_0_15px_rgba(59,130,246,0.15)]">
-                            <Wallet className="w-4 h-4 text-blue-400" />
-                          </div>
-                          <span className="text-sm font-bold text-white">Link External Wallet</span>
-                        </button>
-                      )}
-                    </div>
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="network"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: 20 }}
-                    transition={{ duration: 0.2 }}
-                    className="min-h-[400px] flex flex-col pt-2"
-                  >
-                    <button
-                      onClick={() => setView('main')}
-                      className="flex items-center gap-2 text-slate-500 hover:text-white mb-6 font-bold text-sm"
-                    >
-                      <ChevronLeft className="h-4 w-4" />
-                      Back
-                    </button>
-
-                    <div className="flex items-start gap-4 mb-8">
-                      <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-[#F7931A]/10 text-[#F7931A] border border-[#F7931A]/20">
-                        <Globe className="h-7 w-7" />
-                      </div>
-                      <div className="text-left">
-                        <h3 className="text-3xl font-black text-white font-outfit uppercase tracking-tighter leading-none">Switch<br />Network</h3>
-                        <p className="text-slate-500 text-sm font-medium mt-2">Select your Mezo destination</p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-3 flex-1">
-                      <NetworkOption
-                        name="Mezo Testnet"
-                        description="Test your transactions on Mezo"
-                        icon={<img src="/mezo.png" alt="" className="h-5 w-5" />}
-                        isActive={chain?.id === mezoTestnet.id}
-                        onClick={() => {
-                          switchChain?.({ chainId: mezoTestnet.id });
-                          setView('main');
-                        }}
-                      />
-                      <NetworkOption
-                        name="Mezo Mainnet"
-                        description="Real transactions on Mezo"
-                        icon={<img src="/mezo.png" alt="" className="h-5 w-5" />}
-                        isActive={chain?.id === mezoMainnet.id}
-                        onClick={() => {
-                          switchChain?.({ chainId: mezoMainnet.id });
-                          setView('main');
-                        }}
-                      />
-                    </div>
-
-                    <div className="mt-8 bg-[#F7931A]/5 border border-[#F7931A]/10 rounded-2xl p-4 flex gap-3 items-center">
-                      <Info className="w-4 h-4 text-[#F7931A] shrink-0" />
-                      <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider leading-relaxed text-left">
-                        Rabby or Metamask will prompt you to add the selected Mezo network automatically.
-                      </p>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
             </div>
           </motion.div>
         )}
       </AnimatePresence>
     </div>
-  );
-}
-
-function NetworkOption({
-  name,
-  description,
-  icon,
-  isActive,
-  isLocked,
-  onClick
-}: {
-  name: string;
-  description: string;
-  icon: React.ReactNode;
-  isActive?: boolean;
-  isLocked?: boolean;
-  onClick?: () => void;
-}) {
-  return (
-    <button
-      disabled={isLocked}
-      onClick={onClick}
-      className={`w-full text-left p-4 rounded-2xl border transition-all relative overflow-hidden group ${isLocked
-          ? 'bg-white/[0.02] border-white/5 opacity-50 cursor-not-allowed'
-          : isActive
-            ? 'bg-[#F7931A]/10 border-[#F7931A] shadow-[0_0_20px_rgba(247,147,26,0.1)]'
-            : 'bg-white/5 border-white/5 hover:border-[#F7931A]/40'
-        }`}
-    >
-      <div className="flex items-center gap-4 relative z-10">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all ${isLocked ? 'bg-slate-900' : 'bg-black/40 group-hover:bg-[#F7931A]/20'
-          }`}>
-          {icon}
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <span className="font-black text-white uppercase tracking-tight truncate">{name}</span>
-            {isActive && <div className="w-1.5 h-1.5 rounded-full bg-[#F7931A] animate-pulse" />}
-          </div>
-          <p className="text-slate-500 text-[10px] font-bold uppercase tracking-widest truncate">{description}</p>
-        </div>
-      </div>
-    </button>
   );
 }
 

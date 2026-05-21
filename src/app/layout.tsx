@@ -1,7 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
-import { PrivyProviderWrapper } from "@/components/providers/PrivyProviderWrapper";
+import { WalletProviderWrapper } from "@/components/providers/WalletProviderWrapper";
 import Navbar from "@/components/layout/Navbar";
 import Footer from "@/components/layout/Footer";
 import OnboardingGuard from "@/components/providers/onboarding-guard";
@@ -216,7 +216,7 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <PwaRegister />
-        <PrivyProviderWrapper>
+        <WalletProviderWrapper>
           <OnboardingGuard>
             <WalletSwitchGuard>
               <div id="root-container" className="flex flex-col min-h-screen bg-[#050505]">
@@ -228,7 +228,7 @@ export default function RootLayout({
               </div>
             </WalletSwitchGuard>
           </OnboardingGuard>
-        </PrivyProviderWrapper>
+        </WalletProviderWrapper>
       </body>
     </html>
   );
