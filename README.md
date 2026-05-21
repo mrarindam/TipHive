@@ -28,18 +28,18 @@ By replacing corporate payment processors with trustless, non-custodial Solidity
 
 ## ❌ The Problem & 🍯 TipHive Solution
 
-| Metric / Feature | Traditional Platforms (Patreon, Twitch, Ko-fi) | 🍯 TipHive Solution |
-| :--- | :--- | :--- |
-| **Platform Take Rate** | 5% to 30% of every subscription or tip | **0% Platform Tax — Creators keep 100%** |
-| **Payout Holding Period** | 7 to 30 business days | **Instant On-chain Settlement (< 5s)** |
-| **Account Freeze Risk** | High (subject to arbitrary corporate bans/KYC blocks) | **Unstoppable & Non-Custodial (Sovereign Vaults)** |
-| **Chargeback Fraud** | High risk (supporters can reverse payments via banks) | **Zero Chargeback Risk (On-chain finality)** |
-| **Value Stability** | Volatile crypto standard or high Web2 conversion fees | **Price-stable MUSD pegged 1:1 with USD** |
-| **Identity Provider Lock-in** | Email + password + corporate OAuth | **Wallet-only — Your keys, your account** |
+| Metric / Feature                    | Traditional Platforms (Patreon, Twitch, Ko-fi)        | 🍯 TipHive Solution                                      |
+| :---------------------------------- | :---------------------------------------------------- | :------------------------------------------------------- |
+| **Platform Take Rate**        | 5% to 30% of every subscription or tip                | **0% Platform Tax — Creators keep 100%**          |
+| **Payout Holding Period**     | 7 to 30 business days                                 | **Instant On-chain Settlement (< 5s)**             |
+| **Account Freeze Risk**       | High (subject to arbitrary corporate bans/KYC blocks) | **Unstoppable & Non-Custodial (Sovereign Vaults)** |
+| **Chargeback Fraud**          | High risk (supporters can reverse payments via banks) | **Zero Chargeback Risk (On-chain finality)**       |
+| **Value Stability**           | Volatile crypto standard or high Web2 conversion fees | **Price-stable MUSD pegged 1:1 with USD**          |
+| **Identity Provider Lock-in** | Email + password + corporate OAuth                    | **Wallet-only — Your keys, your account**         |
 
 ---
 
-## 🔌 Core Systems & Web2.5 Architecture
+## 🔌 Core Systems & Web3 Architecture
 
 TipHive uses a clean **wallet-native hybrid architecture** — on-chain for value, off-chain for speed.
 
@@ -193,16 +193,16 @@ Creators export SVG/PNG QR codes from the dashboard for OBS overlays, business c
 
 ## 🔒 Security Posture
 
-| Layer | Mechanism |
-| :--- | :--- |
-| **Session integrity** | HMAC-SHA256 cookie signed with a required `WALLET_SESSION_SECRET` (≥ 32 chars). Throws at runtime if missing — no weak fallback. |
-| **Session lifetime** | Session-only cookie (no `maxAge`). Browser close = forced re-sign. |
-| **Wallet binding** | SIWE message includes domain + nonce + chainId; server validates all four; nonce is single-use. |
-| **Mismatch detection** | `WalletSwitchGuard` compares session wallet ↔ active wallet on every render; forces re-sign if they diverge. |
-| **XSS** | All user-generated HTML (TipTap posts) passes through `isomorphic-dompurify` with iframe-host allowlist. |
-| **Reentrancy** | OpenZeppelin `ReentrancyGuard` on all state-changing contract methods. CEI pattern enforced. |
-| **Self-tip / self-subscribe** | Blocked at both contract level and frontend level with toast/banner notifications. |
-| **RLS** | Row-Level Security enabled on every public table in Supabase. |
+| Layer                               | Mechanism                                                                                                                            |
+| :---------------------------------- | :----------------------------------------------------------------------------------------------------------------------------------- |
+| **Session integrity**         | HMAC-SHA256 cookie signed with a required `WALLET_SESSION_SECRET` (≥ 32 chars). Throws at runtime if missing — no weak fallback. |
+| **Session lifetime**          | Session-only cookie (no `maxAge`). Browser close = forced re-sign.                                                                 |
+| **Wallet binding**            | SIWE message includes domain + nonce + chainId; server validates all four; nonce is single-use.                                      |
+| **Mismatch detection**        | `WalletSwitchGuard` compares session wallet ↔ active wallet on every render; forces re-sign if they diverge.                      |
+| **XSS**                       | All user-generated HTML (TipTap posts) passes through `isomorphic-dompurify` with iframe-host allowlist.                           |
+| **Reentrancy**                | OpenZeppelin `ReentrancyGuard` on all state-changing contract methods. CEI pattern enforced.                                       |
+| **Self-tip / self-subscribe** | Blocked at both contract level and frontend level with toast/banner notifications.                                                   |
+| **RLS**                       | Row-Level Security enabled on every public table in Supabase.                                                                        |
 
 ---
 

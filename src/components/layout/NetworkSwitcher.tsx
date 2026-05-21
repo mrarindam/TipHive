@@ -43,7 +43,15 @@ export default function NetworkSwitcher() {
     return () => window.removeEventListener('open-network-switcher', open);
   }, []);
 
-  if (!mounted || !ready || !authenticated) return null;
+  if (!mounted) return null;
+  if (!ready) {
+    return (
+      <div className="p-2.5 bg-white/5 border border-white/5 rounded-xl animate-pulse">
+        <div className="w-5 h-5" />
+      </div>
+    );
+  }
+  if (!authenticated) return null;
 
   return (
     <div ref={containerRef} className="relative">

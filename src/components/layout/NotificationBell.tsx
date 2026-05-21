@@ -133,7 +133,14 @@ export default function NotificationBell() {
     }
   };
 
-  if (!ready || !authenticated || !address) return null;
+  if (!ready) {
+    return (
+      <div className="p-2.5 bg-white/5 border border-white/5 rounded-xl animate-pulse">
+        <div className="w-5 h-5" />
+      </div>
+    );
+  }
+  if (!authenticated || !address) return null;
 
   return (
     <div className="relative" ref={bellRef}>
