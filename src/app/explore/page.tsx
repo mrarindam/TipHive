@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Search, Sparkles, Calendar, Music2, Video } from 'lucide-react';
+import { Search, Sparkles, Calendar, Music2, Video, Lock } from 'lucide-react';
 import { motion, useScroll, useTransform } from 'framer-motion';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,11 +35,13 @@ interface Creator {
   posts?: Post[];
 }
 
-function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isFollowingInitial: boolean }) {
+function CreatorFeedRow({ creator, isFollowingInitial, hasAccessToCreator }: { creator: Creator, isFollowingInitial: boolean, hasAccessToCreator: { tipped: boolean; subscribed: boolean } }) {
   const { address: userAddress } = useAccount();
   const { user } = useWalletAuth();
   const [isFollowing, setIsFollowing] = useState(isFollowingInitial);
   const rowRef = useRef<HTMLDivElement>(null);
+
+  const isOwner = !!userAddress && !!creator.wallet_address && userAddress.toLowerCase() === creator.wallet_address.toLowerCase();
   
   const { scrollYProgress } = useScroll({
     target: rowRef,
@@ -133,17 +135,23 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 px-4 md:px-0">
         {creator.posts && creator.posts.map((post) => {
           const contentImage = extractFirstImage(post.content);
+          const hasAccess = isOwner
+            || post.visibility === 'public'
+            || (post.visibility === 'followers' && (hasAccessToCreator.tipped || hasAccessToCreator.subscribed))
+            || (post.visibility === 'supporters' && hasAccessToCreator.subscribed);
+          const isLocked = !hasAccess;
           return (
-            <Link 
-              key={post.id} 
+            <Link
+              key={post.id}
               href={`/${creator.username}/posts/${encodeURIComponent(post.title)}`}
               className="group relative flex flex-col bg-[#111827] border border-white/5 rounded-[2.5rem] overflow-hidden hover:border-[#F7931A]/30 transition-all shadow-2xl"
             >
               <div className="absolute top-4 left-4 z-10 px-3 py-1 bg-black/60 backdrop-blur-md border border-white/10 rounded-xl text-[8px] font-black uppercase tracking-widest text-white">
                 Post
               </div>
-              
+
               <div className="h-80 relative overflow-hidden bg-[#1A2234]">
+                <div className={`absolute inset-0 ${isLocked ? 'blur-md scale-110' : ''}`}>
                 {(() => {
                   const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
                   const isVideo = !isAudio && (post.video_url?.includes('/video/') || post.video_url?.match(/\.(mp4|webm|mov|m4v)$/i));
@@ -181,7 +189,16 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
 
                   return <TextThumbnail title={post.title} size="small" />;
                 })()}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8">
+                </div>
+                {isLocked && (
+                  <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] z-10">
+                    <div className="bg-[#0a0a0c]/90 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-white shadow-2xl">
+                      <Lock className="w-3.5 h-3.5 text-[#F7931A]" />
+                      <span className="uppercase tracking-widest">Locked</span>
+                    </div>
+                  </div>
+                )}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-8 z-20 pointer-events-none">
                   <h4 className="font-black text-xl text-white group-hover:text-[#F7931A] transition-colors line-clamp-2 leading-tight mb-3">
                     {post.title}
                   </h4>
@@ -191,9 +208,11 @@ function CreatorFeedRow({ creator, isFollowingInitial }: { creator: Creator, isF
                       {new Date(post.created_at).toLocaleDateString()}
                     </div>
                     <div className={`px-2 py-1 rounded-lg text-[8px] font-black uppercase tracking-widest ${
-                      post.visibility === 'public' ? 'text-emerald-500 bg-emerald-500/10' : 'text-[#F7931A] bg-[#F7931A]/10'
+                      post.visibility === 'public' ? 'text-emerald-500 bg-emerald-500/10' :
+                      post.visibility === 'followers' ? 'text-blue-400 bg-blue-400/10' :
+                      'text-[#F7931A] bg-[#F7931A]/10'
                     }`}>
-                      {post.visibility}
+                      {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Supporters' : post.visibility === 'supporters' ? 'Members' : post.visibility}
                     </div>
                   </div>
                 </div>
@@ -212,11 +231,40 @@ export default function Explore() {
   const userId = user?.id;
   const [creators, setCreators] = useState<Creator[]>([]);
   const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [tippedSet, setTippedSet] = useState<Set<string>>(new Set());
+  const [subscribedSet, setSubscribedSet] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
+
+  const loadAccessSets = useCallback(async () => {
+    if (!userAddress) {
+      setTippedSet(new Set());
+      setSubscribedSet(new Set());
+      return;
+    }
+    const fan = userAddress.toLowerCase();
+    const [{ data: tips }, { data: subs }] = await Promise.all([
+      supabase.from('tips').select('to_address').eq('from_address', fan),
+      supabase.from('subscriptions').select('creator_address, end_date').eq('fan_address', fan).eq('active', true),
+    ]);
+    setTippedSet(new Set((tips || []).map(t => (t.to_address as string).toLowerCase())));
+    const now = new Date();
+    setSubscribedSet(new Set((subs || []).filter(s => new Date(s.end_date) > now).map(s => (s.creator_address as string).toLowerCase())));
+  }, [userAddress]);
+
+  useEffect(() => {
+    loadAccessSets();
+    const refresh = () => loadAccessSets();
+    window.addEventListener('tip-success', refresh);
+    window.addEventListener('subscription-success', refresh);
+    return () => {
+      window.removeEventListener('tip-success', refresh);
+      window.removeEventListener('subscription-success', refresh);
+    };
+  }, [loadAccessSets]);
 
   
   const observer = useRef<IntersectionObserver | null>(null);
@@ -414,13 +462,17 @@ export default function Explore() {
 
       {/* Feed Section - Wider Layout */}
       <div className="px-4 md:px-12 space-y-12">
-        {creators.map((creator) => (
-          <CreatorFeedRow 
-            key={creator.id} 
-            creator={creator} 
-            isFollowingInitial={followingIds.includes(creator.id)} 
-          />
-        ))}
+        {creators.map((creator) => {
+          const addr = (creator.wallet_address || '').toLowerCase();
+          return (
+            <CreatorFeedRow
+              key={creator.id}
+              creator={creator}
+              isFollowingInitial={followingIds.includes(creator.id)}
+              hasAccessToCreator={{ tipped: tippedSet.has(addr), subscribed: subscribedSet.has(addr) }}
+            />
+          );
+        })}
 
         {/* Loading Indicators */}
         {loading && (

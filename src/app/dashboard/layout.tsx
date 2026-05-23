@@ -6,7 +6,7 @@ import { useAccount, useReadContract, useWriteContract, useWaitForTransactionRec
 import { useWalletAuth, type User } from '@/lib/wallet-auth-shim';
 import {
   Globe, Users, Calendar, Edit3,
-  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings, Heart, Gift
+  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings, Heart, Gift, Bitcoin
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import Link from 'next/link';
@@ -35,13 +35,15 @@ export interface CreatorProfile {
 export interface Activity {
   id: string;
   type: 'sent' | 'received';
-  source: 'tip' | 'subscription';
+  source: 'tip' | 'subscription' | 'borrow';
   amount: number;
   to_name?: string;
   created_at: string;
   tx_hash?: string;
   from_address?: string;
   plan_name?: string;
+  event_type?: 'borrow' | 'repay' | 'close';
+  btc_amount?: number;
 }
 
 export interface DashboardContextType {
@@ -196,19 +198,22 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       const queryAddr = userAddr || dbWallet;
 
       let sentTips = null, receivedTips = null, receivedSubs = null, sentSubs = null;
+      let borrowEvents: Array<{ id: string; wallet: string; event_type: 'borrow' | 'repay' | 'close'; musd_amount: number | null; btc_amount: number | null; tx_hash: string; chain_id: number; created_at: string }> | null = null;
 
       if (queryAddr) {
-        const [stRes, rtRes, rsRes, ssRes] = await Promise.all([
+        const [stRes, rtRes, rsRes, ssRes, beRes] = await Promise.all([
           supabase.from('tips').select('*').eq('from_address', queryAddr).eq('chain_id', chainId),
           supabase.from('tips').select('*').eq('to_address', queryAddr).eq('chain_id', chainId),
           supabase.from('subscriptions').select('*, subscription_plans(name)').eq('creator_address', queryAddr).eq('chain_id', chainId),
-          supabase.from('subscriptions').select('*, subscription_plans(name)').eq('fan_address', queryAddr).eq('chain_id', chainId)
+          supabase.from('subscriptions').select('*, subscription_plans(name)').eq('fan_address', queryAddr).eq('chain_id', chainId),
+          supabase.from('borrow_events').select('*').eq('wallet', queryAddr).eq('chain_id', chainId),
         ]);
-        
-        sentTips = stRes.data; 
-        receivedTips = rtRes.data; 
-        receivedSubs = rsRes.data; 
+
+        sentTips = stRes.data;
+        receivedTips = rtRes.data;
+        receivedSubs = rsRes.data;
         sentSubs = ssRes.data;
+        borrowEvents = beRes.data;
       }
 
       let totalSentVal = 0;
@@ -250,6 +255,16 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       if (receivedTips) receivedTips.forEach(r => combined.push({ id: r.id, type: 'received', source: 'tip', amount: r.amount, from_address: r.from_address, to_name: profileByAddress.get(r.from_address?.toLowerCase()) || r.from_address?.slice(0, 10) || 'Anonymous', created_at: r.created_at, tx_hash: r.tx_hash }));
       if (receivedSubs) receivedSubs.forEach(sub => combined.push({ id: sub.id, type: 'received', source: 'subscription', amount: sub.total_paid, from_address: sub.fan_address, to_name: profileByAddress.get(sub.fan_address?.toLowerCase()) || sub.fan_address?.slice(0, 10) || 'Anonymous', created_at: sub.created_at, tx_hash: sub.tx_hash, plan_name: sub.subscription_plans?.name }));
       if (sentSubs) sentSubs.forEach(sub => combined.push({ id: sub.id, type: 'sent', source: 'subscription', amount: sub.total_paid, to_name: profileByAddress.get(sub.creator_address?.toLowerCase()) || sub.creator_address?.slice(0, 10) || 'Anonymous', created_at: sub.created_at, tx_hash: sub.tx_hash, plan_name: sub.subscription_plans?.name }));
+      if (borrowEvents) borrowEvents.forEach(b => combined.push({
+        id: b.id,
+        type: b.event_type === 'borrow' ? 'received' : 'sent',
+        source: 'borrow',
+        amount: Number(b.musd_amount ?? 0),
+        btc_amount: b.btc_amount !== null ? Number(b.btc_amount) : undefined,
+        event_type: b.event_type,
+        created_at: b.created_at,
+        tx_hash: b.tx_hash,
+      }));
 
       setActivities(combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     } catch (err) {
@@ -322,18 +337,19 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
         <SidebarItem icon={<LayoutDashboard size={20} />} label="Hive" active={pathname === '/dashboard'} href="/dashboard" onClick={() => setIsSidebarOpen(false)} />
         <SidebarItem icon={<Gift size={20} />} label="Referrals" active={pathname === '/dashboard/referrals'} href="/dashboard/referrals" onClick={() => setIsSidebarOpen(false)} />
         <SidebarItem icon={<Globe />} label="My Page" href={`/${creatorProfile?.username || ''}`} external onClick={() => setIsSidebarOpen(false)} />
+        <SidebarItem icon={<Bitcoin size={20} />} label="Borrow MUSD" active={pathname === '/dashboard/borrow-musd'} href="/dashboard/borrow-musd" onClick={() => setIsSidebarOpen(false)} />
       </div>
       <div className="mb-8">
         <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Earn</div>
         <div className="space-y-1">
           <SidebarItem icon={<Users />} label="Tip Circles" active={pathname === '/dashboard/tipcircle'} href="/dashboard/tipcircle" onClick={() => setIsSidebarOpen(false)} />
           <SidebarItem icon={<Calendar size={20} />} label="Subscriptions" active={pathname === '/dashboard/subscriptions'} href="/dashboard/subscriptions" onClick={() => setIsSidebarOpen(false)} />
+          <SidebarItem icon={<Edit3 />} label="Posting" active={pathname === '/dashboard/posts'} href="/dashboard/posts" onClick={() => setIsSidebarOpen(false)} />
         </div>
       </div>
       <div className="mb-8">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Content</div>
+        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Messaging</div>
         <div className="space-y-1">
-          <SidebarItem icon={<Edit3 />} label="Posting" active={pathname === '/dashboard/posts'} href="/dashboard/posts" onClick={() => setIsSidebarOpen(false)} />
           <SidebarItem icon={<Inbox />} label="Inbox" active={pathname === '/dashboard/inbox'} href="/dashboard/inbox" onClick={() => setIsSidebarOpen(false)} />
         </div>
       </div>

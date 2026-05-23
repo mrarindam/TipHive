@@ -23,6 +23,7 @@ export default function Navbar() {
   ];
 
   if (pathname?.includes('/dashboard/createposts') || pathname?.startsWith('/docs')) return null;
+  if (pathname && /^\/[^/]+\/posts\/[^/]+/.test(pathname)) return null;
   return (
     <nav className="fixed top-0 w-full z-[100] border-b border-white/5 bg-black/60 backdrop-blur-2xl">
       <div className="w-full px-[5%] md:px-[8%]">

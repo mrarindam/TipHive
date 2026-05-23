@@ -10,6 +10,7 @@ import { useAccount } from 'wagmi';
 import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { motion } from 'framer-motion';
 import ShareModal from '@/components/ui/ShareModal';
+import TipModal from '@/components/profile/TipModal';
 import { sanitizePostHtml } from '@/lib/sanitize';
 
 interface PostComment {
@@ -42,21 +43,26 @@ interface CreatorProfile {
   id: string;
   wallet_address: string;
   username: string;
+  display_name?: string;
+  suggested_amounts?: string[];
+  button_text?: string;
 }
 
 export default function PostDetailClient() {
   const { username, slug } = useParams();
   const { address: userAddress } = useAccount();
-  const { user, getAccessToken } = useWalletAuth();
+  const { user, getAccessToken, authenticated, login } = useWalletAuth();
   const userId = user?.id;
   const router = useRouter();
   const [post, setPost] = useState<Post | null>(null);
   const [creator, setCreator] = useState<CreatorProfile | null>(null);
   const [loading, setLoading] = useState(true);
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  const [isTipModalOpen, setIsTipModalOpen] = useState(false);
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [hasTipped, setHasTipped] = useState(false);
   const [comments, setComments] = useState<PostComment[]>([]);
   const [commentText, setCommentText] = useState('');
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
@@ -95,6 +101,7 @@ export default function PostDetailClient() {
             let isLikedResult = false;
             let commentsResult: PostComment[] = [];
             let isSubscribedResult = false;
+            let hasTippedResult = false;
 
             // 1. Fetch Likes Count
             promises.push(
@@ -168,6 +175,20 @@ export default function PostDetailClient() {
                     }
                   })
               );
+
+              // 5. Fetch Tip Status (any tip from this fan to this creator)
+              promises.push(
+                supabase
+                  .from('tips')
+                  .select('id')
+                  .eq('from_address', identifier)
+                  .eq('to_address', profile.wallet_address.toLowerCase())
+                  .limit(1)
+                  .maybeSingle()
+                  .then(({ data: tipRow }) => {
+                    hasTippedResult = !!tipRow;
+                  })
+              );
             }
 
             // Await all parallel fetches
@@ -178,6 +199,7 @@ export default function PostDetailClient() {
             setIsLiked(isLikedResult);
             setComments(commentsResult);
             setIsSubscribed(isSubscribedResult);
+            setHasTipped(hasTippedResult);
           }
         }
       } catch (err) {
@@ -190,7 +212,11 @@ export default function PostDetailClient() {
   }, [username, slug, userAddress, userId]);
 
   const handleLike = async () => {
-    if (!userId && !userAddress) return alert('Please login to like posts');
+    if (!authenticated && !userAddress) {
+      login();
+      return;
+    }
+    if (!userId && !userAddress) return;
     if (!post) return;
     const identifier = userAddress ? userAddress.toLowerCase() : userId!;
 
@@ -237,7 +263,11 @@ export default function PostDetailClient() {
   };
 
   const handlePostComment = async () => {
-    if (!userId && !userAddress) return alert('Please login to comment');
+    if (!authenticated && !userAddress) {
+      login();
+      return;
+    }
+    if (!userId && !userAddress) return;
     if (!post) return;
     if (!commentText.trim()) return;
 
@@ -309,7 +339,20 @@ export default function PostDetailClient() {
   const isOwner = (userAddress || userId) && creator?.wallet_address
     ? (userAddress?.toLowerCase() === creator.wallet_address.toLowerCase()) || (userId === creator.wallet_address)
     : false;
-  const isLocked = post.visibility !== 'public' && !isOwner && !isSubscribed;
+  // 'supporters' = members only (paid subscribers)
+  // 'followers' = supporters only (tippers OR members)
+  const hasAccess = isOwner
+    || post.visibility === 'public'
+    || (post.visibility === 'followers' && (hasTipped || isSubscribed))
+    || (post.visibility === 'supporters' && isSubscribed);
+  const isLocked = !hasAccess;
+  const isSupportersPost = post.visibility === 'followers';
+  const unlockHref = isSupportersPost ? `/${creator.username}` : `/${creator.username}/subscriptions`;
+  const lockTitle = isSupportersPost ? 'Supporters & Members' : 'Members Only';
+  const lockMessage = isSupportersPost
+    ? 'Available for supporters and members. Tip or subscribe to unlock full access.'
+    : 'This visual content is exclusive for my amazing members. Subscribe to unlock full access!';
+  const unlockCta = isSupportersPost ? 'Visit Creator' : 'Unlock Now';
   const type = post.video_url ? 'video' : post.image_url ? 'image' : 'text';
 
   return (
@@ -336,7 +379,7 @@ export default function PostDetailClient() {
                 'text-[#D8B4FE] bg-[#8A2BE2]/10 border border-[#8A2BE2]/30'
               }`}>
               {post.visibility === 'public' ? <Globe2 className="w-3.5 h-3.5" /> : post.visibility === 'followers' ? <Users className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
-              {post.visibility === 'public' ? 'Public' : 'Members Only'}
+              {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Supporters Only' : 'Members Only'}
             </span>
             <button onClick={() => setIsShareModalOpen(true)} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-colors text-slate-400 hover:text-white border border-white/5">
               <Share2 className="w-5 h-5" />
@@ -357,10 +400,10 @@ export default function PostDetailClient() {
               {isLocked ? (
                 <div className="w-full aspect-video relative flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center">
                   <Lock className="w-16 h-16 text-[#F7931A] mb-4" />
-                  <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">Members Only</h3>
-                  <p className="text-slate-400 mb-8 max-w-sm font-medium">This visual content is exclusive for my amazing members. Subscribe to unlock full access!</p>
-                  <Link href={`/${creator.username}/subscriptions`} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] flex items-center gap-3 hover:scale-105 transition-all text-sm uppercase tracking-widest">
-                    <Zap className="w-4 h-4 fill-current" /> Unlock Now
+                  <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">{lockTitle}</h3>
+                  <p className="text-slate-400 mb-8 max-w-sm font-medium">{lockMessage}</p>
+                  <Link href={unlockHref} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] flex items-center gap-3 hover:scale-105 transition-all text-sm uppercase tracking-widest">
+                    <Zap className="w-4 h-4 fill-current" /> {unlockCta}
                   </Link>
                 </div>
               ) : (
@@ -479,10 +522,10 @@ export default function PostDetailClient() {
                         <div className="w-20 h-20 bg-[#F7931A]/10 rounded-full flex items-center justify-center mb-6 border border-[#F7931A]/20">
                           <Lock className="w-10 h-10 text-[#F7931A]" />
                         </div>
-                        <h3 className="text-3xl font-black mb-2 uppercase tracking-tight">Exclusive Content</h3>
-                        <p className="text-slate-400 mb-8 max-w-sm font-medium">Unlock this video and support the creator to get full access.</p>
-                        <Link href={`/${creator.username}/subscriptions`} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] uppercase tracking-widest text-sm flex items-center gap-3 hover:scale-105 transition-all">
-                          <Zap className="w-4 h-4 fill-current" /> Subscribe to Watch
+                        <h3 className="text-3xl font-black mb-2 uppercase tracking-tight">{isSupportersPost ? 'Supporters & Members' : 'Exclusive Content'}</h3>
+                        <p className="text-slate-400 mb-8 max-w-sm font-medium">{isSupportersPost ? 'Available for supporters and members. Tip or subscribe to unlock this video.' : 'Unlock this video and support the creator to get full access.'}</p>
+                        <Link href={unlockHref} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] uppercase tracking-widest text-sm flex items-center gap-3 hover:scale-105 transition-all">
+                          <Zap className="w-4 h-4 fill-current" /> {isSupportersPost ? 'Visit Creator' : 'Subscribe to Watch'}
                         </Link>
                       </div>
                     ) : (
@@ -516,8 +559,8 @@ export default function PostDetailClient() {
                   <div className="bg-[#111827]/90 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl text-center max-w-xs backdrop-blur-xl">
                     <Lock className="w-12 h-12 text-[#F7931A] mx-auto mb-4" />
                     <h4 className="font-black uppercase tracking-tight text-white mb-2">Content Locked</h4>
-                    <p className="text-xs text-slate-500 font-bold mb-6 uppercase tracking-widest">Available to Members</p>
-                    <Link href={`/${creator.username}/subscriptions`} className="block w-full bg-white text-black font-black py-3 rounded-xl hover:bg-slate-200 transition-colors text-xs uppercase tracking-widest">Unlock Access</Link>
+                    <p className="text-xs text-slate-500 font-bold mb-6 uppercase tracking-widest">{isSupportersPost ? 'Available for Supporters & Members' : 'Available to Members'}</p>
+                    <Link href={unlockHref} className="block w-full bg-white text-black font-black py-3 rounded-xl hover:bg-slate-200 transition-colors text-xs uppercase tracking-widest">{isSupportersPost ? 'Visit Creator' : 'Unlock Access'}</Link>
                   </div>
                 </div>
               </div>
@@ -528,6 +571,24 @@ export default function PostDetailClient() {
             )}
           </div>
         </div>
+
+        {/* Support / Tip CTA (Public posts only) */}
+        {post.visibility === 'public' && creator.wallet_address && !isOwner && (
+          <div className="mx-6 md:mx-10 mb-8">
+            <div className="bg-[#0a0a0c] border border-white/10 rounded-[2rem] px-6 py-8 md:px-10 md:py-10 flex flex-col items-center text-center shadow-2xl">
+              <p className="text-slate-400 text-sm md:text-base font-medium mb-2">Enjoy this post?</p>
+              <h4 className="text-xl md:text-2xl font-black text-white mb-6 tracking-tight">
+                Love to read this post support {creator.display_name || creator.username}
+              </h4>
+              <button
+                onClick={() => setIsTipModalOpen(true)}
+                className="bg-[#EF4444] hover:bg-[#DC2626] text-white font-bold py-3 px-10 rounded-full transition-all shadow-lg shadow-red-500/20 hover:scale-105 active:scale-95"
+              >
+                Support
+              </button>
+            </div>
+          </div>
+        )}
 
         {/* Interactions */}
         <div className="p-6 md:p-8 border-t border-white/5 bg-white/5 flex items-center gap-8">
@@ -622,6 +683,19 @@ export default function PostDetailClient() {
         )}
       </div>
       <ShareModal isOpen={isShareModalOpen} onClose={() => setIsShareModalOpen(false)} url={typeof window !== 'undefined' ? window.location.href : ''} title={`Check out this post: ${post.title as string}`} />
+      {creator.wallet_address && (
+        <TipModal
+          isOpen={isTipModalOpen}
+          onClose={() => setIsTipModalOpen(false)}
+          creator={{
+            wallet_address: creator.wallet_address,
+            display_name: creator.display_name,
+            username: creator.username,
+            suggested_amounts: creator.suggested_amounts,
+            button_text: creator.button_text,
+          }}
+        />
+      )}
     </motion.div>
   );
 }

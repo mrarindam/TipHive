@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { useDashboard, Activity } from '../layout';
-import { History, Heart, Calendar, ExternalLink } from 'lucide-react';
+import { History, Heart, Calendar, ExternalLink, Bitcoin } from 'lucide-react';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import Pagination from '@/components/ui/Pagination';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
@@ -43,50 +43,94 @@ export default function ActivityFeedPage() {
         {paginatedActivities.length > 0 ? (
           <>
             <div className="space-y-3">
-              {paginatedActivities.map((activity: Activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-transparent hover:border-white/5 transition-all group">
-                  <div className="flex items-center gap-4">
-                    <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${
-                      activity.type === 'received' ? 'bg-[#f7931a]/10 text-[#f7931a]' : 'bg-white/5 text-slate-400'
-                    }`}>
-                      {activity.source === 'tip' ? <Heart size={22} /> : <Calendar size={22} />}
+              {paginatedActivities.map((activity: Activity) => {
+                const isBorrow = activity.source === 'borrow';
+                const borrowLabel =
+                  activity.event_type === 'borrow' ? 'Borrowed MUSD' :
+                  activity.event_type === 'repay' ? 'Repaid MUSD' :
+                  activity.event_type === 'close' ? 'Closed Trove — BTC Released' : 'Borrow Activity';
+
+                return (
+                  <div key={activity.id} className="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-transparent hover:border-white/5 transition-all group">
+                    <div className="flex items-center gap-4">
+                      <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${
+                        isBorrow ? 'bg-[#f7931a]/10 text-[#f7931a]' :
+                        activity.type === 'received' ? 'bg-[#f7931a]/10 text-[#f7931a]' : 'bg-white/5 text-slate-400'
+                      }`}>
+                        {isBorrow ? <Bitcoin size={22} /> :
+                         activity.source === 'tip' ? <Heart size={22} /> : <Calendar size={22} />}
+                      </div>
+                      <div>
+                        <h4 className="text-white font-bold text-lg leading-tight">
+                          {isBorrow ? borrowLabel :
+                           activity.source === 'tip' ? (activity.type === 'received' ? 'Tip Received' : 'Support Sent') :
+                           (activity.type === 'received' ? 'New Subscriber' : 'Joined Circle')}
+                        </h4>
+                        {!isBorrow && (
+                          <p className="text-slate-500 text-sm font-medium mt-1">
+                            {activity.type === 'received' ? 'From' : 'To'}: <span className="text-white">{activity.to_name || 'Anonymous'}</span>
+                          </p>
+                        )}
+                        {isBorrow && activity.event_type === 'borrow' && activity.btc_amount !== undefined && (
+                          <p className="text-slate-500 text-sm font-medium mt-1">
+                            Locked <span className="text-white font-bold tabular-nums">{activity.btc_amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} BTC</span> as collateral
+                          </p>
+                        )}
+                        {isBorrow && activity.event_type === 'close' && activity.btc_amount !== undefined && (
+                          <p className="text-slate-500 text-sm font-medium mt-1">
+                            Released <span className="text-white font-bold tabular-nums">{activity.btc_amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} BTC</span> back to wallet
+                          </p>
+                        )}
+                        {isBorrow && activity.event_type === 'repay' && (
+                          <p className="text-slate-500 text-sm font-medium mt-1">
+                            Partial debt repayment
+                          </p>
+                        )}
+                        {activity.plan_name && (
+                          <div className="mt-1 flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-[#f7931a]" />
+                            <span className="text-[10px] font-black uppercase tracking-widest text-[#f7931a]">{activity.plan_name}</span>
+                          </div>
+                        )}
+                        <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">
+                          {new Date(activity.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+                        </p>
+                        {activity.tx_hash && (
+                          <a
+                            href={`${explorerUrl}/tx/${activity.tx_hash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-[#F7931A] text-[10px] font-black uppercase tracking-widest mt-2 flex items-center gap-1 hover:underline w-fit"
+                          >
+                            View on Explorer <ExternalLink size={10} />
+                          </a>
+                        )}
+                      </div>
                     </div>
-                    <div>
-                      <h4 className="text-white font-bold text-lg leading-tight">
-                        {activity.source === 'tip' ? (activity.type === 'received' ? 'Tip Received' : 'Support Sent') : 
-                         (activity.type === 'received' ? 'New Subscriber' : 'Joined Circle')}
-                      </h4>
-                      <p className="text-slate-500 text-sm font-medium mt-1">
-                        {activity.type === 'received' ? 'From' : 'To'}: <span className="text-white">{activity.to_name || 'Anonymous'}</span>
+                    <div className="text-right">
+                      <p className={`text-2xl font-black flex items-center justify-end gap-2 font-outfit ${
+                        isBorrow
+                          ? (activity.event_type === 'borrow' ? 'text-[#f7931a]' : 'text-slate-300')
+                          : (activity.type === 'received' ? 'text-[#f7931a]' : 'text-slate-300')
+                      }`}>
+                        {isBorrow
+                          ? (activity.event_type === 'borrow' ? '+' : '−')
+                          : (activity.type === 'received' ? '+' : '-')
+                        }
+                        {activity.amount.toLocaleString(undefined, { maximumFractionDigits: 2 })}
+                        <MUSDLogo className="w-5 h-5 opacity-50" />
                       </p>
-                      {activity.plan_name && (
-                        <div className="mt-1 flex items-center gap-2">
-                           <div className="w-1.5 h-1.5 rounded-full bg-[#f7931a]" />
-                           <span className="text-[10px] font-black uppercase tracking-widest text-[#f7931a]">{activity.plan_name}</span>
-                        </div>
-                      )}
-                      <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">
-                        {new Date(activity.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
-                      </p>
-                      {activity.tx_hash && (
-                        <a
-                          href={`${explorerUrl}/tx/${activity.tx_hash}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-[#F7931A] text-[10px] font-black uppercase tracking-widest mt-2 flex items-center gap-1 hover:underline w-fit"
-                        >
-                          View on Explorer <ExternalLink size={10} />
-                        </a>
+                      {isBorrow && activity.btc_amount !== undefined && activity.event_type !== 'repay' && (
+                        <p className="text-slate-500 text-xs font-bold tabular-nums mt-1 flex items-center justify-end gap-1.5">
+                          {activity.event_type === 'borrow' ? '−' : '+'}
+                          {activity.btc_amount.toLocaleString(undefined, { maximumFractionDigits: 6 })}
+                          <Bitcoin className="w-3.5 h-3.5 text-[#f7931a]" />
+                        </p>
                       )}
                     </div>
                   </div>
-                  <div className="text-right">
-                    <p className={`text-2xl font-black flex items-center justify-end gap-2 font-outfit ${activity.type === 'received' ? 'text-[#f7931a]' : 'text-slate-300'}`}>
-                      {activity.type === 'received' ? '+' : '-'}{activity.amount} <MUSDLogo className="w-5 h-5 opacity-50" />
-                    </p>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
 
             <Pagination 

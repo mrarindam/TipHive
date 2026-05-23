@@ -6,6 +6,7 @@ import { Lock, Globe2, Users, Filter, Sparkles, ChevronDown, Video, Music2 } fro
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import { useAccount } from 'wagmi';
 import { useProfile, TextThumbnail, extractFirstImage } from '../layout';
 import { usePerformanceSettings } from '@/lib/hooks/usePerformanceSettings';
 
@@ -23,10 +24,13 @@ interface Post {
 export default function PostsClient() {
   const { creator, fetchData } = useProfile();
   const { simplifyAnimations, enableBlur } = usePerformanceSettings();
+  const { address: userAddress } = useAccount();
 
   const [posts, setPosts] = useState<Post[]>([]);
-  const [postAccessFilter, setPostAccessFilter] = useState<'all' | 'public' | 'exclusive'>('all');
+  const [postAccessFilter, setPostAccessFilter] = useState<'all' | 'public' | 'supporters' | 'exclusive'>('all');
   const [postSortOrder, setPostSortOrder] = useState<'latest' | 'oldest'>('latest');
+  const [hasTipped, setHasTipped] = useState(false);
+  const [isSubscribed, setIsSubscribed] = useState(false);
 
   useEffect(() => {
     if (!creator) return;
@@ -41,12 +45,67 @@ export default function PostsClient() {
     loadPosts();
   }, [creator, fetchData]);
 
+  useEffect(() => {
+    if (!creator?.wallet_address || !userAddress) {
+      setHasTipped(false);
+      setIsSubscribed(false);
+      return;
+    }
+    const fan = userAddress.toLowerCase();
+    const creatorAddr = (creator.wallet_address as string).toLowerCase();
+
+    async function loadAccess() {
+      const [{ data: tipRow }, { data: subs }] = await Promise.all([
+        supabase
+          .from('tips')
+          .select('id')
+          .eq('from_address', fan)
+          .eq('to_address', creatorAddr)
+          .limit(1)
+          .maybeSingle(),
+        supabase
+          .from('subscriptions')
+          .select('id, end_date')
+          .eq('fan_address', fan)
+          .eq('creator_address', creatorAddr)
+          .eq('active', true),
+      ]);
+      setHasTipped(!!tipRow);
+      if (subs && subs.length > 0) {
+        const now = new Date();
+        setIsSubscribed(subs.some(s => new Date(s.end_date) > now));
+      } else {
+        setIsSubscribed(false);
+      }
+    }
+    loadAccess();
+
+    const onTip = (e: Event) => {
+      const detail = (e as CustomEvent<{ creator: string }>).detail;
+      if (detail?.creator?.toLowerCase() === creatorAddr) loadAccess();
+    };
+    const onSub = (e: Event) => {
+      const detail = (e as CustomEvent<{ creator: string }>).detail;
+      if (detail?.creator?.toLowerCase() === creatorAddr) loadAccess();
+    };
+    window.addEventListener('tip-success', onTip);
+    window.addEventListener('subscription-success', onSub);
+    return () => {
+      window.removeEventListener('tip-success', onTip);
+      window.removeEventListener('subscription-success', onSub);
+    };
+  }, [creator?.wallet_address, userAddress]);
+
   if (!creator) return null;
+
+  const isOwner = !!userAddress && !!creator.wallet_address && userAddress.toLowerCase() === (creator.wallet_address as string).toLowerCase();
 
   const filteredPosts = posts
     .filter(p => {
       const matchesAccess = postAccessFilter === 'all' ||
-        (postAccessFilter === 'public' ? p.visibility === 'public' : p.visibility !== 'public');
+        (postAccessFilter === 'public' && p.visibility === 'public') ||
+        (postAccessFilter === 'supporters' && p.visibility === 'followers') ||
+        (postAccessFilter === 'exclusive' && p.visibility === 'supporters');
       return matchesAccess;
     })
     .sort((a, b) => {
@@ -89,15 +148,22 @@ export default function PostsClient() {
           {filteredPosts.map(post => {
             const contentImage = extractFirstImage(post.content);
             let thumb = post.image_url || post.video_url || contentImage;
-            
+
             // Fix: If thumb is a video, use Cloudinary thumbnail logic
             if (thumb && thumb.includes('/video/upload/') && thumb.includes('cloudinary.com')) {
               thumb = thumb.replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_500/').replace(/\.[^.]+$/, '.jpg');
             }
 
+            const hasAccess = isOwner
+              || post.visibility === 'public'
+              || (post.visibility === 'followers' && (hasTipped || isSubscribed))
+              || (post.visibility === 'supporters' && isSubscribed);
+            const isLocked = !hasAccess;
+
             return (
               <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="flex flex-col md:flex-row gap-6 p-4 rounded-3xl bg-[#0a0a0c] hover:bg-[#111113] transition-colors border border-white/5 hover:border-white/10 group">
                 <div className="w-full md:w-64 h-48 md:h-36 bg-[#111113] rounded-2xl relative shrink-0 overflow-hidden">
+                  <div className={`absolute inset-0 ${isLocked ? 'blur-md scale-110' : ''}`}>
                   {(() => {
                     const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
                     const isVideo = !isAudio && (post.video_url?.includes('/video/') || post.video_url?.match(/\.(mp4|webm|mov|m4v)$/i));
@@ -135,6 +201,15 @@ export default function PostsClient() {
 
                     return <TextThumbnail title={post.title} size="small" />;
                   })()}
+                  </div>
+                  {isLocked && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] z-10">
+                      <div className="bg-[#0a0a0c]/90 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-white shadow-2xl">
+                        <Lock className="w-3.5 h-3.5 text-[#F7931A]" />
+                        <span className="uppercase tracking-widest">Locked</span>
+                      </div>
+                    </div>
+                  )}
                 </div>
                 <div className="flex-1 py-2 flex flex-col justify-center relative">
                   <h4 className="font-bold text-lg md:text-xl text-white mb-2 line-clamp-2 group-hover:text-[#8A2BE2] transition-colors">{post.title as string}</h4>
@@ -146,7 +221,7 @@ export default function PostsClient() {
                           'text-[#D8B4FE] bg-[#8A2BE2]/10 border border-[#8A2BE2]/30'
                       }`}>
                       {post.visibility === 'public' ? <Globe2 className="w-3 h-3" /> : post.visibility === 'followers' ? <Users className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                      {post.visibility === 'public' ? 'Public' : 'Members Only'}
+                      {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Supporters Only' : 'Members Only'}
                     </div>
                   </div>
                 </div>
@@ -172,7 +247,8 @@ export default function PostsClient() {
               {[
                 { id: 'all', label: 'All Posts', icon: <Sparkles className="w-4 h-4" /> },
                 { id: 'public', label: 'Public', icon: <Globe2 className="w-4 h-4" /> },
-                { id: 'exclusive', label: 'Members Only', icon: <Users className="w-4 h-4" /> }
+                { id: 'supporters', label: 'Supporters Only', icon: <Users className="w-4 h-4" /> },
+                { id: 'exclusive', label: 'Members Only', icon: <Lock className="w-4 h-4" /> }
               ].map((item) => (
                 <label key={item.id} className="flex items-center justify-between group cursor-pointer">
                   <div className="flex items-center gap-3">
@@ -180,7 +256,7 @@ export default function PostsClient() {
                       type="radio" 
                       name="access" 
                       checked={postAccessFilter === item.id} 
-                      onChange={() => setPostAccessFilter(item.id as 'all' | 'public' | 'exclusive')} 
+                      onChange={() => setPostAccessFilter(item.id as 'all' | 'public' | 'supporters' | 'exclusive')}
                       className="hidden" 
                     />
                     <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${postAccessFilter === item.id ? 'border-[#8A2BE2] bg-[#8A2BE2]/10' : 'border-white/10 group-hover:border-white/30'}`}>

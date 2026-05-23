@@ -328,8 +328,8 @@ function EditorInner() {
 
   const visibilityOptions = [
     { id: 'public', label: 'Public', desc: 'Anyone can see this', icon: Globe2, color: 'text-green-500' },
-    { id: 'followers', label: 'Followers Only', desc: 'People who follow you', icon: Users, color: 'text-blue-400' },
-    { id: 'supporters', label: 'Supporters Only', desc: 'Paying members only', icon: Lock, color: 'text-amber-500' },
+    { id: 'followers', label: 'Supporters Only', desc: 'Tippers and members can view', icon: Users, color: 'text-blue-400' },
+    { id: 'supporters', label: 'Members Only', desc: 'Paying members only', icon: Lock, color: 'text-amber-500' },
   ];
 
   const currentVis = visibilityOptions.find(v => v.id === visibility)!;

@@ -61,6 +61,7 @@ export default function ProfileHomeClient() {
   const [posts, setPosts] = useState<Post[]>([]);
   const [recentTips, setRecentTips] = useState<Tip[]>([]);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [hasTipped, setHasTipped] = useState(false);
   const [hasMorePlans, setHasMorePlans] = useState(false);
   const [notification, setNotification] = useState<{ message: string; type: 'error' | 'success' } | null>(null);
 
@@ -78,6 +79,33 @@ export default function ProfileHomeClient() {
     functionName: 'allowance',
     args: [userAddress as `0x${string}`, contracts.TIPPING],
   });
+
+  const refreshAccess = async () => {
+    if (!userAddress || !creator?.wallet_address) return;
+    const [{ data: subs }, { data: tipRow }] = await Promise.all([
+      supabase
+        .from('subscriptions')
+        .select('id, end_date')
+        .eq('fan_address', userAddress.toLowerCase())
+        .eq('creator_address', creator.wallet_address.toLowerCase())
+        .eq('active', true)
+        .eq('chain_id', chainId),
+      supabase
+        .from('tips')
+        .select('id')
+        .eq('from_address', userAddress.toLowerCase())
+        .eq('to_address', creator.wallet_address.toLowerCase())
+        .limit(1)
+        .maybeSingle(),
+    ]);
+    if (subs && subs.length > 0) {
+      const now = new Date();
+      setIsSubscribed(subs.some(s => new Date(s.end_date) > now));
+    } else {
+      setIsSubscribed(false);
+    }
+    setHasTipped(!!tipRow);
+  };
 
   useEffect(() => {
     window.scrollTo(0, 0);
@@ -106,6 +134,15 @@ export default function ProfileHomeClient() {
           const activeSub = subs.find(s => new Date(s.end_date) > now);
           if (activeSub) setIsSubscribed(true);
         }
+
+        const { data: tipRow } = await supabase
+          .from('tips')
+          .select('id')
+          .eq('from_address', userAddress.toLowerCase())
+          .eq('to_address', creator.wallet_address.toLowerCase())
+          .limit(1)
+          .maybeSingle();
+        setHasTipped(!!tipRow);
       }
 
       // Check for more plans
@@ -252,6 +289,8 @@ export default function ProfileHomeClient() {
       setShowCelebration(true);
       setCustomAmount('');
       setMessage('');
+      await refreshAccess();
+      window.dispatchEvent(new CustomEvent('tip-success', { detail: { creator: creator.wallet_address.toLowerCase() } }));
     } catch (err) {
       console.error(err);
       setTipStatus('error');
@@ -360,7 +399,11 @@ export default function ProfileHomeClient() {
                 limit={1}
                 creatorAddress={creator!.wallet_address as string}
                 creatorName={creator!.display_name as string}
-                onSuccess={fetchData}
+                onSuccess={async () => {
+                  await refreshAccess();
+                  fetchData();
+                  window.dispatchEvent(new CustomEvent('subscription-success', { detail: { creator: (creator!.wallet_address as string).toLowerCase() } }));
+                }}
               />
             </div>
 
@@ -444,7 +487,13 @@ export default function ProfileHomeClient() {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
           {posts.slice(0, 4).map(post => {
-            const isLocked = post.visibility !== 'public' && !isOwner && !isSubscribed;
+            // 'supporters' = members only (paid subscribers)
+            // 'followers' = supporters only (tippers OR members)
+            const hasAccess = isOwner
+              || post.visibility === 'public'
+              || (post.visibility === 'followers' && (hasTipped || isSubscribed))
+              || (post.visibility === 'supporters' && isSubscribed);
+            const isLocked = !hasAccess;
             return (
               <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="bg-[#0a0a0c] border border-white/5 rounded-[2rem] overflow-hidden group hover:border-[#8A2BE2]/50 transition-all block shadow-xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
                 <div className="h-52 bg-[#111113] relative overflow-hidden">
@@ -503,7 +552,7 @@ export default function ProfileHomeClient() {
                     <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${post.visibility === 'public' ? 'text-emerald-500 bg-emerald-500/10' :
                       (post.visibility === 'followers' ? 'text-blue-400 bg-blue-400/10' : 'text-orange-500 bg-orange-500/10')
                       }`}>
-                      {post.visibility === 'public' ? 'Public' : 'Members Only'}
+                      {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Supporters Only' : 'Members Only'}
                     </div>
                   </div>
                 </div>

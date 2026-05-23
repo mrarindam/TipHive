@@ -241,7 +241,7 @@ export default function DropsPage() {
                     </span>
                     <span className="flex items-center gap-1">
                       <Eye className="w-3 h-3" />
-                      {post.visibility}
+                      {post.visibility === 'public' ? 'public' : post.visibility === 'followers' ? 'supporters' : post.visibility === 'supporters' ? 'members' : post.visibility}
                     </span>
                   </div>
                 </div>

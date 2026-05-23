@@ -248,6 +248,17 @@ export default function WalletProfileMenu() {
                         </div>
                         <span className="font-black text-white">My Page</span>
                       </Link>
+
+                      <Link
+                        href="/dashboard/borrow-musd"
+                        onClick={() => setIsOpen(false)}
+                        className="flex items-center gap-3 w-full p-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] transition-all border border-white/5 group"
+                      >
+                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f7931a]/10 text-[#f7931a] group-hover:scale-110 transition-transform">
+                          <Bitcoin className="h-5 w-5" />
+                        </div>
+                        <span className="font-black text-white">Borrow MUSD</span>
+                      </Link>
                     </div>
 
                     {!address ? (

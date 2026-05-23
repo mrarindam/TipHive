@@ -150,8 +150,8 @@ export default function PostCreationSystem({ onSuccess }: PostCreationSystemProp
             <label className="text-xs font-black text-slate-500 uppercase tracking-widest mb-3 flex items-center gap-2"><Globe2 className="w-4 h-4" /> Visibility</label>
             <div className="space-y-2">
               {[{ id: 'public', label: 'Public', desc: 'Anyone can see this', icon: Globe2, color: 'text-green-400' },
-              { id: 'followers', label: 'Followers Only', desc: 'People who follow you', icon: Users, color: 'text-blue-400' },
-              { id: 'supporters', label: 'Supporters Only', desc: 'Paying members only', icon: Lock, color: 'text-[#F7931A]' }
+              { id: 'followers', label: 'Supporters Only', desc: 'Tippers and members can view', icon: Users, color: 'text-blue-400' },
+              { id: 'supporters', label: 'Members Only', desc: 'Paying members only', icon: Lock, color: 'text-[#F7931A]' }
               ].map(v => (
                 <button key={v.id} onClick={() => setVisibility(v.id as 'public' | 'followers' | 'supporters')} className={`w-full flex items-center gap-3 p-3 rounded-xl border text-left transition-all ${visibility === v.id ? 'border-[#F7931A] bg-[#F7931A]/10' : 'border-transparent hover:bg-white/5'}`}>
                   <div className={`p-2 rounded-lg bg-white/5 ${visibility === v.id ? v.color : 'text-slate-400'}`}>

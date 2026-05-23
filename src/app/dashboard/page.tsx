@@ -3,7 +3,10 @@
 import { useDashboard } from './layout';
 
 import { motion } from 'framer-motion';
-import { User, DollarSign, Loader2, Copy, Check, TrendingUp, History, Globe, Wallet } from 'lucide-react';
+import {
+  User, DollarSign, Loader2, Copy, Check, TrendingUp, History, Globe, Wallet,
+  Bitcoin, Sparkles, Share2, Heart, Calendar, Edit3, ArrowRight, Palette,
+} from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import MUSDLogo from '@/components/ui/MUSDLogo';
@@ -161,6 +164,9 @@ export default function DashboardPage() {
           subtitle="Your Contributions"
         />
       </div>
+
+      {/* FEATURE SHOWCASE — what you can do with TipHive */}
+      <FeatureShowcase username={creatorProfile?.username} />
     </div>
   );
 }
@@ -189,5 +195,206 @@ function DashboardCard({ icon, label, value, subtitle, highlight }: DashboardCar
 
       <p className="text-[10px] font-bold uppercase tracking-widest text-slate-600">{subtitle}</p>
     </div>
+  );
+}
+
+interface Feature {
+  icon: React.ReactNode;
+  eyebrow: string;
+  title: string;
+  desc: string;
+  href: string;
+  cta: string;
+  accent: string;
+  glow: string;
+  external?: boolean;
+  span?: string;
+}
+
+function FeatureShowcase({ username }: { username?: string }) {
+  const features: Feature[] = [
+    {
+      icon: <Bitcoin className="w-7 h-7" />,
+      eyebrow: 'DeFi · BTC-Backed',
+      title: 'Borrow MUSD against your BTC',
+      desc: 'Lock BTC, mint USD-pegged MUSD instantly. No interest, no expiry — pay creators, spend on Mezo, or earn yield with what you borrow.',
+      href: '/dashboard/borrow-musd',
+      cta: 'Open Vault',
+      accent: '#f7931a',
+      glow: 'rgba(247,147,26,0.22)',
+      span: 'md:col-span-2 lg:col-span-2',
+    },
+    {
+      icon: <Palette className="w-6 h-6" />,
+      eyebrow: 'Customize',
+      title: 'Build your own toolkit',
+      desc: 'Design your creator page your way — layouts, colors, sections.',
+      href: '/dashboard/visual-toolkit',
+      cta: 'Customize Page',
+      accent: '#a855f7',
+      glow: 'rgba(168,85,247,0.20)',
+    },
+    {
+      icon: <Share2 className="w-6 h-6" />,
+      eyebrow: 'Share Anywhere',
+      title: 'One link, infinite reach',
+      desc: 'Drop your TipHive page on socials and start collecting tips, subs, and support — instantly.',
+      href: username ? `/${username}` : '/',
+      cta: 'View Public Page',
+      external: true,
+      accent: '#06b6d4',
+      glow: 'rgba(6,182,212,0.20)',
+    },
+    {
+      icon: <Heart className="w-6 h-6" />,
+      eyebrow: 'Receive',
+      title: 'Get tipped instantly',
+      desc: 'Fans send BTC, MUSD or supported tokens straight to your wallet.',
+      href: '/dashboard/tipcircle',
+      cta: 'Open Tip Circles',
+      accent: '#ec4899',
+      glow: 'rgba(236,72,153,0.20)',
+    },
+    {
+      icon: <Calendar className="w-6 h-6" />,
+      eyebrow: 'Recurring',
+      title: 'Run subscriptions',
+      desc: 'Set monthly tiers — earn on autopilot, every cycle.',
+      href: '/dashboard/subscriptions',
+      cta: 'Manage Tiers',
+      accent: '#3b82f6',
+      glow: 'rgba(59,130,246,0.20)',
+    },
+    {
+      icon: <Edit3 className="w-6 h-6" />,
+      eyebrow: 'Create',
+      title: 'Post & publish',
+      desc: 'Behind-the-scenes drops, exclusive posts, paywalled content.',
+      href: '/dashboard/posts',
+      cta: 'Start Posting',
+      accent: '#eab308',
+      glow: 'rgba(234,179,8,0.20)',
+    },
+    {
+      icon: <TrendingUp className="w-6 h-6" />,
+      eyebrow: 'Insights',
+      title: 'Track your earnings',
+      desc: 'Trends, top supporters, growth — visualised in one place.',
+      href: '/dashboard/earninganalysis',
+      cta: 'View Analytics',
+      accent: '#22c55e',
+      glow: 'rgba(34,197,94,0.20)',
+    },
+  ];
+
+  return (
+    <section className="relative pt-8">
+      {/* Header */}
+      <motion.div
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.4 }}
+        className="mb-8 space-y-3"
+      >
+        <div className="flex items-center gap-3">
+          <Sparkles className="w-4 h-4 text-[#f7931a]" />
+          <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#f7931a]">Your Toolkit</span>
+        </div>
+        <h2 className="text-4xl md:text-5xl font-black text-white uppercase tracking-tighter leading-[0.9]">
+          Everything you need to{' '}
+          <span className="bg-gradient-to-r from-[#f7931a] via-[#ffae42] to-[#ffd166] bg-clip-text text-transparent">
+            monetize
+          </span>
+          .
+        </h2>
+        <p className="text-slate-400 text-base md:text-lg max-w-2xl font-medium leading-relaxed">
+          One link, one wallet, infinite ways to earn. Borrow against BTC, post content, collect tips, run subscriptions — all from your Hive.
+        </p>
+      </motion.div>
+
+      {/* Cards grid — hero spans 2 cols on lg */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {features.map((f, i) => (
+          <FeatureCard key={i} {...f} delay={i * 0.06} />
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function FeatureCard({
+  icon, eyebrow, title, desc, href, cta, accent, glow, external, span, delay,
+}: Feature & { delay: number }) {
+  const Inner = (
+    <>
+      {/* glow blob */}
+      <div
+        className="absolute -top-20 -right-20 w-64 h-64 rounded-full blur-3xl opacity-40 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none"
+        style={{ background: glow }}
+      />
+      {/* subtle accent bar at top */}
+      <div
+        className="absolute top-0 left-6 right-6 h-px opacity-0 group-hover:opacity-100 transition-opacity"
+        style={{ background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }}
+      />
+
+      <div className="relative z-10 flex flex-col h-full">
+        <div
+          className="w-14 h-14 rounded-2xl flex items-center justify-center mb-5 transition-all duration-300 group-hover:scale-110 group-hover:rotate-3"
+          style={{
+            background: `${accent}1f`,
+            color: accent,
+            border: `1px solid ${accent}55`,
+            boxShadow: `0 0 0 0 ${accent}00`,
+          }}
+        >
+          {icon}
+        </div>
+        <div
+          className="text-[10px] font-black uppercase tracking-[0.25em] mb-2"
+          style={{ color: accent }}
+        >
+          {eyebrow}
+        </div>
+        <h3 className="text-xl md:text-2xl font-black text-white tracking-tight leading-tight mb-2">
+          {title}
+        </h3>
+        <p className="text-slate-400 text-sm font-medium leading-relaxed mb-5 flex-1">
+          {desc}
+        </p>
+        <div className="flex items-center gap-2 text-[10px] font-black uppercase tracking-widest text-slate-500 group-hover:text-white transition-colors">
+          <span>{cta}</span>
+          <ArrowRight
+            size={12}
+            className="transition-transform duration-300 group-hover:translate-x-1"
+            style={{ color: accent }}
+          />
+        </div>
+      </div>
+    </>
+  );
+
+  const cardClass =
+    'group relative block rounded-3xl bg-[#0f0f14] border border-white/5 p-6 md:p-7 overflow-hidden transition-all duration-300 hover:border-white/15 hover:-translate-y-1 hover:shadow-2xl h-full';
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 18 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: '-60px' }}
+      transition={{ duration: 0.35, delay, ease: 'easeOut' }}
+      className={span}
+    >
+      {external ? (
+        <a href={href} target="_blank" rel="noreferrer" className={cardClass}>
+          {Inner}
+        </a>
+      ) : (
+        <Link href={href} className={cardClass}>
+          {Inner}
+        </Link>
+      )}
+    </motion.div>
   );
 }

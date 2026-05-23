@@ -20,6 +20,8 @@ export default function PostDetailClient() {
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   const [likes, setLikes] = useState(0);
   const [isLiked, setIsLiked] = useState(false);
+  const [hasTipped, setHasTipped] = useState(false);
+  const [isMember, setIsMember] = useState(false);
 
   useEffect(() => {
     async function fetchData() {
@@ -45,12 +47,39 @@ export default function PostDetailClient() {
 
         if (postData) {
           setPost(postData);
+
+          if (userAddress && profile.wallet_address) {
+            const fan = userAddress.toLowerCase();
+            const creatorAddr = (profile.wallet_address as string).toLowerCase();
+
+            const [{ data: tipRow }, { data: subs }] = await Promise.all([
+              supabase
+                .from('tips')
+                .select('id')
+                .eq('from_address', fan)
+                .eq('to_address', creatorAddr)
+                .limit(1)
+                .maybeSingle(),
+              supabase
+                .from('subscriptions')
+                .select('id, end_date')
+                .eq('fan_address', fan)
+                .eq('creator_address', creatorAddr)
+                .eq('active', true),
+            ]);
+
+            setHasTipped(!!tipRow);
+            if (subs && subs.length > 0) {
+              const now = new Date();
+              setIsMember(subs.some(s => new Date(s.end_date) > now));
+            }
+          }
         }
       }
       setLoading(false);
     }
     fetchData();
-  }, [username, slug]);
+  }, [username, slug, userAddress]);
 
   const handleLike = () => {
     if (isLiked) {
@@ -67,7 +96,16 @@ export default function PostDetailClient() {
   if (!post || !creator) return <div className="min-h-screen bg-[#0B0F19] flex flex-col items-center justify-center text-white"><p className="mb-4">Post not found.</p><button onClick={() => router.back()} className="text-[#F7931A] hover:underline">Go Back</button></div>;
 
   const isOwner = userAddress?.toLowerCase() === (creator?.wallet_address as string)?.toLowerCase();
-  const isLocked = post.visibility !== 'public' && !isOwner;
+  const visibility = post.visibility as string;
+  // 'supporters' = members only (paid subscribers)
+  // 'followers' = supporters only (tippers OR members)
+  const hasAccess = isOwner
+    || visibility === 'public'
+    || (visibility === 'followers' && (hasTipped || isMember))
+    || (visibility === 'supporters' && isMember);
+  const isLocked = !hasAccess;
+  const isSupportersPost = visibility === 'followers';
+  const unlockHref = isSupportersPost ? `/${creator.username}` : `/${creator.username}/subscriptions`;
   const type = post.video_url ? 'video' : post.image_url ? 'image' : 'text';
 
   return (
@@ -109,7 +147,7 @@ export default function PostDetailClient() {
                 'text-orange-400 bg-orange-400/10'
               }`}>
                 {post.visibility === 'public' ? <Globe2 className="w-3 h-3" /> : post.visibility === 'followers' ? <Users className="w-3 h-3" /> : <Lock className="w-3 h-3" />}
-                {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Followers Only' : 'Supporters Only'}
+                {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Supporters Only' : 'Members Only'}
               </span>
             </div>
 
@@ -124,11 +162,11 @@ export default function PostDetailClient() {
                 {isLocked ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center">
                     <Lock className="w-12 h-12 text-[#F7931A] mb-4" />
-                    <h3 className="text-xl font-bold mb-2">Subscribe to Unlock</h3>
-                    <p className="text-slate-400 mb-6 max-w-sm">This content is exclusive for supporters. Subscribe to unlock full access.</p>
-                    <button className="bg-[#8A2BE2] text-white font-black py-3 px-8 rounded-xl shadow-[0_0_20px_rgba(138,43,226,0.3)] flex items-center gap-2">
-                      <Zap className="w-4 h-4" /> Subscribe Now
-                    </button>
+                    <h3 className="text-xl font-bold mb-2">{isSupportersPost ? 'Supporters & Members' : 'Subscribe to Unlock'}</h3>
+                    <p className="text-slate-400 mb-6 max-w-sm">{isSupportersPost ? 'Available for supporters and members. Tip or subscribe to unlock.' : 'This content is exclusive for supporters. Subscribe to unlock full access.'}</p>
+                    <Link href={unlockHref} className="bg-[#8A2BE2] text-white font-black py-3 px-8 rounded-xl shadow-[0_0_20px_rgba(138,43,226,0.3)] flex items-center gap-2">
+                      <Zap className="w-4 h-4" /> {isSupportersPost ? 'Visit Creator' : 'Subscribe Now'}
+                    </Link>
                   </div>
                 ) : (
                   <Image src={post.image_url as string} alt={post.title as string} fill className="object-contain" unoptimized />
@@ -141,8 +179,8 @@ export default function PostDetailClient() {
                 {isLocked ? (
                   <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center z-10">
                     <Lock className="w-12 h-12 text-[#F7931A] mb-4" />
-                    <h3 className="text-xl font-bold mb-2">Subscribe to Unlock</h3>
-                    <button className="bg-[#8A2BE2] text-white font-black py-3 px-8 rounded-xl shadow-[0_0_20px_rgba(138,43,226,0.3)] mt-4">Subscribe Now</button>
+                    <h3 className="text-xl font-bold mb-2">{isSupportersPost ? 'Supporters & Members' : 'Subscribe to Unlock'}</h3>
+                    <Link href={unlockHref} className="bg-[#8A2BE2] text-white font-black py-3 px-8 rounded-xl shadow-[0_0_20px_rgba(138,43,226,0.3)] mt-4">{isSupportersPost ? 'Visit Creator' : 'Subscribe Now'}</Link>
                   </div>
                 ) : (
                   <video src={post.video_url as string} controls className="w-full h-full object-contain" />
