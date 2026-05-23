@@ -1893,21 +1893,17 @@ cd TipHive`}
                 </pre>
               </Step>
 
-              <Step number="2" title="Install Web Application Dependencies">
+              <Step number="2" title="Install All Dependencies">
                 <p className="text-sm text-slate-400 mb-4">
-                  Navigate into the frontend web directory and install the necessary package dependencies:
+                  TipHive is now a unified workspace — a single <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">npm install</code> from inside <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">/web</code> pulls everything: Next.js, wagmi, Hardhat, OpenZeppelin contracts, ethers, and all toolbox plugins under one shared <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">node_modules</code>.
                 </p>
                 <pre className="p-4 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
 {`cd web
 npm install`}
                 </pre>
-                <p className="text-sm text-slate-400 mt-4 mb-4">
-                  If you plan to modify or deploy the smart contracts, also install Hardhat dependencies in the contracts folder:
+                <p className="text-sm text-slate-400 mt-4 leading-relaxed">
+                  No separate install inside <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">/contracts</code> is required — Hardhat resolves dependencies from the root <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">node_modules</code> via parent traversal.
                 </p>
-                <pre className="p-4 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
-{`cd ../contracts
-npm install`}
-                </pre>
               </Step>
 
               <Step number="3" title="Configure Local Environment Variables">
@@ -1994,15 +1990,14 @@ WALLET_SESSION_SECRET=replace-with-32-plus-char-random-string`}
 
               <Step number="5" title="Deploying Smart Contracts (Optional)">
                 <p className="text-sm text-slate-400 mb-4">
-                  If you have modified the Solidity tipping or subscription contracts, compile and deploy them to the Mezo network using Hardhat:
+                  If you have modified the Solidity tipping or subscription contracts, use the unified npm scripts from inside <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">/web</code> to compile and deploy via Hardhat:
                 </p>
                 <pre className="p-4 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
-{`cd contracts
-# Compile Solidity contracts
-npx hardhat compile
-
-# Deploy to Mezo Testnet
-npx hardhat run scripts/deploySubscription.js --network mezoTestnet`}
+{`# From inside /web
+npm run contracts:compile           # hardhat compile
+npm run contracts:test              # hardhat test
+npm run contracts:deploy:testnet    # deploy SubscriptionV2 to Mezo Testnet (chainId 31611)
+npm run contracts:deploy:mainnet    # deploy to Mezo Mainnet  (chainId 31612)`}
                 </pre>
                 <p className="text-sm text-slate-400 mt-4 leading-relaxed">
                   Take the newly generated contract addresses from the console output and update the corresponding contract environment keys inside your <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">.env.local</code> file.
@@ -2039,40 +2034,66 @@ npm run dev`}
               Project Directory Structure
             </h2>
             <p className="text-sm text-slate-400 font-medium leading-relaxed">
-              TipHive is organized as a clean, modular repository splitting smart contracts and indexer assets from the primary Next.js web application:
+              TipHive is organized as a single unified workspace at <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">/web</code> — Next.js frontend, API routes, and the Hardhat smart-contract project all share one <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">package.json</code> and one <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">node_modules</code>:
             </p>
             <pre className="p-6 bg-black/60 border border-white/10 rounded-2xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
-{`c:/Hackathon/superpay/
-├── contracts/               # Solidity Smart Contracts (Hardhat Suite)
-│   ├── Subscription.sol     # Recurrent subscription tier payments contract
-│   ├── Tipping.sol          # Wallet-to-wallet tip processor contract
-│   ├── hardhat.config.js    # Hardhat networks and compiler configurations
-│   └── scripts/             # Smart contract deployment & validation scripts
-│
-├── indexer/                 # On-chain logs indexing and event monitor suite
-│
-└── web/                     # Main Next.js Frontend and API Application
-    ├── public/              # Static media, logos, and global brand assets
+{`TipHive/
+└── web/                             # Unified Next.js 16 + Hardhat workspace
+    ├── package.json                 # Single manifest (Next + Hardhat deps)
+    ├── node_modules/                # Single dependency tree
+    ├── .env.local                   # Shared env (consumed by Next + Hardhat)
+    │
+    ├── contracts/                   # Hardhat project (shares root node_modules)
+    │   ├── hardhat.config.js        # Solc 0.8.19 + Mezo testnet/mainnet networks
+    │   ├── contracts/               # Solidity sources
+    │   │   ├── Tipping.sol          # One-time tipping contract
+    │   │   └── Subscription.sol     # SubscriptionV2 — recurring memberships
+    │   └── scripts/                 # Deploy & verify scripts
+    │       ├── deploySubscription.js
+    │       └── deployMainnet.js
+    │
+    ├── public/                      # PWA manifest, service worker, logos, icons
+    │
     └── src/
-        ├── app/             # Next.js App Router folders and routes
-        │   ├── (api)/       # Serverless API routes (auth, uploads, emails)
-        │   ├── [username]/  # Creator public customizable profile pages
-        │   ├── dashboard/   # Content creator analytics & control panels
-        │   │   ├── createposts/ # Rich text posting creator screen
-        │   │   ├── inbox/   # Real-time direct messages screen
-        │   │   └── posts/   # Creator posts view & management center
-        │   ├── onboarding/  # Sign-up flows and unique username reservation
-        │   └── page.tsx     # Landing page with visual features
-        ├── components/      # Modular high-fidelity React components
-        │   ├── layout/      # Shared Navbar, Sidebars, and footers
-        │   ├── profile/     # Public interactive tipping/subscribing boxes
-        │   └── ui/          # Sleek premium glassmorphic UI controls
-        └── lib/             # Shared client configs and integration scripts
-            ├── sanitize.ts        # DOMPurify wrapper for user-generated HTML
-            ├── wallet-session.ts  # SIWE + HMAC session cookies
-            ├── wallet-auth-shim.ts# Client-side auth hook (current wallet/session)
-            ├── contracts.ts       # Viem & Wagmi contract hooks integration
-            └── supabase.ts        # Supabase client instance and database types`}
+        ├── app/                     # Next.js App Router folders and routes
+        │   ├── (api)/api/           # Serverless API routes (auth, profile, v1 widgets)
+        │   ├── [username]/          # Creator public profile + posts/members/subs
+        │   ├── dashboard/           # Creator control panels
+        │   │   ├── borrow-musd/     # Mezo Trove (open/adjust/close)
+        │   │   ├── tipcircle/       # Live tip ledger + supporter ranking
+        │   │   ├── visual-toolkit/  # Button, widget, QR generator
+        │   │   ├── createposts/     # TipTap-powered post composer
+        │   │   ├── earninganalysis/ # Chart.js earnings analytics
+        │   │   ├── inbox/           # Direct messages
+        │   │   ├── mysubsriptions/  # Subscriptions you hold
+        │   │   ├── posts/           # Your post manager
+        │   │   ├── referrals/       # Referral tracking
+        │   │   ├── sentsupport/     # Outgoing support history
+        │   │   ├── subscriptions/   # Plan management
+        │   │   └── activityfeed/    # Unified on/off-chain activity stream
+        │   ├── mezo-toolkit/        # Mezo ecosystem launcher hub
+        │   ├── embed/               # Iframeable widget for external sites
+        │   ├── explore/             # Creator discovery feed
+        │   ├── onboarding/          # First-time wallet sign-in flow
+        │   ├── editprofile/         # Profile editor
+        │   ├── docs/                # In-app documentation pages
+        │   └── HomePageClient.tsx   # Landing page
+        ├── components/              # Modular React components
+        │   ├── layout/              # Navbar, Footer, NetworkSwitcher, NotificationBell
+        │   ├── providers/           # Web3Provider, OnboardingGuard, WalletSwitchGuard
+        │   ├── dashboard/           # SubscriptionManager, Analytics, inbox/ChatWindow
+        │   ├── wallet/              # WalletProfileMenu
+        │   ├── profile/             # SubscriptionSection
+        │   ├── modals/              # Tip + Subscribe modals
+        │   └── ui/                  # Skeletons, Modals, Buttons, Pagination, MUSDLogo
+        └── lib/                     # Shared client configs and integrations
+            ├── wallet-session.ts    # SIWE verify + HMAC session cookies
+            ├── wallet-auth-shim.ts  # Client wallet auth state hook
+            ├── chains.ts            # Mezo chain definitions + RPC config
+            ├── contracts.ts         # Tipping + Subscription ABIs + addresses
+            ├── borrow-contracts.ts  # Mezo Trove ABIs + addresses + constants
+            ├── sanitize.ts          # DOMPurify wrapper for TipTap content
+            └── supabase.ts          # Anon + service-role clients`}
             </pre>
           </section>
         </div>

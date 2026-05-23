@@ -1,0 +1,10 @@
+{
+  "network": "mezo-mainnet",
+  "chainId": 31612,
+  "musd": "0xdD468A1DDc392dcdbEf6db6e34E89AA338F9F186",
+  "contracts": {
+    "Tipping": "0xc2fCf7dA22C53fe7137a6191b9230022A1A9a393",
+    "SubscriptionV2": "0x122C3181703b5B6A88C80a07Ac5e848bC5c1a33D"
+  },
+  "deployedAt": "2026-05-14T19:06:16.186Z"
+}

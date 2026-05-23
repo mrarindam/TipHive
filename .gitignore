@@ -58,3 +58,16 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# hardhat / contracts
+/contracts/artifacts/
+/contracts/cache/
+/contracts/typechain/
+/contracts/typechain-types/
+/contracts/node_modules/
+/contracts/coverage/
+/contracts/coverage.json
+/contracts/gas-report.txt
+*.key
+secrets.json
+mnemonic.txt
+

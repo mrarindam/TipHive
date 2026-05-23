@@ -1,0 +1,8 @@
+{
+  "network": "mezo-testnet",
+  "chainId": 31611,
+  "contract": "SubscriptionV2",
+  "address": "0x4315E5B5d64E3d650d2AD017716cf225C666aD60",
+  "musd": "0x118917a40FAF1CD7a13dB0Ef56C86De7973Ac503",
+  "deployedAt": "2026-04-27T07:57:53.183Z"
+}
