@@ -25,12 +25,12 @@ const config = getDefaultConfig({
   appUrl: 'https://tiphive.xyz',
   appIcon: '/logo.png',
   projectId: walletConnectProjectId,
-  // Mainnet first => RainbowKit/wagmi treat it as the default chain. Users can
-  // still manually switch to testnet from the wallet profile menu.
-  chains: [mezoMainnet, mezoTestnet],
+  // Testnet first => RainbowKit/wagmi treat it as the default chain. Users can
+  // still manually switch to mainnet from the wallet profile menu.
+  chains: [mezoTestnet, mezoMainnet],
   transports: {
-    [mezoMainnet.id]: http(MAINNET_RPC),
     [mezoTestnet.id]: http(TESTNET_RPC),
+    [mezoMainnet.id]: http(MAINNET_RPC),
   },
   wallets: [
     {
@@ -90,7 +90,7 @@ function WalletSessionSync() {
           statement: 'Sign in to TipHive with your wallet.',
           uri: window.location.origin,
           version: '1',
-          chainId: chainId || mezoMainnet.id,
+          chainId: chainId || mezoTestnet.id,
           nonce,
         });
 
@@ -161,7 +161,7 @@ export function Web3Provider({ children }: { children: React.ReactNode }) {
     <WagmiProvider config={config} reconnectOnMount={true}>
       <QueryClientProvider client={queryClient}>
         <RainbowKitProvider
-          initialChain={mezoMainnet}
+          initialChain={mezoTestnet}
           theme={darkTheme({
             accentColor: '#F7931A',
             accentColorForeground: 'white',

@@ -47,12 +47,12 @@ const MAINNET_CONFIG: NetworkConfig = {
 export function useNetworkConfig(): NetworkConfig {
   const chainId = useChainId();
 
-  if (chainId === MEZO_TESTNET_ID) {
-    return TESTNET_CONFIG;
+  if (chainId === MEZO_MAINNET_ID) {
+    return MAINNET_CONFIG;
   }
 
-  // Default to mainnet for any other chain (including mainnet itself and when not connected)
-  return MAINNET_CONFIG;
+  // Default to testnet for any other chain (including testnet itself and when not connected)
+  return TESTNET_CONFIG;
 }
 
 export { MEZO_TESTNET_ID, MEZO_MAINNET_ID };

@@ -8,8 +8,8 @@ import { mezoTestnet, mezoMainnet } from '@/components/providers/WalletProviderW
 import { useWalletAuth } from '@/lib/wallet-auth-shim';
 
 const NETWORKS = [
-  { id: mezoMainnet.id, name: 'Mezo Mainnet', desc: 'Live network' },
   { id: mezoTestnet.id, name: 'Mezo Testnet', desc: 'Test environment' },
+  { id: mezoMainnet.id, name: 'Mezo Mainnet', desc: 'Live network' },
 ];
 
 export default function NetworkSwitcher() {

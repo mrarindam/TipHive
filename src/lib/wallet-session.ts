@@ -144,7 +144,7 @@ export async function getWalletSession() {
 
     return {
       address: session.address.toLowerCase(),
-      chainId: session.chainId || mezoMainnet.id,
+      chainId: session.chainId || mezoTestnet.id,
     };
   } catch {
     return null;

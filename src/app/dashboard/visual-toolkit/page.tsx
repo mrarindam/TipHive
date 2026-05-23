@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MousePointerClick, QrCode, ArrowRight, Sparkles, Lock } from 'lucide-react';
 import { useDashboard } from '../layout';
@@ -186,12 +187,12 @@ export default function VisualToolkitPage() {
         className="p-10 rounded-[3rem] bg-gradient-to-br from-[#0f0f14] to-[#050507] border border-white/5 flex flex-col md:flex-row items-center justify-between gap-8"
       >
          <div className="space-y-4">
-            <h2 className="text-3xl font-black text-white tracking-tight">Need a custom integration?</h2>
-            <p className="text-slate-500 font-medium">Our API allows you to build completely custom experiences for your fans.</p>
+            <h2 className="text-3xl font-black text-white tracking-tight">Want to learn more?</h2>
+            <p className="text-slate-500 font-medium">Our API allows you to build completely special experiences for your fans.</p>
          </div>
-         <button className="whitespace-nowrap px-8 py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors shadow-2xl">
+         <Link href="/docs/visual-toolkit" className="whitespace-nowrap px-8 py-4 bg-white text-black rounded-2xl font-black uppercase tracking-widest text-xs hover:bg-slate-200 transition-colors shadow-2xl">
             View API Docs
-         </button>
+         </Link>
       </motion.div>
 
       <AnimatePresence>

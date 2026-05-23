@@ -2,9 +2,9 @@
 
 import { useDashboard } from '../layout';
 import { motion } from 'framer-motion';
-import { 
-  Users, Gift, Copy, Check, Share2, 
-  Send, MessageCircle, ArrowRight, TrendingUp, 
+import {
+  Users, Gift, Copy, Check, Share2,
+  ArrowRight, TrendingUp,
   Star, Zap
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
@@ -142,12 +142,6 @@ export default function ReferralsPage() {
               <span className="text-xs font-black uppercase tracking-widest text-slate-500 mr-2">Share via:</span>
               <button onClick={shareOnTwitter} className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-blue-400 hover:border-blue-400/30 transition-all group">
                 <Share2 className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-blue-500 hover:border-blue-500/30 transition-all group">
-                <Send className="w-5 h-5 group-hover:scale-110 transition-transform" />
-              </button>
-              <button className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-slate-400 hover:text-green-500 hover:border-green-500/30 transition-all group">
-                <MessageCircle className="w-5 h-5 group-hover:scale-110 transition-transform" />
               </button>
             </div>
           </div>
