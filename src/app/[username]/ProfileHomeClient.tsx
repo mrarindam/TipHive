@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
+import { invalidateCreatorCache } from '@/lib/cache-invalidate';
 import { Heart, ChevronRight, Lock, Video, Music2, X, CheckCircle2 } from 'lucide-react';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -250,6 +251,8 @@ export default function ProfileHomeClient() {
           creator_address: creator.wallet_address.toLowerCase(),
           amount_to_add: parseFloat(finalAmount)
         });
+
+        await invalidateCreatorCache(creator.wallet_address, userAddress);
       }
 
       // Create notification for creator

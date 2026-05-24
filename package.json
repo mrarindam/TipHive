@@ -30,6 +30,7 @@
     "@tiptap/extension-youtube": "^3.22.5",
     "@tiptap/react": "^3.22.5",
     "@tiptap/starter-kit": "^3.22.5",
+    "@upstash/redis": "^1.38.0",
     "@walletconnect/ethereum-provider": "^2.23.9",
     "chart.js": "^4.5.1",
     "clsx": "^2.1.1",

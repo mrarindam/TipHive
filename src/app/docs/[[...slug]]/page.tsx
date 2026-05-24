@@ -1867,6 +1867,16 @@ struct SubscriptionRecord {
 
               <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all">
                 <div className="flex items-center gap-3 mb-2">
+                  <div className="w-3 h-3 rounded-full bg-red-400" />
+                  <h4 className="font-bold text-white text-base">Upstash Redis Database</h4>
+                </div>
+                <p className="text-sm text-slate-400 font-medium leading-relaxed">
+                  A free Redis database at console.upstash.com. Powers the cache-aside layer in front of Supabase — caches profiles, explore feed, dashboard activity, and post bundles for sub-100ms responses. The app gracefully degrades to Supabase pass-through if Redis is unavailable.
+                </p>
+              </div>
+
+              <div className="p-6 bg-white/5 border border-white/10 rounded-2xl hover:border-white/20 transition-all">
+                <div className="flex items-center gap-3 mb-2">
                   <div className="w-3 h-3 rounded-full bg-blue-400" />
                   <h4 className="font-bold text-white text-base">No External Mailer Required</h4>
                 </div>
@@ -1949,7 +1959,12 @@ RainbowKit_APP_SECRET=your-RainbowKit-app-secret
 
 # Wallet Session HMAC Secret (Required, 32+ random chars)
 # No email service env vars needed — TipHive sends no transactional email.
-WALLET_SESSION_SECRET=replace-with-32-plus-char-random-string`}
+WALLET_SESSION_SECRET=replace-with-32-plus-char-random-string
+
+# Upstash Redis (Recommended — graceful Supabase fallback if missing)
+# Create a free Redis DB at console.upstash.com → REST API tab → copy these values
+UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token`}
                 </pre>
               </Step>
 
@@ -1988,7 +2003,80 @@ WALLET_SESSION_SECRET=replace-with-32-plus-char-random-string`}
                 </Callout>
               </Step>
 
-              <Step number="5" title="Deploying Smart Contracts (Optional)">
+              <Step number="5" title="Initialize Upstash Redis Cache">
+                <p className="text-sm text-slate-400 mb-4">
+                  TipHive uses a <strong className="text-white">cache-aside Redis layer</strong> in front of Supabase. The app caches public profiles, the explore feed, dashboard activity, and post bundles for sub-100ms response times. Without Redis the app still runs — every cache helper falls back to Supabase via <code className="text-white bg-white/10 px-1.5 py-0.5 rounded font-mono">try/catch</code> — but production traffic will be noticeably slower.
+                </p>
+
+                <div className="space-y-4 my-6">
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
+                    <h5 className="font-black text-white text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs font-black">A</span>
+                      Create a Redis database
+                    </h5>
+                    <ol className="space-y-2 text-sm text-slate-400 font-medium leading-relaxed list-decimal list-inside ml-1">
+                      <li>Sign in at <Link href="https://console.upstash.com" className="text-[#F7931A] hover:underline font-bold">console.upstash.com</Link>.</li>
+                      <li>Click <strong className="text-white">Create Database</strong>.</li>
+                      <li>Name it (e.g. <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">tiphive-cache</code>) and pick the region closest to your Vercel function region (e.g. <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">us-east-1</code> for <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">iad1</code>).</li>
+                      <li>Choose the <strong className="text-white">Regional</strong> type and turn on <strong className="text-white">Eviction</strong> (defaults to <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">allkeys-lru</code>, perfect for cache use).</li>
+                      <li>The free tier (10 K commands/day, 256 MB) is plenty for development and early traffic.</li>
+                    </ol>
+                  </div>
+
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
+                    <h5 className="font-black text-white text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs font-black">B</span>
+                      Copy the REST credentials
+                    </h5>
+                    <p className="text-sm text-slate-400 font-medium leading-relaxed mb-3">
+                      Open the database, click the <strong className="text-white">REST API</strong> tab, select the <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">@upstash/redis</code> view, and copy both values into your <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">.env.local</code>:
+                    </p>
+                    <pre className="p-4 bg-black/60 border border-white/10 rounded-xl text-slate-300 font-mono text-sm overflow-x-auto leading-relaxed">
+{`UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+UPSTASH_REDIS_REST_TOKEN=AXX...your-rest-token`}
+                    </pre>
+                  </div>
+
+                  <div className="p-5 bg-white/5 border border-white/10 rounded-2xl">
+                    <h5 className="font-black text-white text-sm uppercase tracking-widest mb-3 flex items-center gap-2">
+                      <span className="w-7 h-7 rounded-full bg-red-500/20 text-red-400 flex items-center justify-center text-xs font-black">C</span>
+                      What gets cached
+                    </h5>
+                    <div className="grid md:grid-cols-2 gap-3 mt-3">
+                      <div className="p-3 bg-black/40 border border-white/5 rounded-xl">
+                        <p className="text-xs font-black text-white uppercase tracking-widest mb-1">Public profile</p>
+                        <p className="text-xs text-slate-400 font-medium">/[username] bundled profile + counts + earnings · TTL 30 min</p>
+                      </div>
+                      <div className="p-3 bg-black/40 border border-white/5 rounded-xl">
+                        <p className="text-xs font-black text-white uppercase tracking-widest mb-1">Explore feed</p>
+                        <p className="text-xs text-slate-400 font-medium">Creator discovery + their posts · TTL 5 min</p>
+                      </div>
+                      <div className="p-3 bg-black/40 border border-white/5 rounded-xl">
+                        <p className="text-xs font-black text-white uppercase tracking-widest mb-1">Dashboard activity</p>
+                        <p className="text-xs text-slate-400 font-medium">Tips + subs + borrow events bundle · TTL 5 min</p>
+                      </div>
+                      <div className="p-3 bg-black/40 border border-white/5 rounded-xl">
+                        <p className="text-xs font-black text-white uppercase tracking-widest mb-1">Post detail</p>
+                        <p className="text-xs text-slate-400 font-medium">Post + comments + likes · TTL 5 min</p>
+                      </div>
+                      <div className="p-3 bg-black/40 border border-white/5 rounded-xl">
+                        <p className="text-xs font-black text-white uppercase tracking-widest mb-1">Auth user row</p>
+                        <p className="text-xs text-slate-400 font-medium">Dashboard hot path · TTL 15 min</p>
+                      </div>
+                      <div className="p-3 bg-black/40 border border-white/5 rounded-xl">
+                        <p className="text-xs font-black text-white uppercase tracking-widest mb-1">User access</p>
+                        <p className="text-xs text-slate-400 font-medium">Tipped + subscribed creator sets · TTL 5 min</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <Callout type="info" title="Real-Time Invalidation">
+                  Every tip, subscription, and profile update fires <code className="text-white bg-white/15 px-1 py-0.5 rounded font-mono">POST /api/cache/invalidate-creator</code> — wiping creator + fan cache entries instantly, so the dashboard balance never shows stale earnings after a successful on-chain transaction.
+                </Callout>
+              </Step>
+
+              <Step number="6" title="Deploying Smart Contracts (Optional)">
                 <p className="text-sm text-slate-400 mb-4">
                   If you have modified the Solidity tipping or subscription contracts, use the unified npm scripts from inside <code className="text-white bg-white/10 px-1 py-0.5 rounded font-mono">/web</code> to compile and deploy via Hardhat:
                 </p>
@@ -2004,7 +2092,7 @@ npm run contracts:deploy:mainnet    # deploy to Mezo Mainnet  (chainId 31612)`}
                 </p>
               </Step>
 
-              <Step number="6" title="Launch the Local Development Server">
+              <Step number="7" title="Launch the Local Development Server">
                 <p className="text-sm text-slate-400 mb-4">
                   Start the Next.js development server to compile and run the local application:
                 </p>
@@ -2017,7 +2105,7 @@ npm run dev`}
                 </p>
               </Step>
 
-              <Step number="7" title="Execute TypeScript Code Verification">
+              <Step number="8" title="Execute TypeScript Code Verification">
                 <p className="text-sm text-slate-400 mb-4">
                   Validate that all files compile correctly and do not produce type checking errors:
                 </p>
@@ -2056,7 +2144,15 @@ npm run dev`}
     │
     └── src/
         ├── app/                     # Next.js App Router folders and routes
-        │   ├── (api)/api/           # Serverless API routes (auth, profile, v1 widgets)
+        │   ├── (api)/api/           # Serverless API routes
+        │   │   ├── auth/            # SIWE + cached user fetch
+        │   │   ├── cache/           # Redis invalidation hooks (invalidate-creator)
+        │   │   ├── dashboard/       # Cached activity bundle (tips/subs/borrows + aggregates)
+        │   │   ├── explore/         # Cached explore feed (creators + posts bundle)
+        │   │   ├── posts/           # Cached post detail bundle (post + comments + likes)
+        │   │   ├── profile/         # Profile CRUD + cached by-username bundle
+        │   │   ├── user/            # Cached per-user access (tipped + subscribed sets)
+        │   │   └── v1/              # Public widget JS + cached SVG button
         │   ├── [username]/          # Creator public profile + posts/members/subs
         │   ├── dashboard/           # Creator control panels
         │   │   ├── borrow-musd/     # Mezo Trove (open/adjust/close)
@@ -2064,7 +2160,7 @@ npm run dev`}
         │   │   ├── visual-toolkit/  # Button, widget, QR generator
         │   │   ├── createposts/     # TipTap-powered post composer
         │   │   ├── earninganalysis/ # Chart.js earnings analytics
-        │   │   ├── inbox/           # Direct messages
+        │   │   ├── inbox/           # Direct messages (Supabase realtime — uncached)
         │   │   ├── mysubsriptions/  # Subscriptions you hold
         │   │   ├── posts/           # Your post manager
         │   │   ├── referrals/       # Referral tracking
@@ -2092,6 +2188,9 @@ npm run dev`}
             ├── chains.ts            # Mezo chain definitions + RPC config
             ├── contracts.ts         # Tipping + Subscription ABIs + addresses
             ├── borrow-contracts.ts  # Mezo Trove ABIs + addresses + constants
+            ├── redis.ts             # Upstash client + cacheGetOrSet/cacheDel helpers + key map
+            ├── cache-invalidate.ts  # Client helper for /api/cache/invalidate-creator
+            ├── post-fetcher.ts      # Shared post-bundle fetcher (SSR + client share cache)
             ├── sanitize.ts          # DOMPurify wrapper for TipTap content
             └── supabase.ts          # Anon + service-role clients`}
             </pre>

@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import {
+  ArrowLeft,
   AtSign,
   Crown,
   ExternalLink,
@@ -253,7 +254,16 @@ export default function ConnectedProfilePage() {
   }
 
   return (
-    <div className="w-full px-4 py-10 sm:px-6 lg:px-8">
+    <div className="w-full px-4 pt-28 pb-10 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto mb-4">
+        <Link
+          href="/dashboard"
+          className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-semibold text-sm"
+        >
+          <ArrowLeft size={18} />
+          Back to Dashboard
+        </Link>
+      </div>
       <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between max-w-4xl mx-auto">
         <div>
           <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#F7931A]/25 bg-[#F7931A]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#F7931A]">

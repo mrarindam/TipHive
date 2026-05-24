@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
+import { cacheGetOrSet, cacheKeys, TTL } from '@/lib/redis';
 
 function escapeXml(value: string) {
   return value
@@ -32,31 +33,44 @@ export async function GET(req: NextRequest) {
   if (showCount && slug) {
     try {
       const supabase = createServerSupabase();
-      
-      // Case-insensitive slug lookup
-      const { data: profile, error: profileError } = await supabase
-        .from('user_profiles')
-        .select('wallet_address')
-        .ilike('username', slug)
-        .single();
+      const normalizedSlug = slug.toLowerCase();
 
-      if (profile?.wallet_address) {
-        const addr = profile.wallet_address;
-        
-        // Use ILIKE for address comparison to handle potential casing differences
-        const [{ data: tips }, { data: subs }] = await Promise.all([
-          supabase.from('tips').select('from_address').ilike('to_address', addr),
-          supabase.from('subscriptions').select('fan_address').ilike('creator_address', addr)
-        ]);
+      const wallet = await cacheGetOrSet<string | null>(
+        cacheKeys.usernameToWallet(normalizedSlug),
+        TTL.day,
+        async () => {
+          const { data, error } = await supabase
+            .from('user_profiles')
+            .select('wallet_address')
+            .ilike('username', normalizedSlug)
+            .maybeSingle();
+          if (error) {
+            console.error('Profile not found for slug:', slug, error);
+            return null;
+          }
+          return data?.wallet_address ?? null;
+        },
+      );
 
-        const unique = new Set([
-          ...(tips || []).map(t => t.from_address?.toLowerCase()),
-          ...(subs || []).map(s => s.fan_address?.toLowerCase())
-        ].filter(Boolean));
+      if (wallet) {
+        const cachedCount = await cacheGetOrSet<number>(
+          cacheKeys.buttonCount(wallet),
+          TTL.long,
+          async () => {
+            const [{ data: tips }, { data: subs }] = await Promise.all([
+              supabase.from('tips').select('from_address').ilike('to_address', wallet),
+              supabase.from('subscriptions').select('fan_address').ilike('creator_address', wallet),
+            ]);
 
-        supporterCount = unique.size;
-      } else if (profileError) {
-        console.error('Profile not found for slug:', slug, profileError);
+            const unique = new Set([
+              ...(tips || []).map((t) => t.from_address?.toLowerCase()),
+              ...(subs || []).map((s) => s.fan_address?.toLowerCase()),
+            ].filter(Boolean));
+
+            return unique.size;
+          },
+        );
+        supporterCount = cachedCount;
       }
     } catch (e) {
       console.error('Error fetching supporter count:', e);

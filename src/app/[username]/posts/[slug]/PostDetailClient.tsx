@@ -71,136 +71,56 @@ export default function PostDetailClient() {
     window.scrollTo(0, 0);
     async function fetchData() {
       if (!username || !slug) return;
-      const title = decodeURIComponent(slug as string);
 
       try {
-        const { data: profile } = await supabase
-          .from('user_profiles')
-          .select('*')
-          .ilike('username', username as string)
-          .single();
+        const bundleRes = await fetch(
+          `/api/posts/by-slug?username=${encodeURIComponent(username as string)}&slug=${encodeURIComponent(slug as string)}`,
+        );
 
-        if (profile) {
-          setCreator(profile);
-          const { data: postData } = await supabase
-            .from('posts')
-            .select('*')
-            .eq('creator_id', profile.id)
-            .ilike('title', title)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single();
+        if (!bundleRes.ok) {
+          setLoading(false);
+          return;
+        }
 
-          if (postData) {
-            setPost(postData);
+        const bundle = await bundleRes.json();
+        const bundleCreator = bundle.creator as CreatorProfile & { wallet_address: string };
+        const postData = bundle.post as Post;
 
-            const identifier = userAddress ? userAddress.toLowerCase() : userId;
-            const promises: PromiseLike<void>[] = [];
+        setCreator(bundleCreator);
+        setPost(postData);
+        setLikes(bundle.likesCount || 0);
+        setComments(bundle.comments || []);
 
-            let likesCountResult = 0;
-            let isLikedResult = false;
-            let commentsResult: PostComment[] = [];
-            let isSubscribedResult = false;
-            let hasTippedResult = false;
+        const identifier = userAddress ? userAddress.toLowerCase() : userId;
 
-            // 1. Fetch Likes Count
+        if (identifier) {
+          const promises: PromiseLike<void>[] = [];
+
+          promises.push(
+            supabase
+              .from('post_likes')
+              .select('id')
+              .eq('post_id', postData.id)
+              .eq('user_address', identifier)
+              .maybeSingle()
+              .then(({ data }) => {
+                setIsLiked(!!data);
+              }),
+          );
+
+          if (bundleCreator.wallet_address) {
             promises.push(
-              supabase
-                .from('post_likes')
-                .select('*', { count: 'exact', head: true })
-                .eq('post_id', postData.id)
-                .then(({ count }) => {
-                  likesCountResult = count || 0;
-                })
+              fetch(`/api/user/access?wallet=${encodeURIComponent(identifier)}`)
+                .then((r) => (r.ok ? r.json() : { tipped: [], subscribed: [] }))
+                .then((access: { tipped: string[]; subscribed: string[] }) => {
+                  const creatorAddr = bundleCreator.wallet_address.toLowerCase();
+                  setIsSubscribed((access.subscribed || []).includes(creatorAddr));
+                  setHasTipped((access.tipped || []).includes(creatorAddr));
+                }),
             );
-
-            // 2. Fetch User Like Status
-            if (identifier) {
-              promises.push(
-                supabase
-                  .from('post_likes')
-                  .select('id')
-                  .eq('post_id', postData.id)
-                  .eq('user_address', identifier)
-                  .maybeSingle()
-                  .then(({ data }) => {
-                    isLikedResult = !!data;
-                  })
-              );
-            }
-
-            // 3. Fetch Comments & Commenter Profiles
-            promises.push(
-              supabase
-                .from('post_comments')
-                .select('*')
-                .eq('post_id', postData.id)
-                .order('created_at', { ascending: false })
-                .then(async ({ data: commentsData }) => {
-                  if (commentsData && commentsData.length > 0) {
-                    const commenterIds = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
-                    const { data: commenterProfiles } = await supabase
-                      .from('user_profiles')
-                      .select('wallet_address, username, display_name, avatar_url')
-                      .in('wallet_address', commenterIds);
-
-                    const profileMap = new Map();
-                    commenterProfiles?.forEach(p => {
-                      if (p.wallet_address) profileMap.set(p.wallet_address.toLowerCase(), p);
-                      if (p.wallet_address) profileMap.set(p.wallet_address.toLowerCase(), p);
-                    });
-
-                    commentsResult = commentsData.map(c => ({
-                      ...c,
-                      sender: profileMap.get(c.user_address.toLowerCase())
-                    }));
-                  }
-                })
-            );
-
-            // 4. Fetch Subscription Status if post is exclusive and user is logged in
-            if (identifier && profile.wallet_address) {
-              promises.push(
-                supabase
-                  .from('subscriptions')
-                  .select('id, end_date')
-                  .eq('fan_address', identifier)
-                  .eq('creator_address', profile.wallet_address.toLowerCase())
-                  .eq('active', true)
-                  .then(({ data: subs }) => {
-                    if (subs && subs.length > 0) {
-                      const now = new Date();
-                      const activeSub = subs.find(s => new Date(s.end_date) > now);
-                      if (activeSub) isSubscribedResult = true;
-                    }
-                  })
-              );
-
-              // 5. Fetch Tip Status (any tip from this fan to this creator)
-              promises.push(
-                supabase
-                  .from('tips')
-                  .select('id')
-                  .eq('from_address', identifier)
-                  .eq('to_address', profile.wallet_address.toLowerCase())
-                  .limit(1)
-                  .maybeSingle()
-                  .then(({ data: tipRow }) => {
-                    hasTippedResult = !!tipRow;
-                  })
-              );
-            }
-
-            // Await all parallel fetches
-            await Promise.all(promises);
-
-            // Batch state updates to avoid separate re-renders
-            setLikes(likesCountResult);
-            setIsLiked(isLikedResult);
-            setComments(commentsResult);
-            setIsSubscribed(isSubscribedResult);
-            setHasTipped(hasTippedResult);
           }
+
+          await Promise.all(promises);
         }
       } catch (err) {
         console.error('Error fetching post details:', err);

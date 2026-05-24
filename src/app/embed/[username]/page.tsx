@@ -2,6 +2,7 @@
 
 import { useState, useEffect, use } from 'react';
 import { supabase } from '@/lib/supabase';
+import { invalidateCreatorCache } from '@/lib/cache-invalidate';
 import { Heart, Check, Sparkles, Loader2 } from 'lucide-react';
 import { useAccount, useWriteContract, useReadContract, useConfig } from 'wagmi';
 import { waitForTransactionReceipt } from 'wagmi/actions';
@@ -53,14 +54,23 @@ export default function EmbedPage({ params: paramsPromise }: { params: Promise<{
 
   useEffect(() => {
     async function fetchCreator() {
-      const { data } = await supabase
-        .from('user_profiles')
-        .select('*')
-        .eq('username', username)
-        .single();
-      
-      setCreator(data);
-      setLoading(false);
+      try {
+        const res = await fetch(
+          `/api/profile/by-username?username=${encodeURIComponent(username)}`,
+        );
+        if (!res.ok) {
+          setCreator(null);
+          setLoading(false);
+          return;
+        }
+        const bundle = await res.json();
+        setCreator((bundle.profile as CreatorProfile) || null);
+      } catch (err) {
+        console.error('[embed] failed to load creator:', err);
+        setCreator(null);
+      } finally {
+        setLoading(false);
+      }
     }
     fetchCreator();
   }, [username]);
@@ -114,6 +124,8 @@ export default function EmbedPage({ params: paramsPromise }: { params: Promise<{
         creator_address: creator.wallet_address.toLowerCase(),
         amount_to_add: parseFloat(finalAmount)
       });
+
+      await invalidateCreatorCache(creator.wallet_address, userAddress);
 
       setTipStatus('success');
       setLastTipAmount(finalAmount);

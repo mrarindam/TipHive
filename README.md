@@ -13,6 +13,7 @@
 [![React 19](https://img.shields.io/badge/React-19-149ECA?logo=react)](https://react.dev/)
 [![Mezo L2](https://img.shields.io/badge/Mezo-L2-F7931A?logo=bitcoin)](https://mezo.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-PostgreSQL-3ECF8E?logo=supabase)](https://supabase.com/)
+[![Upstash Redis](https://img.shields.io/badge/Upstash-Redis-DC382D?logo=redis&logoColor=white)](https://upstash.com/)
 [![SIWE](https://img.shields.io/badge/Auth-SIWE%20%2B%20Wallet-F7931A.svg)](https://eips.ethereum.org/EIPS/eip-4361)
 [![PWA](https://img.shields.io/badge/PWA-Installable-5A0FC8?logo=pwa)](./public/manifest.json)
 
@@ -72,7 +73,7 @@ By replacing corporate payment processors with trustless, non-custodial Solidity
 
 ## 🔌 Core Systems & Web3 Architecture
 
-TipHive uses a clean **wallet-native hybrid architecture** — on-chain for value, off-chain for speed.
+TipHive uses a clean **wallet-native hybrid architecture** — on-chain for value, off-chain for speed, in-memory for latency.
 
 ```
  Supporters (Wagmi / Viem Client)
@@ -85,6 +86,13 @@ TipHive uses a clean **wallet-native hybrid architecture** — on-chain for valu
           │          │ Row-Level Security + wallet-bound API routes      ▼ [Cache State]
           ▼          │                                                   │
    Next.js App Server ◄─── [2] Read On-Chain State + Sync ────── Supabase PostgreSQL
+          │                                                              ▲
+          │  ◄──── [4] Cache-Aside (HIT) ──────► Upstash Redis ──────────┘
+          │                                          │
+          │                                          │ (on MISS only,
+          │                                          │  populates cache)
+          ▼                                          ▼
+   Sub-100ms responses                       Source of truth
 ```
 
 ### 1. Wallet-Only Identity (SIWE)
@@ -269,6 +277,88 @@ A single, polished workspace for every creator action:
 
 ---
 
+## 🚀 Performance & Caching (Upstash Redis)
+
+TipHive uses **Upstash Redis** as a serverless cache layer in front of Supabase, delivering sub-100ms API responses on warm hits without giving up Postgres as the source of truth.
+
+### Why Cache?
+
+Public profile pages, the explore feed, and dashboard activity each fired **6–10 Supabase queries per cold load**. With creator monetization traffic clustering on hot creators (popular profiles, viral posts), the same data was being re-fetched thousands of times per minute. Caching solves three problems at once: latency, Supabase connection pool pressure, and bandwidth cost.
+
+### Pattern — Cache-Aside (Lazy Loading)
+
+Postgres remains the source of truth. Redis is a transparent speed layer:
+
+```
+Request → Redis GET → HIT? return cached payload (~50ms)
+                   → MISS? Supabase fetch → SET cache w/ TTL → return
+```
+
+If Redis is unreachable, every helper falls back to Supabase via `try/catch` — **Redis down ≠ site down**. The same gentle degradation kicks in if `UPSTASH_REDIS_REST_URL` / `UPSTASH_REDIS_REST_TOKEN` are missing in the environment.
+
+### Cached Endpoints
+
+| Endpoint                              | What's bundled                                                                 | TTL    |
+| :------------------------------------ | :----------------------------------------------------------------------------- | :----- |
+| `GET /api/profile?wallet=…`           | Public profile by wallet                                                       | 30 min |
+| `GET /api/profile/by-username?…`      | Profile + posts count + followers count + per-chain earnings (one bundle)      | 30 min |
+| `GET /api/auth?wallet=…`              | Authenticated user row (dashboard hot path)                                    | 15 min |
+| `GET /api/explore/feed?page=…&search=…` | Recent creators + their posts (priority + top earners + per-creator post slice) | 5 min  |
+| `GET /api/user/access?wallet=…`       | User's tipped + actively-subscribed creator sets                               | 5 min  |
+| `GET /api/dashboard/activity?…`       | Sent/received tips + subscriptions + borrow events + display-name lookups + aggregates | 5 min  |
+| `GET /api/posts/by-slug?…`            | Post + creator + likes count + comments + commenter profiles                   | 5 min  |
+| `GET /api/v1/button?slug=…`           | Username → wallet + unique supporter count (for the embeddable SVG badge)      | 30 min |
+
+The `/[username]/posts/[slug]` page's `generateMetadata` (server) and the `PostDetailClient` (browser) both call the same `getPostBundle()` helper — they share a single cached payload, so the SSR metadata pre-warms the cache for the very first browser fetch.
+
+### Cache Key Conventions
+
+Keys are namespaced by resource and identifier, with addresses and usernames normalized to lowercase to avoid duplicate entries:
+
+```
+profile:w:{wallet}                  ← public profile by wallet
+profile:u:{username}                ← profile by username
+profile:full:w:{wallet}             ← bundled profile + counts + earnings
+username_to_wallet:{username}       ← username lookup
+auth:user:w:{wallet}                ← full user row (dashboard)
+button:count:w:{wallet}             ← embed widget supporter count
+explore:feed:p{page}                ← public explore page bundle
+explore:search:{slug}:p{page}       ← search-filtered explore bundle
+user:access:{wallet}                ← user's tipped + subscribed lists
+dashboard:activity:{wallet}:{chainId} ← per-chain activity bundle
+post:detail:u:{username}:s:{slug}   ← post + comments + likes
+```
+
+### Real-Time Invalidation (Payment App Grade)
+
+For a creator monetization app, **15-minute TTL on earnings is unacceptable** — a creator must see their dashboard balance update the moment a tip lands. Every mutation in the app fires explicit cache deletes:
+
+| Trigger                                 | Invalidates                                                                                       |
+| :-------------------------------------- | :------------------------------------------------------------------------------------------------ |
+| `PATCH /api/profile`                    | `profile:w:`, `auth:user:w:`, `profile:full:w:`, `profile:u:{old\|new}`, `username_to_wallet:{old\|new}` |
+| Tip recorded (`TipModal`, embed, inbox) | Calls `POST /api/cache/invalidate-creator` → wipes creator profile/auth/full/button + fan access + dashboard:activity (SCAN-based pattern delete across all chains) |
+| Subscription recorded                   | Same as tip                                                                                       |
+
+Tip/sub call sites use a tiny `invalidateCreatorCache(creator, fan)` client helper that fires the invalidation endpoint after the on-chain transaction confirms — best-effort, never blocks the user flow.
+
+### Production Tier Considerations
+
+- **Free tier (10 K commands/day)** — Comfortable for early-stage traffic. Each page view consumes 2–5 Redis commands (depending on auth state).
+- **TLS + REST** — Upstash's REST API works inside Vercel Edge and serverless runtimes where TCP is restricted. No connection pool to manage.
+- **Region locality** — Optimal performance when the Upstash region matches the Vercel function region (e.g. both `us-east-1` / `iad1`).
+- **TTL jitter** — Every `cacheSet` adds ±10 % randomness to the TTL to prevent thundering-herd cache stampedes when popular keys expire simultaneously.
+
+### Why Not Cache Everything?
+
+Some data deliberately bypasses the cache:
+
+- **Direct messages (`/dashboard/inbox`)** — Uses Supabase realtime channels. Caching would defeat the live-chat UX.
+- **Notifications** — Per-user, real-time, low value to cache.
+- **Contract balance reads (wagmi)** — Already auto-refetched every 15 s on-chain.
+- **Per-post like status** — Per-user-per-post fan-out; the cardinality kills cache hit rate, and the underlying query is a single-row index lookup.
+
+---
+
 ## 🔒 Security Posture
 
 | Layer                          | Mechanism                                                                                                                              |
@@ -343,6 +433,11 @@ SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
 # Generate with:  node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"
 WALLET_SESSION_SECRET=your-strong-random-base64-string
 
+# ── Upstash Redis (HIGHLY RECOMMENDED for production — graceful fallback to Supabase if missing)
+# Sign up at https://console.upstash.com → create a Redis database → copy REST credentials
+UPSTASH_REDIS_REST_URL=https://your-database.upstash.io
+UPSTASH_REDIS_REST_TOKEN=your-upstash-rest-token
+
 # ── WalletConnect ───────────────────────────────────────────────
 NEXT_PUBLIC_WC_PROJECT_ID=your-walletconnect-project-id
 
@@ -398,7 +493,7 @@ Open [http://localhost:3000](http://localhost:3000).
 | **Animation**    | Framer Motion · GSAP                                                                  |
 | **Web3**         | wagmi · viem · RainbowKit · WalletConnect v2                                          |
 | **Editor**       | TipTap 3 (StarterKit, Image, YouTube, Link, Code, Highlight, Color, Underline)        |
-| **Data**         | Supabase PostgreSQL (RLS) · TanStack Query · Cloudinary (media CDN)                  |
+| **Data**         | Supabase PostgreSQL (RLS) · Upstash Redis (cache-aside) · TanStack Query · Cloudinary (media CDN)    |
 | **Charts & UX**  | Chart.js + react-chartjs-2 · react-easy-crop · qr-code-styling · emoji-mart           |
 | **Auth**         | EIP-4361 SIWE · HMAC-SHA256 session cookies                                          |
 | **Contracts**    | Solidity ^0.8.19 · OpenZeppelin (ReentrancyGuard, Ownable, IERC20, IERC20Permit) · Hardhat |
@@ -438,15 +533,20 @@ TipHive/                             # Repo root
     └── src/
         ├── app/
         │   ├── (api)/api/           # Serverless API routes
-        │   │   ├── auth/            # SIWE: nonce, verify, session, logout
-        │   │   ├── profile/         # Profile read/update + username check
+        │   │   ├── auth/            # SIWE: nonce, verify, session, logout (+ user fetch, cached)
+        │   │   ├── cache/           # Redis cache invalidation hooks (invalidate-creator)
+        │   │   ├── dashboard/       # Cached dashboard activity bundle (tips + subs + borrows)
+        │   │   ├── explore/         # Cached public explore feed (creators + posts bundle)
         │   │   ├── notifications/   # In-app notification bell feed
+        │   │   ├── posts/           # Cached post detail bundle (post + likes + comments)
+        │   │   ├── profile/         # Profile read/update + username check + by-username bundle
         │   │   ├── referrals/       # Referral list endpoint
         │   │   ├── plans/           # Subscription plan CRUD
         │   │   ├── subscriptions/   # Subscription read endpoints
         │   │   ├── og/              # Open Graph image generators
         │   │   ├── upload/          # Cloudinary signed-upload endpoint
-        │   │   └── v1/              # Public widget JS + SVG button generator
+        │   │   ├── user/            # Cached per-user access bundle (tipped + subscribed sets)
+        │   │   └── v1/              # Public widget JS + SVG button generator (cached)
         │   ├── [username]/          # Public creator profile + posts / members / subscriptions
         │   ├── dashboard/
         │   │   ├── activityfeed/    # Unified on/off-chain activity stream
@@ -490,6 +590,9 @@ TipHive/                             # Repo root
             ├── chains.ts            # Mezo chain definitions + RPC config
             ├── contracts.ts         # Tipping + Subscription ABIs + addresses
             ├── borrow-contracts.ts  # Mezo Trove ABIs + addresses + constants
+            ├── redis.ts             # Upstash client + cacheGetOrSet/cacheDel helpers + key conventions
+            ├── cache-invalidate.ts  # Client helper to fire /api/cache/invalidate-creator after mutations
+            ├── post-fetcher.ts      # Shared post-bundle fetcher (SSR + client share the cache)
             ├── sanitize.ts          # DOMPurify wrapper for TipTap content
             ├── supabase.ts          # Anon + service-role clients
             ├── cropImage.ts         # react-easy-crop helper

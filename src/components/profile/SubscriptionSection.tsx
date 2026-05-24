@@ -8,6 +8,7 @@ import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther } from 'viem';
 import { supabase } from '@/lib/supabase';
+import { invalidateCreatorCache } from '@/lib/cache-invalidate';
 import { SUBSCRIPTION_ABI, ERC20_ABI } from '@/lib/contracts';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import CelebrationModal from '@/components/ui/CelebrationModal';
@@ -195,6 +196,8 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
         creator_address: creatorAddress.toLowerCase(),
         amount_to_add: parseFloat(plan.price.toString())
       });
+
+      await invalidateCreatorCache(creatorAddress, userAddress);
 
       // Create subscription notification via API
       try {

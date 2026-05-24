@@ -245,14 +245,23 @@ export default function Explore() {
       setSubscribedSet(new Set());
       return;
     }
-    const fan = userAddress.toLowerCase();
-    const [{ data: tips }, { data: subs }] = await Promise.all([
-      supabase.from('tips').select('to_address').eq('from_address', fan),
-      supabase.from('subscriptions').select('creator_address, end_date').eq('fan_address', fan).eq('active', true),
-    ]);
-    setTippedSet(new Set((tips || []).map(t => (t.to_address as string).toLowerCase())));
-    const now = new Date();
-    setSubscribedSet(new Set((subs || []).filter(s => new Date(s.end_date) > now).map(s => (s.creator_address as string).toLowerCase())));
+    try {
+      const res = await fetch(
+        `/api/user/access?wallet=${encodeURIComponent(userAddress.toLowerCase())}`,
+      );
+      if (!res.ok) {
+        setTippedSet(new Set());
+        setSubscribedSet(new Set());
+        return;
+      }
+      const { tipped, subscribed } = await res.json();
+      setTippedSet(new Set((tipped as string[]) || []));
+      setSubscribedSet(new Set((subscribed as string[]) || []));
+    } catch (err) {
+      console.error('[explore] loadAccessSets failed:', err);
+      setTippedSet(new Set());
+      setSubscribedSet(new Set());
+    }
   }, [userAddress]);
 
   useEffect(() => {
@@ -280,128 +289,59 @@ export default function Explore() {
   }, [loading, loadingMore, hasMore]);
 
   const fetchCreators = useCallback(async (pageNum: number, isNewSearch = false) => {
-    const limit = 10;
-    const from = pageNum * limit;
-    const to = from + limit - 1;
-
     if (pageNum === 0) setLoading(true);
     else setLoadingMore(true);
 
-    // 2. Fetch profiles
-    let query = supabase
-      .from('user_profiles')
-      .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
-      .eq('is_creator', true);
-    
-    if (search) {
-      query = query.or(`display_name.ilike.%${search}%,username.ilike.%${search}%`);
-    }
+    try {
+      const params = new URLSearchParams({ page: String(pageNum) });
+      if (search) params.set('search', search);
 
-    let profileData = [];
-    
-    if (!search) {
-      // 1. Get IDs of creators who recently posted (truly "Live")
-      const { data: recentPosts } = await supabase
-        .from('posts')
-        .select('creator_id, created_at')
-        .order('created_at', { ascending: false })
-        .limit(100);
-      
-      const liveCreatorIds = Array.from(new Set(recentPosts?.map(p => p.creator_id) || []));
-      
-      // 2. Combine with top earners to form our priority list
-      // We'll prioritize people who recently posted, then top earners
-      const priorityIds = Array.from(new Set([...liveCreatorIds])); // In the future we can mix top earners here
-      
-      const toSkip = from;
-      const toTake = limit;
-      
-      // Fetch batch from priority list first
-      let currentBatch: Creator[] = [];
-      const batchPriorityIds = priorityIds.slice(toSkip, toSkip + toTake);
-      
-      if (batchPriorityIds.length > 0) {
-        const { data: priorityData } = await supabase
-          .from('user_profiles')
-          .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
-          .in('id', batchPriorityIds);
-        
-        if (priorityData) {
-          // Sort to match priority order (recency of posts)
-          currentBatch = priorityData.sort((a, b) => priorityIds.indexOf(a.id) - priorityIds.indexOf(b.id));
+      const res = await fetch(`/api/explore/feed?${params.toString()}`);
+      if (!res.ok) {
+        setHasMore(false);
+        return;
+      }
+
+      const { creators: feedCreators, hasMore: nextHasMore } = (await res.json()) as {
+        creators: Creator[];
+        hasMore: boolean;
+      };
+
+      if (!feedCreators || feedCreators.length === 0) {
+        setHasMore(false);
+        if (isNewSearch) setCreators([]);
+        return;
+      }
+
+      setHasMore(nextHasMore);
+
+      let fIds: string[] = [];
+      if (userAddress || userId) {
+        let profileQuery = supabase.from('user_profiles').select('id');
+        if (userAddress) {
+          profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
+        } else {
+          profileQuery = profileQuery.eq('wallet_address', userId!);
+        }
+
+        const { data: currentUser } = await profileQuery.single();
+        if (currentUser) {
+          const { data: follows } = await supabase
+            .from('followers')
+            .select('creator_id')
+            .eq('follower_id', currentUser.id);
+          if (follows) fIds = follows.map((f) => f.creator_id);
         }
       }
-      
-      // If we still need more (e.g. at the end of the recent posters list), get top earners or others
-      if (currentBatch.length < limit) {
-        const othersSkip = Math.max(0, from - priorityIds.length);
-        const othersTake = limit - currentBatch.length;
-        
-        const { data: othersData } = await supabase
-          .from('user_profiles')
-          .select('id, wallet_address, username, display_name, bio, avatar_url, total_earned')
-          .eq('is_creator', true)
-          .not('id', 'in', `(${priorityIds.slice(0, 100).join(',')})`)
-          .order('total_earned', { ascending: false })
-          .range(othersSkip, othersSkip + othersTake - 1);
-          
-        if (othersData) {
-          currentBatch = [...currentBatch, ...othersData];
-        }
-      }
-      
-      profileData = currentBatch;
-    } else {
-      // Regular search
-      const { data } = await query
-        .order('total_earned', { ascending: false })
-        .range(from, to);
-      profileData = data || [];
-    }
+      setFollowingIds((prev) => (isNewSearch ? fIds : [...new Set([...prev, ...fIds])]));
 
-    if (profileData.length === 0) {
-      setHasMore(false);
+      setCreators((prev) => (isNewSearch ? feedCreators : [...prev, ...feedCreators]));
+    } catch (err) {
+      console.error('[explore] fetchCreators failed:', err);
+    } finally {
       setLoading(false);
       setLoadingMore(false);
-      return;
     }
-
-    if (profileData.length < limit) setHasMore(false);
-
-    // Fetch recent posts for these specific creators
-    const creatorIds = profileData.map(p => p.id);
-    const { data: postsData } = await supabase
-      .from('posts')
-      .select('*')
-      .in('creator_id', creatorIds)
-      .order('created_at', { ascending: false });
-
-    // Fetch following status
-    let fIds: string[] = [];
-    if (userAddress || userId) {
-      let profileQuery = supabase.from('user_profiles').select('id');
-      if (userAddress) {
-        profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
-      } else {
-        profileQuery = profileQuery.eq('wallet_address', userId!);
-      }
-
-      const { data: currentUser } = await profileQuery.single();
-      if (currentUser) {
-        const { data: follows } = await supabase.from('followers').select('creator_id').eq('follower_id', currentUser.id);
-        if (follows) fIds = follows.map(f => f.creator_id);
-      }
-    }
-    setFollowingIds(prev => isNewSearch ? fIds : [...new Set([...prev, ...fIds])]);
-
-    const creatorsWithPosts = profileData.map(profile => ({
-      ...profile,
-      posts: postsData?.filter(p => p.creator_id === profile.id).slice(0, 3) || []
-    })).filter(c => c.posts.length > 0) as Creator[];
-
-    setCreators(prev => isNewSearch ? creatorsWithPosts : [...prev, ...creatorsWithPosts]);
-    setLoading(false);
-    setLoadingMore(false);
   }, [search, userAddress, userId]);
 
   useEffect(() => {

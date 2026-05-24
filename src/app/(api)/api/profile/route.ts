@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 import { requireWalletSession } from '@/lib/wallet-session';
+import { cacheGetOrSet, cacheDel, cacheKeys, TTL } from '@/lib/redis';
 
 const WALLET_REGEX = /^0x[a-fA-F0-9]{40}$/;
 const USERNAME_REGEX = /^[a-z0-9_]{3,24}$/;
@@ -34,18 +35,28 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'wallet required' }, { status: 400 });
     }
 
-    const supabase = createServerSupabase();
-    
-    let query = supabase.from('user_profiles').select(PUBLIC_PROFILE_FIELDS);
-    if (wallet && WALLET_REGEX.test(wallet)) {
-      query = query.eq('wallet_address', wallet.toLowerCase());
-    } else {
+    if (!WALLET_REGEX.test(wallet)) {
       return NextResponse.json({ error: 'Invalid identifiers' }, { status: 400 });
     }
 
-    const { data: profile, error } = await query.maybeSingle();
+    const walletLower = wallet.toLowerCase();
 
-    if (error) throw error;
+    const profile = await cacheGetOrSet(
+      cacheKeys.profileByWallet(walletLower),
+      TTL.long,
+      async () => {
+        const supabase = createServerSupabase();
+        const { data, error } = await supabase
+          .from('user_profiles')
+          .select(PUBLIC_PROFILE_FIELDS)
+          .eq('wallet_address', walletLower)
+          .maybeSingle();
+
+        if (error) throw error;
+        return data;
+      },
+    );
+
     if (!profile) return NextResponse.json({ error: 'Profile not found' }, { status: 404 });
 
     return NextResponse.json({ profile });
@@ -87,12 +98,16 @@ export async function PATCH(request: NextRequest) {
       updated_at: new Date().toISOString(),
     };
 
+    let oldUsername: string | null = null;
+
     if (body.username) {
       const { data: currentProfile } = await supabase
         .from('user_profiles')
         .select('username')
         .eq('wallet_address', session.address)
         .single();
+
+      oldUsername = currentProfile?.username ?? null;
 
       if (currentProfile?.username !== username) {
         if (!USERNAME_REGEX.test(username)) {
@@ -149,6 +164,21 @@ export async function PATCH(request: NextRequest) {
     const { data, error } = await updateQuery.select().single();
 
     if (error) throw error;
+
+    const invalidationKeys = [
+      cacheKeys.profileByWallet(session.address),
+      cacheKeys.userByWallet(session.address),
+      cacheKeys.fullProfileByWallet(session.address),
+    ];
+    if (oldUsername) {
+      invalidationKeys.push(cacheKeys.profileByUsername(oldUsername));
+      invalidationKeys.push(cacheKeys.usernameToWallet(oldUsername));
+    }
+    if (updateData.username && updateData.username !== oldUsername) {
+      invalidationKeys.push(cacheKeys.profileByUsername(updateData.username));
+      invalidationKeys.push(cacheKeys.usernameToWallet(updateData.username));
+    }
+    await cacheDel(...invalidationKeys);
 
     return NextResponse.json({ profile: data });
   } catch (error) {

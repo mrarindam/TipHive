@@ -10,6 +10,7 @@ import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { parseEther } from 'viem';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { supabase } from '@/lib/supabase';
+import { invalidateCreatorCache } from '@/lib/cache-invalidate';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import { TIPPING_ABI, ERC20_ABI } from '@/lib/contracts';
 
@@ -137,6 +138,8 @@ export default function ChatWindow({
         message: 'Tip from Inbox',
         chain_id: chainId
       });
+
+      await invalidateCreatorCache(otherUser.wallet_address, userAddress);
 
       // Notify
       await fetch('/api/notifications', {

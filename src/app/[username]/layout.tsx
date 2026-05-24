@@ -106,30 +106,37 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   const fetchData = useCallback(async () => {
     if (!username) return;
     setLoading(true);
-    const { data: profile } = await supabase
-      .from('user_profiles')
-      .select('*')
-      .ilike('username', username as string)
-      .single();
 
-    if (profile) {
+    try {
+      const res = await fetch(
+        `/api/profile/by-username?username=${encodeURIComponent(username as string)}`,
+      );
+
+      if (!res.ok) {
+        setCreator(null);
+        setLoading(false);
+        return;
+      }
+
+      const bundle = await res.json();
+      const profile = bundle.profile as CreatorProfile | null;
+
+      if (!profile) {
+        setCreator(null);
+        setLoading(false);
+        return;
+      }
+
       setCreator(profile);
+      setPostsCount(bundle.postsCount || 0);
+      setFollowersCount(bundle.followersCount || 0);
 
-      const { count: pCount } = await supabase
-        .from('posts')
-        .select('*', { count: 'exact', head: true })
-        .eq('creator_id', profile.id);
-      setPostsCount(pCount || 0);
-
-      const { count: fCount } = await supabase
-        .from('followers')
-        .select('*', { count: 'exact', head: true })
-        .eq('creator_id', profile.id);
-      setFollowersCount(fCount || 0);
+      const chainEarnings = bundle.earningsByChain?.[String(chainId)] || 0;
+      setTotalEarned(chainEarnings);
 
       if (userAddress || userId) {
         let profileQuery = supabase.from('user_profiles').select('id');
-        
+
         if (userAddress) {
           profileQuery = profileQuery.eq('wallet_address', userAddress.toLowerCase());
         } else {
@@ -148,30 +155,12 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
           setIsFollowing(!!followData);
         }
       }
-
-      // Calculate network-specific earnings
-      let tipsTotal = 0;
-      let subsTotal = 0;
-
-      if (profile.wallet_address) {
-        const { data: tips } = await supabase
-          .from('tips')
-          .select('amount')
-          .eq('to_address', profile.wallet_address.toLowerCase())
-          .eq('chain_id', chainId);
-        
-        const { data: subs } = await supabase
-          .from('subscriptions')
-          .select('total_paid')
-          .eq('creator_address', profile.wallet_address.toLowerCase())
-          .eq('chain_id', chainId);
-
-        tipsTotal = (tips || []).reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0);
-        subsTotal = (subs || []).reduce((acc, curr) => acc + (Number(curr.total_paid) || 0), 0);
-      }
-      setTotalEarned(tipsTotal + subsTotal);
+    } catch (err) {
+      console.error('[username/layout] fetchData failed:', err);
+      setCreator(null);
+    } finally {
+      setLoading(false);
     }
-    setLoading(false);
   }, [username, userAddress, userId, chainId]);
 
   useEffect(() => {

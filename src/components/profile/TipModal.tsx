@@ -8,6 +8,7 @@ import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { waitForTransactionReceipt } from 'wagmi/actions';
 import { parseEther } from 'viem';
 import { supabase } from '@/lib/supabase';
+import { invalidateCreatorCache } from '@/lib/cache-invalidate';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import { TIPPING_ABI, ERC20_ABI } from '@/lib/contracts';
 import CelebrationModal from '@/components/ui/CelebrationModal';
@@ -103,6 +104,8 @@ export default function TipModal({
         creator_address: creator.wallet_address.toLowerCase(),
         amount_to_add: parseFloat(finalAmount),
       });
+
+      await invalidateCreatorCache(creator.wallet_address, userAddress);
 
       try {
         const { data: senderProfile } = await supabase

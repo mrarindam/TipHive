@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback, ReactNode, createContext, useContext } from 'react';
-import { supabase } from '@/lib/supabase';
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useWalletAuth, type User } from '@/lib/wallet-auth-shim';
 import {
@@ -197,76 +196,28 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
 
       const queryAddr = userAddr || dbWallet;
 
-      let sentTips = null, receivedTips = null, receivedSubs = null, sentSubs = null;
-      let borrowEvents: Array<{ id: string; wallet: string; event_type: 'borrow' | 'repay' | 'close'; musd_amount: number | null; btc_amount: number | null; tx_hash: string; chain_id: number; created_at: string }> | null = null;
-
       if (queryAddr) {
-        const [stRes, rtRes, rsRes, ssRes, beRes] = await Promise.all([
-          supabase.from('tips').select('*').eq('from_address', queryAddr).eq('chain_id', chainId),
-          supabase.from('tips').select('*').eq('to_address', queryAddr).eq('chain_id', chainId),
-          supabase.from('subscriptions').select('*, subscription_plans(name)').eq('creator_address', queryAddr).eq('chain_id', chainId),
-          supabase.from('subscriptions').select('*, subscription_plans(name)').eq('fan_address', queryAddr).eq('chain_id', chainId),
-          supabase.from('borrow_events').select('*').eq('wallet', queryAddr).eq('chain_id', chainId),
-        ]);
-
-        sentTips = stRes.data;
-        receivedTips = rtRes.data;
-        receivedSubs = rsRes.data;
-        sentSubs = ssRes.data;
-        borrowEvents = beRes.data;
+        try {
+          const activityRes = await fetch(
+            `/api/dashboard/activity?wallet=${encodeURIComponent(queryAddr)}&chainId=${chainId}`,
+          );
+          if (activityRes.ok) {
+            const { activities: activityList, totalSent: ts, totalEarned: te } = await activityRes.json();
+            setActivities(activityList || []);
+            setTotalSent(ts || 0);
+            setTotalEarned(te || 0);
+          } else {
+            setActivities([]);
+            setTotalSent(0);
+            setTotalEarned(0);
+          }
+        } catch (activityErr) {
+          console.error('[dashboard] activity fetch failed:', activityErr);
+          setActivities([]);
+          setTotalSent(0);
+          setTotalEarned(0);
+        }
       }
-
-      let totalSentVal = 0;
-      if (sentTips) {
-        totalSentVal += sentTips.reduce((sum, tip) => sum + (Number(tip.amount) || 0), 0);
-      }
-      if (sentSubs) {
-        totalSentVal += sentSubs.reduce((sum, sub) => sum + (Number(sub.total_paid) || 0), 0);
-      }
-      setTotalSent(totalSentVal);
-
-      let totalEarnedVal = 0;
-      if (receivedTips) {
-        totalEarnedVal += receivedTips.reduce((sum, tip) => sum + (Number(tip.amount) || 0), 0);
-      }
-      if (receivedSubs) {
-        totalEarnedVal += receivedSubs.reduce((sum, sub) => sum + (Number(sub.total_paid) || 0), 0);
-      }
-      setTotalEarned(totalEarnedVal);
-
-      const combined: Activity[] = [];
-      const knownAddresses = Array.from(new Set([
-        ...(sentTips || []).map((tip) => tip.to_address),
-        ...(receivedTips || []).map((tip) => tip.from_address),
-        ...(receivedSubs || []).map((sub) => sub.fan_address),
-        ...(sentSubs || []).map((sub) => sub.creator_address),
-      ].filter(Boolean).map((item) => item.toLowerCase())));
-
-      const { data: knownProfiles } = knownAddresses.length
-        ? await supabase.from('user_profiles').select('wallet_address, display_name, username').in('wallet_address', knownAddresses)
-        : { data: [] };
-
-      const profileByAddress = new Map((knownProfiles || []).map((item: { wallet_address: string; display_name: string; username: string }) => [
-        item.wallet_address.toLowerCase(),
-        item.username ? `${item.display_name} (@${item.username})` : item.display_name,
-      ]));
-
-      if (sentTips) sentTips.forEach(s => combined.push({ id: s.id, type: 'sent', source: 'tip', amount: s.amount, to_name: profileByAddress.get(s.to_address?.toLowerCase()) || s.to_address?.slice(0, 10) || 'Anonymous', created_at: s.created_at, tx_hash: s.tx_hash }));
-      if (receivedTips) receivedTips.forEach(r => combined.push({ id: r.id, type: 'received', source: 'tip', amount: r.amount, from_address: r.from_address, to_name: profileByAddress.get(r.from_address?.toLowerCase()) || r.from_address?.slice(0, 10) || 'Anonymous', created_at: r.created_at, tx_hash: r.tx_hash }));
-      if (receivedSubs) receivedSubs.forEach(sub => combined.push({ id: sub.id, type: 'received', source: 'subscription', amount: sub.total_paid, from_address: sub.fan_address, to_name: profileByAddress.get(sub.fan_address?.toLowerCase()) || sub.fan_address?.slice(0, 10) || 'Anonymous', created_at: sub.created_at, tx_hash: sub.tx_hash, plan_name: sub.subscription_plans?.name }));
-      if (sentSubs) sentSubs.forEach(sub => combined.push({ id: sub.id, type: 'sent', source: 'subscription', amount: sub.total_paid, to_name: profileByAddress.get(sub.creator_address?.toLowerCase()) || sub.creator_address?.slice(0, 10) || 'Anonymous', created_at: sub.created_at, tx_hash: sub.tx_hash, plan_name: sub.subscription_plans?.name }));
-      if (borrowEvents) borrowEvents.forEach(b => combined.push({
-        id: b.id,
-        type: b.event_type === 'borrow' ? 'received' : 'sent',
-        source: 'borrow',
-        amount: Number(b.musd_amount ?? 0),
-        btc_amount: b.btc_amount !== null ? Number(b.btc_amount) : undefined,
-        event_type: b.event_type,
-        created_at: b.created_at,
-        tx_hash: b.tx_hash,
-      }));
-
-      setActivities(combined.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime()));
     } catch (err) {
       console.error(err);
     } finally {

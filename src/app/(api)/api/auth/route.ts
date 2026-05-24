@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createServerSupabase } from '@/lib/supabase';
 import { getWalletSession } from '@/lib/wallet-session';
+import { cacheGet, cacheSet, cacheKeys, TTL } from '@/lib/redis';
 
 function generateReferralCode(length = 8) {
   const chars = 'abcdefghijklmnopqrstuvwxyz0123456789';
@@ -28,6 +29,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Auth required' }, { status: 401 });
     }
 
+    const cacheKey = cacheKeys.userByWallet(wallet);
+    const cached = await cacheGet<Record<string, unknown>>(cacheKey);
+    if (cached) {
+      return NextResponse.json({ user: cached, isNewUser: false });
+    }
+
     const supabase = createServerSupabase();
     const { data: existingUser, error: existingError } = await supabase
       .from('user_profiles')
@@ -44,8 +51,11 @@ export async function GET(request: NextRequest) {
           .eq('wallet_address', wallet)
           .select()
           .single();
-        return NextResponse.json({ user: updatedWithRef || existingUser, isNewUser: false });
+        const finalUser = updatedWithRef || existingUser;
+        await cacheSet(cacheKey, finalUser, TTL.medium);
+        return NextResponse.json({ user: finalUser, isNewUser: false });
       }
+      await cacheSet(cacheKey, existingUser, TTL.medium);
       return NextResponse.json({ user: existingUser, isNewUser: false });
     }
 
@@ -73,6 +83,7 @@ export async function GET(request: NextRequest) {
           .eq('wallet_address', wallet)
           .single();
         if (retryUser) {
+          await cacheSet(cacheKey, retryUser, TTL.medium);
           return NextResponse.json({ user: retryUser, isNewUser: false });
         }
       }
@@ -85,6 +96,7 @@ export async function GET(request: NextRequest) {
       content: 'Welcome to TipHive! Your Web3 creator economy starts here.',
     });
 
+    await cacheSet(cacheKey, newUser, TTL.medium);
     return NextResponse.json({ user: newUser, isNewUser: true });
   } catch (error) {
     console.error('AUTH_API_ERROR:', error);
