@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useDashboard } from '../layout';
 import { supabase } from '@/lib/supabase';
@@ -209,12 +209,24 @@ export default function InboxPage() {
     }
   }, [activeChatAddress, fetchMessages]);
 
-  // Real-time subscription
+  // Keep latest activeChatAddress / fetchConversations accessible to the
+  // realtime handler WITHOUT forcing the subscription to tear down and
+  // re-subscribe every time the user clicks a different conversation.
+  // Resubscribing rapidly on the same channel name caused Supabase to drop
+  // events, which is why messages only appeared after a manual refresh.
+  const activeChatRef = useRef(activeChatAddress);
+  useEffect(() => { activeChatRef.current = activeChatAddress; }, [activeChatAddress]);
+
+  const fetchConversationsRef = useRef(fetchConversations);
+  useEffect(() => { fetchConversationsRef.current = fetchConversations; }, [fetchConversations]);
+
+  // Real-time subscription — one channel per signed-in wallet, lifetime tied
+  // to currentAddress only.
   useEffect(() => {
     if (!currentAddress) return;
 
     const channel = supabase
-      .channel('inbox-realtime')
+      .channel(`inbox-realtime:${currentAddress}`)
       .on(
         'postgres_changes',
         {
@@ -226,22 +238,31 @@ export default function InboxPage() {
         (payload) => {
           const newMsg = payload.new as Message;
           // ONLY add to UI if it's from the person I'm currently chatting with
-          if (activeChatAddress === newMsg.sender_wallet_address) {
+          if (activeChatRef.current === newMsg.sender_wallet_address) {
             setMessages(prev => {
               // Prevent duplicate messages
               if (prev.find(m => m.id === newMsg.id)) return prev;
               return [...prev, newMsg];
             });
           }
-          fetchConversations();
+          fetchConversationsRef.current();
         }
       )
-      .subscribe();
+      .subscribe((status, err) => {
+        // Surfaces SUBSCRIBED / CHANNEL_ERROR / TIMED_OUT / CLOSED. If you
+        // ever see anything other than SUBSCRIBED here, realtime is not
+        // enabled on `public.direct_messages` in the Supabase dashboard
+        // (Database → Replication → supabase_realtime) or RLS is blocking
+        // the anon role from SELECTing the row.
+        if (status !== 'SUBSCRIBED') {
+          console.warn(`[inbox-realtime] status=${status}`, err);
+        }
+      });
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [currentAddress, activeChatAddress, fetchConversations]);
+  }, [currentAddress]);
 
   const handleSendMessage = async (text: string) => {
     if (!currentAddress || !activeChatAddress) return;
@@ -253,8 +274,18 @@ export default function InboxPage() {
         p_text: text
       });
 
-    if (!error && data) {
-      setMessages(prev => [...prev, data]);
+    if (error) {
+      console.error(
+        `[inbox/handleSendMessage] RPC send_direct_message failed. ` +
+        `code=${error.code} message=${error.message} details=${error.details} hint=${error.hint}`
+      );
+      return;
+    }
+
+    // RPC may return a single row or SETOF — accept both.
+    const inserted: Message | undefined = Array.isArray(data) ? data[0] : data;
+    if (inserted && inserted.id) {
+      setMessages(prev => prev.find(m => m.id === inserted.id) ? prev : [...prev, inserted]);
       fetchConversations();
     }
   };
