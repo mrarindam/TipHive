@@ -7,6 +7,7 @@ import Footer from "@/components/layout/Footer";
 import OnboardingGuard from "@/components/providers/onboarding-guard";
 import WalletSwitchGuard from "@/components/providers/WalletSwitchGuard";
 import PwaRegister from "@/components/providers/PwaRegister";
+import { SpeedInsights } from "@vercel/speed-insights/next";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -226,6 +227,7 @@ export default function RootLayout({
                 </main>
                 <Footer />
               </div>
+              <SpeedInsights />
             </WalletSwitchGuard>
           </OnboardingGuard>
         </WalletProviderWrapper>
