@@ -89,7 +89,7 @@ function EditorInner() {
     onUpdate: ({ editor }) => setContent(editor.getHTML()),
     editorProps: {
       attributes: {
-        class: 'prose prose-invert max-w-none focus:outline-none min-h-[60vh] text-slate-300 leading-relaxed selection:bg-[#8A2BE2]/30 prose-h1:text-5xl prose-h1:font-black prose-h1:text-white prose-h1:mb-8 prose-h2:text-4xl prose-h2:font-extrabold prose-h2:text-white prose-h2:mt-12 prose-h2:mb-6 prose-h3:text-2xl prose-h3:font-bold prose-h3:text-slate-100 prose-h3:mt-8 prose-h3:mb-4',
+        class: 'prose dark:prose-invert max-w-none focus:outline-none min-h-[60vh] text-slate-700 dark:text-slate-300 leading-relaxed selection:bg-[#8A2BE2]/30 prose-h1:text-5xl prose-h1:font-black prose-h1:text-slate-900 prose-h1:dark:text-white prose-h1:mb-8 prose-h2:text-4xl prose-h2:font-extrabold prose-h2:text-slate-900 prose-h2:dark:text-white prose-h2:mt-12 prose-h2:mb-6 prose-h3:text-2xl prose-h3:font-bold prose-h3:text-slate-800 prose-h3:dark:text-slate-100 prose-h3:mt-8 prose-h3:mb-4',
       },
     },
   });
@@ -335,14 +335,14 @@ function EditorInner() {
   const currentVis = visibilityOptions.find(v => v.id === visibility)!;
 
   return (
-    <div className="min-h-screen bg-[#080B12] flex flex-col">
+    <div className="min-h-screen bg-slate-50 dark:bg-[#080B12] flex flex-col transition-colors duration-300">
       {/* Top Bar */}
-      <div className="fixed top-0 left-0 right-0 z-50 bg-[#080B12]/95 backdrop-blur-xl border-b border-white/5 px-4 md:px-8">
+      <div className="fixed top-0 left-0 right-0 z-50 bg-white/95 dark:bg-[#080B12]/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/5 px-4 md:px-8">
         <div className="max-w-5xl mx-auto flex items-center justify-between h-14">
           <div className="flex items-center gap-4">
             <button
               onClick={() => router.push('/dashboard/posts')}
-              className="flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-semibold text-sm"
+              className="flex items-center gap-2 text-slate-600 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors font-semibold text-sm"
             >
               <ArrowLeft size={18} />
               Dashboard
@@ -354,7 +354,7 @@ function EditorInner() {
             <div className="relative">
               <button
                 onClick={() => setShowVisibility(!showVisibility)}
-                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-white/5 border border-white/10 text-sm font-medium text-slate-300 hover:bg-white/10 transition-colors"
+                className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-200 dark:hover:bg-white/10 transition-colors"
               >
                 <currentVis.icon size={14} className={currentVis.color} />
                 {currentVis.label}
@@ -366,7 +366,7 @@ function EditorInner() {
                     initial={{ opacity: 0, y: 10 }}
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 10 }}
-                    className="absolute right-0 top-full mt-2 w-64 bg-[#111827] border border-white/10 rounded-xl shadow-2xl p-2 z-50"
+                    className="absolute right-0 top-full mt-2 w-64 bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-xl shadow-2xl p-2 z-50"
                   >
                     {visibilityOptions.map(v => {
                       const isDisabled = v.id === 'supporters' && !displayAddress;
@@ -375,11 +375,11 @@ function EditorInner() {
                           key={v.id}
                           disabled={isDisabled}
                           onClick={() => { setVisibility(v.id as 'public' | 'followers' | 'supporters'); setShowVisibility(false); }}
-                          className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${visibility === v.id ? 'bg-white/5' : 'hover:bg-white/5'} ${isDisabled ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
+                          className={`w-full flex items-center gap-3 p-3 rounded-lg text-left transition-all ${visibility === v.id ? 'bg-slate-100 dark:bg-white/5' : 'hover:bg-slate-50 dark:hover:bg-white/5'} ${isDisabled ? 'opacity-40 grayscale cursor-not-allowed' : ''}`}
                         >
                           <v.icon size={16} className={v.color} />
                           <div className="flex-1">
-                            <p className="text-sm font-semibold text-white flex items-center gap-2">
+                            <p className="text-sm font-semibold text-slate-900 dark:text-white flex items-center gap-2">
                               {v.label}
                               {isDisabled && <Lock size={12} className="text-amber-500" />}
                             </p>
@@ -407,35 +407,35 @@ function EditorInner() {
       </div>
 
       {/* Toolbar */}
-      <div className="fixed top-14 left-0 right-0 z-40 bg-[#080B12]/95 backdrop-blur-xl border-b border-white/5">
+      <div className="fixed top-14 left-0 right-0 z-40 bg-white/95 dark:bg-[#080B12]/95 backdrop-blur-xl border-b border-slate-200 dark:border-white/5">
         <div className="max-w-[850px] mx-auto flex flex-wrap items-center gap-0.5 px-4 py-1.5">
-          <div className="flex items-center gap-0.5 bg-white/5 p-1 rounded-xl mr-1">
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-white/5 p-1 rounded-xl mr-1">
             <ToolBtn onClick={() => editor.chain().focus().toggleBold().run()} active={editor.isActive('bold')} icon={<Bold size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleItalic().run()} active={editor.isActive('italic')} icon={<Italic size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleUnderline().run()} active={editor.isActive('underline')} icon={<Underline size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleStrike().run()} active={editor.isActive('strike')} icon={<Strikethrough size={15} />} />
           </div>
 
-          <div className="flex items-center gap-0.5 bg-white/5 p-1 rounded-xl mr-1">
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-white/5 p-1 rounded-xl mr-1">
             <ToolBtn onClick={() => setModalType('color')} icon={<Type size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleHighlight().run()} active={editor.isActive('highlight')} icon={<Highlighter size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().unsetAllMarks().setParagraph().run()} icon={<Eraser size={15} />} />
           </div>
 
-          <div className="flex items-center gap-0.5 bg-white/5 p-1 rounded-xl mr-1">
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-white/5 p-1 rounded-xl mr-1">
             <ToolBtn onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} active={editor.isActive('heading', { level: 1 })} icon={<Heading1 size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} active={editor.isActive('heading', { level: 2 })} icon={<Heading2 size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} active={editor.isActive('heading', { level: 3 })} icon={<Heading3 size={15} />} />
           </div>
 
-          <div className="flex items-center gap-0.5 bg-white/5 p-1 rounded-xl mr-1">
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-white/5 p-1 rounded-xl mr-1">
             <ToolBtn onClick={() => editor.chain().focus().toggleBulletList().run()} active={editor.isActive('bulletList')} icon={<List size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleOrderedList().run()} active={editor.isActive('orderedList')} icon={<ListOrdered size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleBlockquote().run()} active={editor.isActive('blockquote')} icon={<Quote size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().toggleCodeBlock().run()} active={editor.isActive('codeBlock')} icon={<Code2 size={15} />} />
           </div>
 
-          <div className="flex items-center gap-0.5 bg-white/5 p-1 rounded-xl">
+          <div className="flex items-center gap-0.5 bg-slate-100 dark:bg-white/5 p-1 rounded-xl">
             <ToolBtn onClick={() => setModalType('link')} active={editor.isActive('link')} icon={<LinkIcon size={15} />} />
             <ToolBtn onClick={() => editor.chain().focus().unsetLink().run()} disabled={!editor.isActive('link')} icon={<Unlink size={15} />} />
             <ToolBtn onClick={() => setModalType('image')} icon={<ImageIcon size={15} />} />
@@ -459,7 +459,7 @@ function EditorInner() {
           {(postType === 'album' || postType === 'audio' || postType === 'video') && (
             <div className="mb-10">
               {mediaUrl ? (
-                <div className="relative rounded-3xl overflow-hidden bg-white/5 border border-white/10 group">
+                <div className="relative rounded-3xl overflow-hidden bg-white dark:bg-white/5 border border-slate-200 dark:border-white/10 group">
                   {postType === 'album' && <img src={mediaUrl} alt="Cover" className="w-full aspect-video object-cover" />}
                   {postType === 'video' && (
                     <video 
@@ -470,14 +470,14 @@ function EditorInner() {
                     />
                   )}
                   {postType === 'audio' && (
-                    <div className="p-10 flex flex-col items-center gap-6 bg-gradient-to-br from-blue-600/20 to-purple-600/20 relative">
-                      <div className="w-24 h-24 rounded-full bg-white/10 flex items-center justify-center relative">
+                    <div className="p-10 flex flex-col items-center gap-6 bg-gradient-to-br from-blue-600/10 to-purple-600/10 relative">
+                      <div className="w-24 h-24 rounded-full bg-slate-100 dark:bg-white/10 flex items-center justify-center relative">
                         <div className="absolute inset-0 bg-blue-500/20 rounded-full animate-ping" />
                         <Music2 className="text-blue-400 w-12 h-12 relative z-10" />
                       </div>
                       <div className="text-center">
-                        <p className="text-white font-black text-xl mb-1">Audio Track Uploaded</p>
-                        <p className="text-slate-400 text-xs font-medium uppercase tracking-[0.2em]">{uploadFileName || 'Track 01'}</p>
+                        <p className="text-slate-900 dark:text-white font-black text-xl mb-1">Audio Track Uploaded</p>
+                        <p className="text-slate-500 dark:text-slate-400 text-xs font-medium uppercase tracking-[0.2em]">{uploadFileName || 'Track 01'}</p>
                       </div>
                       <audio 
                         src={mediaUrl} 
@@ -496,15 +496,15 @@ function EditorInner() {
               ) : (
                 <button 
                   onClick={() => mediaInputRef.current?.click()}
-                  className="w-full aspect-video md:aspect-[21/9] rounded-3xl bg-white/5 border-2 border-dashed border-white/10 flex flex-col items-center justify-center gap-4 hover:bg-white/[0.08] transition-all group"
+                  className="w-full aspect-video md:aspect-[21/9] rounded-3xl bg-white dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 flex flex-col items-center justify-center gap-4 hover:bg-slate-50 dark:hover:bg-white/[0.08] transition-all group"
                 >
-                  <div className="w-16 h-16 rounded-full bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform border border-white/5">
+                  <div className="w-16 h-16 rounded-full bg-slate-100 dark:bg-white/5 flex items-center justify-center group-hover:scale-110 transition-transform border border-slate-200 dark:border-white/5">
                     {postType === 'album' && <ImageIcon className="text-purple-400 w-8 h-8" />}
                     {postType === 'audio' && <FileAudio className="text-blue-400 w-8 h-8" />}
                     {postType === 'video' && <Clapperboard className="text-red-400 w-8 h-8" />}
                   </div>
                   <div className="text-center">
-                    <p className="text-white font-bold text-lg">Click to upload {postType === 'album' ? 'Photo' : postType === 'audio' ? 'Audio' : 'Video'}</p>
+                    <p className="text-slate-900 dark:text-white font-bold text-lg">Click to upload {postType === 'album' ? 'Photo' : postType === 'audio' ? 'Audio' : 'Video'}</p>
                     <p className="text-slate-500 text-sm mt-1">High quality files recommended</p>
                   </div>
                   <input 
@@ -530,7 +530,7 @@ function EditorInner() {
               t.style.height = `${t.scrollHeight}px`;
             }}
             placeholder="Give it a title..."
-            className="w-full bg-transparent text-white text-4xl md:text-6xl font-black focus:outline-none placeholder:text-slate-800 tracking-tighter resize-none overflow-hidden leading-tight mb-8"
+            className="w-full bg-transparent text-slate-900 dark:text-white text-4xl md:text-6xl font-black focus:outline-none placeholder:text-slate-400 dark:placeholder:text-slate-700 tracking-tighter resize-none overflow-hidden leading-tight mb-8"
           />
 
           {/* Divider */}
@@ -549,19 +549,19 @@ function EditorInner() {
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
               exit={{ scale: 0.95, opacity: 0 }}
-              className="bg-[#111827] border border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl"
+              className="bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-3xl p-8 w-full max-w-md shadow-2xl"
             >
               <div className="flex items-center justify-between mb-6">
-                <h3 className="text-white font-black uppercase tracking-widest text-sm">
+                <h3 className="text-slate-900 dark:text-white font-black uppercase tracking-widest text-sm">
                   {modalType === 'link' ? 'Add Link' : modalType === 'image' ? 'Add Image' : modalType === 'color' ? 'Text Color' : 'Add Embed'}
                 </h3>
-                <button onClick={() => setModalType(null)} className="text-slate-500 hover:text-white transition-colors"><X size={24} /></button>
+                <button onClick={() => setModalType(null)} className="text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors"><X size={24} /></button>
               </div>
 
               <div className="space-y-6">
                 {modalType === 'image' && (
                   <>
-                    <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex flex-col items-center justify-center gap-3 w-full p-6 rounded-2xl bg-white/5 border-2 border-dashed border-white/10 hover:bg-white/10 transition-all text-slate-400 hover:text-white overflow-hidden relative">
+                    <button onClick={() => fileInputRef.current?.click()} disabled={isUploading} className="flex flex-col items-center justify-center gap-3 w-full p-6 rounded-2xl bg-slate-50 dark:bg-white/5 border-2 border-dashed border-slate-200 dark:border-white/10 hover:bg-slate-100 dark:hover:bg-white/10 transition-all text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white overflow-hidden relative">
                       <>
                         <UploadCloud size={32} />
                         <span className="font-bold text-sm uppercase tracking-wide">Upload from gallery</span>
@@ -569,8 +569,8 @@ function EditorInner() {
                     </button>
                     <input type="file" ref={fileInputRef} onChange={handleInlineImageUpload} className="hidden" accept="image/*" />
                     <div className="relative">
-                      <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/5"></span></div>
-                      <div className="relative flex justify-center text-[10px] font-black uppercase text-slate-600"><span className="bg-[#111827] px-4 tracking-widest">or paste url</span></div>
+                      <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-slate-200 dark:border-white/5"></span></div>
+                      <div className="relative flex justify-center text-[10px] font-black uppercase text-slate-600"><span className="bg-white dark:bg-[#111827] px-4 tracking-widest">or paste url</span></div>
                     </div>
                   </>
                 )}
@@ -590,7 +590,7 @@ function EditorInner() {
                       type="text" value={modalValue} onChange={(e) => setModalValue(e.target.value)}
                       onKeyDown={(e) => e.key === 'Enter' && handleModalSubmit()}
                       placeholder={modalType === 'link' ? 'https://example.com' : modalType === 'image' ? 'Paste image URL...' : 'Paste YouTube or Spotify URL...'}
-                      className="w-full bg-white/5 border border-white/10 rounded-xl pl-12 pr-4 py-4 text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none font-medium"
+                      className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl pl-12 pr-4 py-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#8A2BE2] outline-none font-medium"
                       autoFocus
                     />
                   </div>
@@ -631,22 +631,38 @@ function EditorInner() {
 
       <style jsx global>{`
         .ProseMirror { min-height: 50vh; outline: none !important; }
-        .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #1e293b; pointer-events: none; height: 0; font-style: italic; }
+        .ProseMirror p.is-editor-empty:first-child::before { content: attr(data-placeholder); float: left; color: #64748b; pointer-events: none; height: 0; font-style: italic; }
+        html.dark .ProseMirror p.is-editor-empty:first-child::before { color: #475569; }
         
         /* Direct Headings Styling to override any prose conflicts */
-        .ProseMirror h1 { font-size: 3.5rem !important; font-weight: 900 !important; margin-bottom: 2rem !important; color: white !important; line-height: 1.1 !important; display: block !important; margin-top: 2rem !important; }
-        .ProseMirror h2 { font-size: 2.75rem !important; font-weight: 800 !important; margin-bottom: 1.5rem !important; color: white !important; margin-top: 3.5rem !important; display: block !important; line-height: 1.2 !important; }
-        .ProseMirror h3 { font-size: 2rem !important; font-weight: 700 !important; margin-bottom: 1.25rem !important; color: #f1f5f9 !important; margin-top: 2.5rem !important; display: block !important; line-height: 1.3 !important; }
+        .ProseMirror h1 { font-size: 3.5rem !important; font-weight: 900 !important; margin-bottom: 2rem !important; color: #0f172a !important; line-height: 1.1 !important; display: block !important; margin-top: 2rem !important; }
+        html.dark .ProseMirror h1 { color: white !important; }
+
+        .ProseMirror h2 { font-size: 2.75rem !important; font-weight: 800 !important; margin-bottom: 1.5rem !important; color: #1e293b !important; margin-top: 3.5rem !important; display: block !important; line-height: 1.2 !important; }
+        html.dark .ProseMirror h2 { color: white !important; }
+
+        .ProseMirror h3 { font-size: 2rem !important; font-weight: 700 !important; margin-bottom: 1.25rem !important; color: #334155 !important; margin-top: 2.5rem !important; display: block !important; line-height: 1.3 !important; }
+        html.dark .ProseMirror h3 { color: #f1f5f9 !important; }
         
-        .ProseMirror p { margin-bottom: 1.5rem; font-size: 1.25rem; line-height: 1.8; color: #cbd5e1; font-weight: 500; }
-        .ProseMirror blockquote { border-left: 4px solid #8A2BE2; padding-left: 1.5rem; font-style: italic; color: #94a3b8; margin: 2.5rem 0; background: rgba(255,255,255,0.03); padding-top: 1.5rem; padding-bottom: 1.5rem; border-radius: 0 1rem 1rem 0; }
+        .ProseMirror p { margin-bottom: 1.5rem; font-size: 1.25rem; line-height: 1.8; color: #334155; font-weight: 500; }
+        html.dark .ProseMirror p { color: #cbd5e1; }
+
+        .ProseMirror blockquote { border-left: 4px solid #8A2BE2; padding-left: 1.5rem; font-style: italic; color: #475569; margin: 2.5rem 0; background: rgba(0,0,0,0.03); padding-top: 1.5rem; padding-bottom: 1.5rem; border-radius: 0 1rem 1rem 0; }
+        html.dark .ProseMirror blockquote { color: #94a3b8; background: rgba(255,255,255,0.03); }
+
         .ProseMirror ul { list-style-type: disc !important; padding-left: 2rem !important; margin-bottom: 1.5rem !important; }
         .ProseMirror ol { list-style-type: decimal !important; padding-left: 2rem !important; margin-bottom: 1.5rem !important; }
-        .ProseMirror li { margin-bottom: 0.5rem; color: #cbd5e1; display: list-item !important; }
-        .ProseMirror pre { background: #011627 !important; color: #e2e8f0; padding: 1.5rem; border-radius: 1rem; margin: 2rem 0; border: 1px solid rgba(255,255,255,0.05); }
+        
+        .ProseMirror li { margin-bottom: 0.5rem; color: #334155; display: list-item !important; }
+        html.dark .ProseMirror li { color: #cbd5e1; }
+
+        .ProseMirror pre { background: #011627 !important; color: #f8fafc; padding: 1.5rem; border-radius: 1rem; margin: 2rem 0; border: 1px solid rgba(0,0,0,0.05); }
+        html.dark .ProseMirror pre { background: #011627 !important; color: #e2e8f0; border: 1px solid rgba(255,255,255,0.05); }
+
         .ProseMirror a { color: #8A2BE2; text-decoration: underline; font-weight: 700; }
         .ProseMirror mark { background-color: #8A2BE2; color: white; border-radius: 4px; padding: 0 4px; }
-        .ProseMirror img { border-radius: 1.5rem; margin: 2.5rem 0; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
+        .ProseMirror img { border-radius: 1.5rem; margin: 2.5rem 0; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.15); }
+        html.dark .ProseMirror img { box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); }
       `}</style>
     </div>
   );
@@ -664,7 +680,7 @@ function ToolBtn({ onClick, active, disabled, icon }: ToolBtnProps) {
     <button
       onClick={(e) => { e.preventDefault(); onClick?.(); }}
       disabled={disabled}
-      className={`p-2 rounded-lg transition-all ${active ? 'bg-white/10 text-[#8A2BE2] scale-110 shadow-lg shadow-[#8A2BE2]/10' : 'text-slate-500 hover:text-white hover:bg-white/5'} ${disabled ? 'opacity-20 cursor-not-allowed' : ''}`}
+      className={`p-2 rounded-lg transition-all ${active ? 'bg-slate-200/50 dark:bg-white/10 text-[#8A2BE2] scale-110 shadow-lg shadow-[#8A2BE2]/10' : 'text-slate-500 hover:text-slate-900 hover:bg-slate-200 dark:hover:text-white dark:hover:bg-white/5'} ${disabled ? 'opacity-20 cursor-not-allowed' : ''}`}
     >
       {icon}
     </button>
@@ -673,7 +689,7 @@ function ToolBtn({ onClick, active, disabled, icon }: ToolBtnProps) {
 
 export default function NewDropPage() {
   return (
-    <Suspense fallback={<div className="min-h-screen bg-[#080B12] flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#F7931A]" /></div>}>
+    <Suspense fallback={<div className="min-h-screen bg-slate-50 dark:bg-[#080B12] flex items-center justify-center"><Loader2 className="w-10 h-10 animate-spin text-[#F7931A]" /></div>}>
       <EditorInner />
     </Suspense>
   );

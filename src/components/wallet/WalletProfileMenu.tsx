@@ -187,11 +187,10 @@ export default function WalletProfileMenu() {
       <button
         onClick={() => setIsOpen((value) => !value)}
         type="button"
-        className="relative h-12 w-12 overflow-hidden rounded-2xl border border-[#F7931A]/50 bg-black shadow-lg shadow-orange-500/20 transition-all hover:-translate-y-0.5 hover:shadow-orange-500/40"
+        className="relative h-12 w-12 overflow-hidden rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black transition-all active:scale-95 shadow-sm"
         aria-label="Open wallet profile"
       >
         <img src={avatar} alt="" className="h-full w-full object-cover" />
-        <span className="absolute bottom-1 right-1 h-3 w-3 rounded-full border-2 border-black bg-lime-400 shadow-[0_0_12px_rgba(163,230,53,0.9)]" />
       </button>
 
       <AnimatePresence>
@@ -201,10 +200,10 @@ export default function WalletProfileMenu() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="fixed left-1/2 top-20 z-[120] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-white/5 bg-[#070707] text-white shadow-2xl shadow-black/60 backdrop-blur-3xl md:absolute md:left-auto md:right-0 md:top-16 md:w-[430px] md:translate-x-0 md:rounded-[2rem] transform-gpu"
+            className="fixed left-1/2 top-20 z-[120] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-slate-200 dark:border-white/10 bg-white dark:bg-[#070707] text-slate-900 dark:text-white shadow-xl md:absolute md:left-auto md:right-0 md:top-16 md:w-[400px] md:translate-x-0 md:rounded-[2rem] transform-gpu transition-all duration-300"
           >
-            <div className="absolute inset-0 bg-[radial-gradient(circle_at_15%_0%,rgba(247,147,26,0.28),transparent_32%),radial-gradient(circle_at_95%_8%,rgba(34,211,238,0.2),transparent_26%),radial-gradient(circle_at_50%_100%,rgba(236,72,153,0.16),transparent_34%)]" />
-            <div className="absolute inset-x-8 top-0 h-px bg-gradient-to-r from-transparent via-[#F7931A] to-transparent" />
+            {/* Minimal top border */}
+            <div className="absolute inset-x-0 top-0 h-px bg-slate-200 dark:bg-white/10" />
             <div className="relative overflow-hidden p-5">
               <motion.div
                 key="main"
@@ -213,166 +212,142 @@ export default function WalletProfileMenu() {
                 exit={{ opacity: 0, x: -20 }}
                 transition={{ duration: 0.2 }}
               >
-                    <div className="relative flex items-center gap-4 pt-2">
-                      <img src={avatar} alt="" className="h-14 w-14 rounded-2xl border-2 border-[#F7931A]/50 object-cover shadow-lg shadow-orange-500/25" />
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2">
-                          <h3 className="truncate text-2xl font-black tracking-tight text-white">
-                            {displayName}
-                          </h3>
-                          <BadgeCheck className="h-5 w-5 shrink-0 fill-cyan-400 text-black" />
-                        </div>
-                        <p className="truncate text-xs font-black uppercase tracking-[0.18em] text-[#F7931A]">{username}</p>
-                      </div>
+                <div className="relative flex items-center gap-4 pt-2">
+                  <img src={avatar} alt="" className="h-14 w-14 rounded-2xl border border-[#F7931A]/30 object-cover shadow-sm" />
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2">
+                      <h3 className="truncate text-2xl font-black tracking-tight text-slate-900 dark:text-white">
+                        {displayName}
+                      </h3>
+                      <BadgeCheck className="h-5 w-5 shrink-0 fill-cyan-400 text-black dark:text-cyan-400" />
                     </div>
+                    <p className="truncate text-xs font-black uppercase tracking-[0.18em] text-[#F7931A]">{username}</p>
+                  </div>
+                </div>
 
-                    <div className="relative mt-6 space-y-2">
-                      <Link
-                        href="/editprofile"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center gap-3 w-full p-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] transition-all border border-white/5 group"
-                      >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 group-hover:scale-110 transition-transform">
-                          <UserPen className="h-5 w-5" />
-                        </div>
-                        <span className="font-black text-white">Edit Profile</span>
-                      </Link>
-
-                      <Link
-                        href={profile?.username ? `/${profile.username}` : '#'}
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center gap-3 w-full p-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] transition-all border border-white/5 group"
-                      >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-400 group-hover:scale-110 transition-transform">
-                          <User className="h-5 w-5" />
-                        </div>
-                        <span className="font-black text-white">My Page</span>
-                      </Link>
-
-                      <Link
-                        href="/dashboard/borrow-musd"
-                        onClick={() => setIsOpen(false)}
-                        className="flex items-center gap-3 w-full p-3 rounded-xl bg-white/[0.05] hover:bg-white/[0.1] transition-all border border-white/5 group"
-                      >
-                        <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-[#f7931a]/10 text-[#f7931a] group-hover:scale-110 transition-transform">
-                          <Bitcoin className="h-5 w-5" />
-                        </div>
-                        <span className="font-black text-white">Borrow MUSD</span>
-                      </Link>
+                <div className="relative mt-6 space-y-2">
+                  <Link
+                    href="/editprofile"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 w-full p-3 rounded-xl bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.1] transition-all border border-slate-200 dark:border-white/5 group"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-orange-500/10 text-orange-500 group-hover:scale-105 transition-transform">
+                      <UserPen className="h-5 w-5" />
                     </div>
+                    <span className="font-black text-slate-800 dark:text-white">Edit Profile</span>
+                  </Link>
 
-                    {!address ? (
-                      <div className="relative mt-6 border-y border-white/5 bg-white/[0.03] -mx-5 px-5 py-5 text-center">
-                        <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
-                          <Wallet className="h-6 w-6" />
+                  <Link
+                    href={profile?.username ? `/${profile.username}` : '#'}
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 w-full p-3 rounded-xl bg-slate-50 dark:bg-white/[0.05] hover:bg-slate-100 dark:hover:bg-white/[0.1] transition-all border border-slate-200 dark:border-white/5 group"
+                  >
+                    <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-cyan-500/10 text-cyan-500 group-hover:scale-105 transition-transform">
+                      <User className="h-5 w-5" />
+                    </div>
+                    <span className="font-black text-slate-800 dark:text-white">Profile</span>
+                  </Link>
+                </div>
+
+                {!address ? (
+                  <div className="relative mt-6 border-y border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] -mx-5 px-5 py-5 text-center">
+                    <div className="mx-auto mb-3 flex h-12 w-12 items-center justify-center rounded-full bg-blue-500/10 text-blue-400 border border-blue-500/20">
+                      <Wallet className="h-6 w-6" />
+                    </div>
+                    <h3 className="mb-2 text-lg font-black text-slate-900 dark:text-white uppercase tracking-tight">Login with Wallet</h3>
+                    <p className="mb-4 text-xs text-slate-500 dark:text-slate-400 font-medium">
+                      Select a wallet, connect, and sign to use TipHive.
+                    </p>
+                    <button
+                      onClick={login}
+                      className="w-full btn-primary py-3 px-4 flex items-center justify-center gap-2 group text-sm"
+                    >
+                      <Wallet className="w-4 h-4 group-hover:scale-110 transition-transform" />
+                      Login
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    {/* Network Warning if not on supported Mezo network */}
+                    {isConnected && chain?.id !== mezoTestnet.id && chain?.id !== mezoMainnet.id && (
+                      <div className="relative mt-6 border border-red-500/30 bg-red-500/5 -mx-5 px-5 py-4 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
+                            <Wallet className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-tight">Wrong Network</p>
+                            <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Switch to Mezo</p>
+                          </div>
                         </div>
-                        <h3 className="mb-2 text-lg font-black text-white uppercase tracking-tight">Login with Wallet</h3>
-                        <p className="mb-4 text-xs text-slate-400 font-medium">
-                          Select a wallet, connect, and sign to use TipHive.
-                        </p>
                         <button
-                          onClick={login}
-                          className="w-full btn-primary py-3 px-4 flex items-center justify-center gap-2 group text-sm"
+                          onClick={() => {
+                            setIsOpen(false);
+                            window.dispatchEvent(new Event('open-network-switcher'));
+                          }}
+                          className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.1em] rounded-lg border border-red-500/20 transition-all"
                         >
-                          <Wallet className="w-4 h-4 group-hover:scale-110 transition-transform" />
-                          Login
+                          FIX NOW
                         </button>
                       </div>
-                    ) : (
-                      <>
-                        {/* Network Warning if not on supported Mezo network */}
-                        {isConnected && chain?.id !== mezoTestnet.id && chain?.id !== mezoMainnet.id && (
-                          <div className="relative mt-6 border border-red-500/30 bg-red-500/5 -mx-5 px-5 py-4 flex items-center justify-between gap-3">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-500/10 text-red-500">
-                                <Wallet className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="text-sm font-black text-white uppercase tracking-tight">Wrong Network</p>
-                                <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Switch to Mezo</p>
-                              </div>
-                            </div>
-                            <button
-                              onClick={() => {
-                                setIsOpen(false);
-                                window.dispatchEvent(new Event('open-network-switcher'));
-                              }}
-                              className="px-4 py-2 bg-red-500/10 hover:bg-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-[0.1em] rounded-lg border border-red-500/20 transition-all"
-                            >
-                              FIX NOW
-                            </button>
-                          </div>
-                        )}
-                        <div className="relative mt-6 grid grid-cols-2 gap-3">
-                          <MenuAction
-                            href="/mezo-toolkit"
-                            icon={<img src="/mezo.png" alt="" className="h-4 w-4" />}
-                            label="MEZO TOOLKIT"
-                          />
-                          <MenuAction
-                            href="/docs"
-                            icon={<BookOpen className="h-4 w-4" />}
-                            label="DOCS"
-                            external
-                          />
-                        </div>
-
-                        <div className="relative mt-3 grid grid-cols-1">
-                          <MenuAction
-                            href={`${networkConfig.explorerUrl}/address/${address}`}
-                            icon={<ExternalLink className="h-4 w-4" />}
-                            label="View on Explorer"
-                            external
-                          />
-                        </div>
-
-                        <div className="relative mt-6 border-y border-white/5 bg-white/[0.03] -mx-5 px-5 py-4">
-                          <div className="flex items-center justify-between gap-4">
-                            <div className="flex items-center gap-3">
-                              <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-white/10 text-[#F7931A]">
-                                <Wallet className="h-4 w-4" />
-                              </div>
-                              <div>
-                                <p className="font-black text-white">Connected Wallet</p>
-                                <p className="font-mono text-sm text-slate-500">{shortAddress(address)}</p>
-                              </div>
-                            </div>
-                            <BadgeCheck className="h-5 w-5 text-lime-500" />
-                          </div>
-                        </div>
-
-                        <div className="relative pt-4">
-                          <AssetRow
-                            icon={<Bitcoin className="h-5 w-5" />}
-                            title="Bitcoin"
-                            subtitle={`${btcAmount.toFixed(5)} BTC`}
-                            value={`$${(btcAmount * btcUsd).toFixed(2)}`}
-                            orange
-                          />
-                          <AssetRow
-                            icon={<MUSDLogo className="h-5 w-5" />}
-                            title="MUSD"
-                            subtitle="Wallet balance"
-                            value={`$${musdAmount.toFixed(2)}`}
-                          />
-                        </div>
-                      </>
                     )}
 
-                    <div className="relative flex items-center justify-center border-t border-white/5 bg-black/40 -mx-5 mt-4 px-5 py-4">
-                      <button
-                        onClick={() => {
-                          setIsOpen(false);
-                          logout();
-                        }}
-                        type="button"
-                        className="flex items-center gap-2 rounded-xl px-2 py-1 text-sm font-black text-white hover:text-red-500"
-                      >
-                        <LogOut className="h-4 w-4" />
-                        Sign out
-                      </button>
+                    <div className="relative mt-4 grid grid-cols-1">
+                      <MenuAction
+                        href={`${networkConfig.explorerUrl}/address/${address}`}
+                        icon={<ExternalLink className="h-4 w-4" />}
+                        label="View on Explorer"
+                        external
+                      />
                     </div>
-                  </motion.div>
+
+                    <div className="relative mt-6 border-y border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/[0.03] -mx-5 px-5 py-4">
+                      <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-[#F7931A]">
+                            <Wallet className="h-4 w-4" />
+                          </div>
+                          <div>
+                            <p className="font-black text-slate-900 dark:text-white">Connected Wallet</p>
+                            <p className="font-mono text-sm text-slate-500">{shortAddress(address)}</p>
+                          </div>
+                        </div>
+                        <BadgeCheck className="h-5 w-5 text-lime-600 dark:text-lime-500" />
+                      </div>
+                    </div>
+
+                    <div className="relative pt-4">
+                      <AssetRow
+                        icon={<Bitcoin className="h-5 w-5" />}
+                        title="Bitcoin"
+                        subtitle={`${btcAmount.toFixed(5)} BTC`}
+                        value={`$${(btcAmount * btcUsd).toFixed(2)}`}
+                        orange
+                      />
+                      <AssetRow
+                        icon={<MUSDLogo className="h-5 w-5" />}
+                        title="MUSD"
+                        subtitle="Wallet balance"
+                        value={`$${musdAmount.toFixed(2)}`}
+                      />
+                    </div>
+                  </>
+                )}
+
+                <div className="relative flex items-center justify-center border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-black/40 -mx-5 mt-4 px-5 py-4">
+                  <button
+                    onClick={() => {
+                      setIsOpen(false);
+                      logout();
+                    }}
+                    type="button"
+                    className="flex items-center gap-2 rounded-xl px-2 py-1 text-sm font-black text-slate-800 dark:text-white hover:text-red-600 dark:hover:text-red-500 transition-colors"
+                  >
+                    <LogOut className="h-4 w-4" />
+                    Sign out
+                  </button>
+                </div>
+              </motion.div>
             </div>
           </motion.div>
         )}
@@ -394,7 +369,7 @@ function MenuAction({
   external?: boolean;
   onClick?: () => void;
 }) {
-  const className = 'flex items-center justify-center gap-2 rounded-2xl bg-white/10 px-4 py-3 text-sm font-black text-white transition-all hover:-translate-y-0.5 hover:bg-[#F7931A] hover:shadow-lg hover:shadow-orange-500/20';
+  const className = 'flex items-center justify-center gap-2 rounded-2xl bg-slate-100 dark:bg-white/10 px-4 py-3 text-sm font-black text-slate-800 dark:text-white transition-all hover:bg-slate-200 dark:hover:bg-white/15 border border-slate-200 dark:border-white/5';
 
   if (href) {
     return (
@@ -431,15 +406,15 @@ function AssetRow({
   return (
     <div className="flex items-center justify-between gap-4 py-3">
       <div className="flex items-center gap-4">
-        <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${orange ? 'bg-orange-500 text-white' : 'bg-white/10 text-white'}`}>
+        <div className={`flex h-10 w-10 items-center justify-center rounded-2xl ${orange ? 'bg-orange-500 text-white' : 'bg-slate-100 dark:bg-white/10 text-slate-800 dark:text-white'}`}>
           {icon}
         </div>
         <div>
-          <p className={`${strong ? 'text-lg' : 'text-base'} font-black leading-tight text-white`}>{title}</p>
+          <p className={`${strong ? 'text-lg' : 'text-base'} font-black leading-tight text-slate-900 dark:text-white`}>{title}</p>
           <p className="text-sm font-medium leading-tight text-slate-500">{subtitle}</p>
         </div>
       </div>
-      <p className={`${strong ? 'text-lg' : 'text-base'} shrink-0 font-black text-white`}>{value}</p>
+      <p className={`${strong ? 'text-lg' : 'text-base'} shrink-0 font-black text-slate-900 dark:text-white`}>{value}</p>
     </div>
   );
 }

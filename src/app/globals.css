@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-primary-orange: #F7931A;
 }
@@ -32,22 +34,50 @@ body {
   margin: 0;
   width: 100%;
   overflow-x: hidden;
-  background-color: #050505;
-  color: white;
   -webkit-font-smoothing: antialiased;
   scroll-behavior: smooth;
   position: relative;
+}
+
+/* Smooth transitions for theme toggle on interactive and container elements */
+html,
+body,
+header,
+footer,
+nav,
+aside,
+main,
+section,
+.glass-card,
+[class*="bg-"],
+[class*="text-"],
+[class*="border-"] {
+  transition-property: background-color, border-color, color, fill, stroke, box-shadow;
+  transition-duration: 250ms;
+  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+html {
+  background-color: #f8fafc;
+  color: #0f172a;
+}
+
+html.dark {
+  background-color: #050505;
+  color: #ffffff;
 }
 
 body {
   min-height: 100vh;
   display: flex;
   flex-direction: column;
+  background-color: transparent;
+  color: inherit;
 }
 
 
 @utility glass-card {
-  @apply bg-white/[0.03] backdrop-blur-xl border border-white/5 rounded-[2.5rem] shadow-2xl;
+  @apply bg-white dark:bg-white/[0.03] backdrop-blur-xl border border-slate-200 dark:border-white/5 rounded-[2.5rem] shadow-sm dark:shadow-2xl;
 }
 
 @utility btn-primary {
@@ -59,7 +89,7 @@ body {
 }
 
 @utility profile-input {
-  @apply w-full rounded-2xl border border-white/10 bg-white/5 px-6 py-5 font-bold text-white placeholder:text-slate-600 outline-none transition-all focus:border-[#F7931A]/60 focus:ring-4 focus:ring-[#F7931A]/10;
+  @apply w-full rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-50 dark:bg-white/5 px-6 py-5 font-bold text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 outline-none transition-all focus:border-[#F7931A]/60 focus:ring-4 focus:ring-[#F7931A]/10;
 }
 
 /* Custom Scrollbar */
@@ -145,7 +175,7 @@ body {
   scrollbar-width: none;
 
   &::-webkit-scrollbar {
-    display: none;
+    display: none !important;
   }
 }
 
@@ -177,6 +207,10 @@ body {
 /* Tiptap / Post Content Styles */
 .tiptap-content {
   line-height: 1.75;
+  color: #334155;
+}
+
+html.dark .tiptap-content {
   color: #cbd5e1;
 }
 
@@ -184,33 +218,49 @@ body {
   font-size: 2.5rem !important;
   font-weight: 900 !important;
   margin-bottom: 1.5rem !important;
-  color: white !important;
+  color: #0f172a !important;
   line-height: 1.2 !important;
   font-family: var(--font-outfit), sans-serif !important;
+}
+
+html.dark .tiptap-content h1 {
+  color: white !important;
 }
 
 .tiptap-content h2 {
   font-size: 2rem !important;
   font-weight: 800 !important;
   margin-bottom: 1.25rem !important;
-  color: white !important;
+  color: #0f172a !important;
   margin-top: 2rem !important;
   font-family: var(--font-outfit), sans-serif !important;
+}
+
+html.dark .tiptap-content h2 {
+  color: white !important;
 }
 
 .tiptap-content h3 {
   font-size: 1.5rem !important;
   font-weight: 700 !important;
   margin-bottom: 1rem !important;
-  color: rgba(255, 255, 255, 0.9) !important;
+  color: #1e293b !important;
   margin-top: 1.5rem !important;
   font-family: var(--font-outfit), sans-serif !important;
+}
+
+html.dark .tiptap-content h3 {
+  color: rgba(255, 255, 255, 0.9) !important;
 }
 
 .tiptap-content p {
   margin-bottom: 1.5rem !important;
   font-size: 1.125rem !important;
   line-height: 1.75 !important;
+  color: #334155 !important;
+}
+
+html.dark .tiptap-content p {
   color: #cbd5e1 !important;
 }
 
@@ -218,12 +268,17 @@ body {
   border-left: 4px solid #8A2BE2 !important;
   padding-left: 1.5rem !important;
   font-style: italic !important;
-  color: #94a3b8 !important;
-  background: rgba(255, 255, 255, 0.05) !important;
+  color: #475569 !important;
+  background: rgba(0, 0, 0, 0.03) !important;
   padding-top: 0.5rem !important;
   padding-bottom: 0.5rem !important;
   border-radius: 0 0.75rem 0.75rem 0 !important;
   margin: 2rem 0 !important;
+}
+
+html.dark .tiptap-content blockquote {
+  color: #94a3b8 !important;
+  background: rgba(255, 255, 255, 0.05) !important;
 }
 
 .tiptap-content ul {
@@ -240,25 +295,42 @@ body {
 
 .tiptap-content li {
   margin-bottom: 0.5rem !important;
-  color: #cbd5e1 !important;
+  color: #334155 !important;
   display: list-item !important;
 }
 
+html.dark .tiptap-content li {
+  color: #cbd5e1 !important;
+}
+
 .tiptap-content pre {
-  background: #011627 !important;
-  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  background: #f8fafc !important;
+  border: 1px solid rgba(0, 0, 0, 0.06) !important;
   padding: 1.5rem !important;
   border-radius: 1rem !important;
   margin: 2rem 0 !important;
   overflow-x: auto !important;
+  color: #0f172a !important;
+}
+
+html.dark .tiptap-content pre {
+  background: #011627 !important;
+  border: 1px solid rgba(255, 255, 255, 0.05) !important;
+  color: inherit !important;
 }
 
 .tiptap-content code {
   font-family: monospace !important;
-  background: rgba(255, 255, 255, 0.1) !important;
+  background: rgba(0, 0, 0, 0.05) !important;
+  color: #0f172a !important;
   padding: 0.2rem 0.4rem !important;
   border-radius: 0.375rem !important;
   font-size: 0.875em !important;
+}
+
+html.dark .tiptap-content code {
+  background: rgba(255, 255, 255, 0.1) !important;
+  color: inherit !important;
 }
 
 .tiptap-content pre code {

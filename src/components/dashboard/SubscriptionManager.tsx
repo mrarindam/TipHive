@@ -69,7 +69,7 @@ export default function SubscriptionManager() {
   const { contracts, chainId, explorerUrl } = useNetworkConfig();
   const { creatorProfile } = useDashboard();
   const { linkWallet, authenticated } = useWalletAuth();
-  
+
   const [activeTab, setActiveTab] = useState<ViewMode>('manage');
   const [creating, setCreating] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -338,7 +338,7 @@ export default function SubscriptionManager() {
 
   if (authenticated && !address) {
     const hasLinkedWallet = !!creatorProfile?.address;
-    
+
     return (
       <motion.div
         initial={{ opacity: 0, y: 20 }}
@@ -355,7 +355,7 @@ export default function SubscriptionManager() {
           {hasLinkedWallet ? 'Connect Your Wallet' : 'Unlock Creator Engine'}
         </h2>
         <p className="text-slate-400 text-lg font-medium mb-10 leading-relaxed max-w-lg mx-auto">
-          {hasLinkedWallet 
+          {hasLinkedWallet
             ? 'Your wallet is linked but not currently connected. Please connect it to manage your on-chain tiers.'
             : 'To build recurring revenue and manage your exclusive tiers, you need to link a Web3 wallet to your account.'}
         </p>
@@ -379,19 +379,19 @@ export default function SubscriptionManager() {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-6 right-6 z-[200] flex items-center gap-3 bg-[#1a1a1f] border border-white/10 p-4 rounded-2xl shadow-2xl backdrop-blur-xl"
+            className="fixed top-6 right-6 z-[200] flex items-center gap-3 bg-white dark:bg-[#1a1a1f] border border-slate-200 dark:border-white/10 p-4 rounded-2xl shadow-lg dark:shadow-2xl backdrop-blur-xl transition-colors duration-300"
           >
             <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${notification.type === 'error' ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'
               }`}>
               {notification.type === 'error' ? <X className="w-5 h-5" /> : <CheckCircle2 className="w-5 h-5" />}
             </div>
             <div>
-              <p className="text-sm font-black text-white uppercase tracking-tight">{notification.message}</p>
-              <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest mt-0.5">Subscription Manager</p>
+              <p className="text-sm font-bold text-slate-900 dark:text-white uppercase tracking-tight">{notification.message}</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider mt-0.5">Subscription Manager</p>
             </div>
             <button
               onClick={() => setNotification(null)}
-              className="ml-4 p-1 hover:bg-white/5 rounded-lg transition-colors"
+              className="ml-4 p-1 hover:bg-slate-100 dark:hover:bg-white/5 rounded-lg transition-colors cursor-pointer"
             >
               <X className="w-4 h-4 text-slate-500" />
             </button>
@@ -404,16 +404,22 @@ export default function SubscriptionManager() {
         <div className="flex items-center gap-3">
           <button
             onClick={() => setActiveTab('manage')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'manage' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
-              }`}
+            className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === 'manage'
+                ? 'bg-[#F7931A] text-white dark:text-black shadow-md shadow-orange-500/20'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
+            }`}
           >
             Manage Tiers
           </button>
           <button
             disabled={plans.filter(p => p.active).length >= 3 && activeTab !== 'create'}
             onClick={() => setActiveTab('create')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all relative ${activeTab === 'create' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
-              } ${plans.filter(p => p.active).length >= 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
+            className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all relative cursor-pointer ${
+              activeTab === 'create'
+                ? 'bg-[#F7931A] text-white dark:text-black shadow-md shadow-orange-500/20'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
+            } ${plans.filter(p => p.active).length >= 3 ? 'opacity-50 cursor-not-allowed' : ''}`}
           >
             Create New Tier
             {plans.filter(p => p.active).length >= 3 && (
@@ -422,8 +428,11 @@ export default function SubscriptionManager() {
           </button>
           <button
             onClick={() => setActiveTab('members')}
-            className={`px-6 py-2 rounded-full text-xs font-black uppercase tracking-widest transition-all ${activeTab === 'members' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'bg-white/5 text-slate-500 hover:bg-white/10'
-              }`}
+            className={`px-6 py-2.5 rounded-full text-xs font-bold uppercase tracking-wider transition-all cursor-pointer ${
+              activeTab === 'members'
+                ? 'bg-[#F7931A] text-white dark:text-black shadow-md shadow-orange-500/20'
+                : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
+            }`}
           >
             Members Zone
           </button>
@@ -440,28 +449,37 @@ export default function SubscriptionManager() {
             className="space-y-6"
           >
             {/* Filter UI */}
-            <div className="flex items-center justify-between bg-white/[0.02] border border-white/5 p-2 rounded-2xl">
+            <div className="flex items-center justify-between bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 p-2 rounded-2xl transition-colors duration-300">
               <div className="flex items-center gap-1.5 p-1">
                 <button
                   onClick={() => setFilter('active')}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${filter === 'active' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
-                    }`}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                    filter === 'active'
+                      ? 'bg-[#F7931A] text-white dark:text-black shadow-md shadow-orange-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full ${filter === 'active' ? 'bg-black' : 'bg-green-500'}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${filter === 'active' ? 'bg-white dark:bg-black' : 'bg-green-500'}`} />
                   Live Tiers
                 </button>
                 <button
                   onClick={() => setFilter('inactive')}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${filter === 'inactive' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
-                    }`}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                    filter === 'inactive'
+                      ? 'bg-[#F7931A] text-white dark:text-black shadow-md shadow-orange-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
                 >
-                  <div className={`w-1.5 h-1.5 rounded-full ${filter === 'inactive' ? 'bg-black' : 'bg-red-500'}`} />
+                  <div className={`w-1.5 h-1.5 rounded-full ${filter === 'inactive' ? 'bg-white dark:bg-black' : 'bg-red-500'}`} />
                   Inactive
                 </button>
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all flex items-center gap-2 ${filter === 'all' ? 'bg-[#F7931A] text-black shadow-lg shadow-orange-500/20' : 'text-slate-500 hover:text-white hover:bg-white/5'
-                    }`}
+                  className={`px-4 py-2 rounded-xl text-[10px] font-bold uppercase tracking-wider transition-all flex items-center gap-2 cursor-pointer ${
+                    filter === 'all'
+                      ? 'bg-[#F7931A] text-white dark:text-black shadow-md shadow-orange-500/20'
+                      : 'text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'
+                  }`}
                 >
                   <SlidersHorizontal className="w-3 h-3" />
                   All Tiers
@@ -485,30 +503,33 @@ export default function SubscriptionManager() {
                   .map((plan) => {
                     const isProcessing = activeActionId === plan.id;
                     return (
-                      <div key={plan.id} className="glass-card p-6 border-white/5 bg-white/[0.03] group transition-all hover:bg-white/[0.05] relative overflow-hidden">
+                      <div key={plan.id} className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 p-6 rounded-[2rem] shadow-md dark:shadow-xl transition-all duration-300 relative overflow-hidden">
                         <div className="flex justify-between items-start mb-6">
-                          <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${plan.active ? 'bg-green-500/10 text-green-500 border border-green-500/20' : 'bg-red-500/10 text-red-500 border border-red-500/20'
-                            }`}>
+                          <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
+                            plan.active
+                              ? 'bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20'
+                              : 'bg-red-500/10 text-red-500 border border-red-500/20'
+                          }`}>
                             {plan.active ? 'Live' : 'Inactive'}
                           </span>
-                          <div className="flex items-center gap-1.5 text-[#F7931A] font-black text-xl">
+                          <div className="flex items-center gap-1.5 text-[#F7931A] font-bold text-xl">
                             <span>{plan.price}</span>
                             <MUSDLogo className="w-5 h-5" />
                           </div>
                         </div>
 
-                        <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2 leading-none">{plan.name}</h3>
-                        <p className="text-slate-500 text-sm font-medium mb-6 line-clamp-2">{plan.description}</p>
+                        <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-2 leading-none">{plan.name}</h3>
+                        <p className="text-slate-600 dark:text-slate-400 text-sm font-medium mb-6 line-clamp-2 leading-relaxed">{plan.description}</p>
 
                         <div className="space-y-3 mb-8">
-                          <div className="flex items-center gap-2 text-xs font-black text-slate-400 uppercase tracking-widest">
+                          <div className="flex items-center gap-2 text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">
                             <Clock className="w-3.5 h-3.5 text-[#F7931A]" />
                             {plan.duration / 86400} Days Access
                           </div>
                           <div className="space-y-2 mt-4">
                             {plan.perks?.slice(0, 5).map((perk, i) => (
-                              <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-400 uppercase tracking-widest">
-                                <div className="w-4 h-4 rounded bg-[#F7931A]/10 flex items-center justify-center text-[#F7931A]">
+                              <div key={i} className="flex items-center gap-2 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider">
+                                <div className="w-4 h-4 rounded bg-[#F7931A]/10 flex items-center justify-center text-[#F7931A] shrink-0">
                                   <Zap size={10} />
                                 </div>
                                 <span className="truncate">{perk}</span>
@@ -517,13 +538,13 @@ export default function SubscriptionManager() {
                           </div>
                         </div>
 
-                        <div className="pt-6 border-t border-white/5 flex gap-3">
+                        <div className="pt-6 border-t border-slate-100 dark:border-white/5 flex gap-3">
                           <button
                             onClick={() => handleToggleActive(plan)}
                             disabled={isProcessing}
-                            className={`flex-1 py-3.5 rounded-xl text-xs font-black uppercase tracking-widest flex items-center justify-center gap-2 transition-all ${plan.active
-                              ? 'bg-white/5 text-slate-300 hover:bg-red-500/10 hover:text-red-500 border border-transparent hover:border-red-500/20'
-                              : 'bg-[#F7931A]/10 text-[#F7931A] hover:bg-[#F7931A] hover:text-black'
+                            className={`flex-1 py-3.5 rounded-xl text-xs font-bold uppercase tracking-wider flex items-center justify-center gap-2 transition-all cursor-pointer ${plan.active
+                              ? 'bg-slate-50 dark:bg-white/5 text-slate-600 dark:text-slate-300 hover:bg-red-500/10 hover:text-red-500 border border-slate-200 dark:border-transparent hover:border-red-500/20'
+                              : 'bg-[#F7931A]/10 text-[#F7931A] hover:bg-[#F7931A] hover:text-white dark:hover:text-black border border-transparent'
                               }`}
                           >
                             {isProcessing ? <Loader2 className="w-3 h-3 animate-spin" /> : plan.active ? <PowerOff className="w-3 h-3" /> : <Power className="w-3 h-3" />}
@@ -533,14 +554,14 @@ export default function SubscriptionManager() {
                       </div>
                     );
                   }) : (
-                <div className="col-span-full py-24 text-center glass-card border-dashed border-white/5">
-                  <div className="w-20 h-20 bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6">
+                <div className="col-span-full py-24 text-center bg-white dark:bg-[#0f0f14] border border-dashed border-slate-200 dark:border-white/5 rounded-[2rem] shadow-sm">
+                  <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-3xl flex items-center justify-center mx-auto mb-6 border border-slate-200 dark:border-white/5">
                     {filter === 'active' ? <Zap className="w-10 h-10 text-green-500/30" /> : <PowerOff className="w-10 h-10 text-red-500/30" />}
                   </div>
-                  <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">
+                  <h3 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white uppercase tracking-tight mb-2">
                     {filter === 'active' ? 'No Live Tiers' : filter === 'inactive' ? 'No Inactive Tiers' : 'No Tiers Found'}
                   </h3>
-                  <p className="text-slate-500 font-medium mb-10 max-w-sm mx-auto">
+                  <p className="text-slate-500 dark:text-slate-400 font-medium mb-10 max-w-sm mx-auto">
                     {filter === 'active'
                       ? 'All your subscription tiers are currently hidden or you haven\'t created any yet.'
                       : 'You don\'t have any deactivated tiers at the moment.'}
@@ -548,7 +569,7 @@ export default function SubscriptionManager() {
                   {filter === 'active' && (
                     <button
                       onClick={() => setActiveTab('create')}
-                      className="btn-secondary px-10 py-4 mx-auto"
+                      className="px-8 py-3 bg-[#F7931A] text-white dark:text-black rounded-xl text-xs font-bold uppercase tracking-wider hover:bg-[#e08215] transition-colors cursor-pointer"
                     >
                       Set Up Your First Tier
                     </button>
@@ -567,42 +588,42 @@ export default function SubscriptionManager() {
           >
             {/* Metrics */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-              <div className="bg-[#111116] border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
+              <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 rounded-3xl p-6 relative overflow-hidden group shadow-md dark:shadow-xl transition-colors duration-300">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                   <UsersIcon className="w-12 h-12 text-[#F7931A]" />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Total Members</p>
-                <h3 className="text-4xl font-black text-white">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Total Members</p>
+                <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
                   {new Set(subscribers.map(s => s.fan_address.toLowerCase())).size}
                 </h3>
-                <p className="text-[10px] text-slate-500 font-bold mt-2 flex items-center gap-1 uppercase tracking-widest">
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-2 flex items-center gap-1 uppercase tracking-wider">
                   Unique Members
                 </p>
               </div>
 
-              <div className="bg-[#111116] border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
+              <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 rounded-3xl p-6 relative overflow-hidden group shadow-md dark:shadow-xl transition-colors duration-300">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                   <CheckCircle2 className="w-12 h-12 text-green-500" />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Active Members</p>
-                <h3 className="text-4xl font-black text-white">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Active Members</p>
+                <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
                   {new Set(
                     subscribers
                       .filter(s => s.active === true && new Date(s.end_date) > new Date())
                       .map(s => s.fan_address?.toLowerCase())
                   ).size}
                 </h3>
-                <div className="text-[10px] text-green-500 font-bold mt-2 flex items-center gap-1 uppercase tracking-widest">
+                <div className="text-[10px] text-green-600 dark:text-green-400 font-bold mt-2 flex items-center gap-1 uppercase tracking-wider">
                   <div className="w-1.5 h-1.5 bg-green-500 rounded-full animate-pulse" /> Currently Live
                 </div>
               </div>
 
-              <div className="bg-[#111116] border border-white/5 rounded-3xl p-6 relative overflow-hidden group">
+              <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 rounded-3xl p-6 relative overflow-hidden group shadow-md dark:shadow-xl transition-colors duration-300">
                 <div className="absolute top-0 right-0 p-4 opacity-10 group-hover:opacity-20 transition-opacity">
                   <Zap className="w-12 h-12 text-[#F7931A]" />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Popular Plan</p>
-                <h3 className="text-xl font-black text-white truncate">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Popular Plan</p>
+                <h3 className="text-lg md:text-xl font-bold text-slate-900 dark:text-white truncate font-outfit">
                   {(() => {
                     const counts: Record<string, number> = {};
                     subscribers.forEach(s => {
@@ -613,19 +634,19 @@ export default function SubscriptionManager() {
                     return top ? top[0] : 'No data';
                   })()}
                 </h3>
-                <p className="text-[10px] text-slate-500 font-bold mt-2 uppercase tracking-widest">Most subscribed</p>
+                <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold mt-2 uppercase tracking-wider">Most subscribed</p>
               </div>
 
-              <div className="bg-[#111116] border border-[#F7931A]/20 rounded-3xl p-6 relative overflow-hidden group shadow-lg shadow-orange-500/5">
+              <div className="bg-white dark:bg-[#0f0f14] border border-[#F7931A]/20 rounded-3xl p-6 relative overflow-hidden group shadow-md dark:shadow-xl transition-colors duration-300 shadow-orange-500/5">
                 <div className="absolute top-0 right-0 p-4 opacity-20">
                   <MUSDLogo className="w-12 h-12" />
                 </div>
-                <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 mb-2">Total Income</p>
-                <h3 className="text-4xl font-black text-white flex items-center gap-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-2">Total Income</p>
+                <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
                   {subscribers.reduce((acc, curr) => acc + (curr.total_paid || 0), 0).toFixed(2)}
-                  <MUSDLogo className="w-6 h-6 opacity-50" />
+                  <MUSDLogo className="w-6 h-6 opacity-75" />
                 </h3>
-                <p className="text-[10px] text-[#F7931A] font-bold mt-2 uppercase tracking-widest">From Subscriptions</p>
+                <p className="text-[10px] text-[#F7931A] font-bold mt-2 uppercase tracking-wider">From Subscriptions</p>
               </div>
             </div>
 
@@ -635,40 +656,40 @@ export default function SubscriptionManager() {
               const totalMemberPages = Math.ceil(subscribers.length / MEMBERS_PER_PAGE);
               const pagedSubs = subscribers.slice((memberPage - 1) * MEMBERS_PER_PAGE, memberPage * MEMBERS_PER_PAGE);
               return (
-                <div className="bg-[#111116] border border-white/5 rounded-[2rem] overflow-hidden">
-                  <div className="px-8 py-6 border-b border-white/5 flex items-center justify-between">
-                    <h3 className="text-lg font-bold text-white tracking-tight uppercase">Recent Joins</h3>
-                    <span className="text-[10px] font-black bg-white/5 px-3 py-1 rounded-full text-slate-400 uppercase tracking-widest">{subscribers.length} Total</span>
+                <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 rounded-[2rem] overflow-hidden shadow-md dark:shadow-xl transition-colors duration-300">
+                  <div className="px-8 py-6 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight uppercase font-outfit">Recent Joins</h3>
+                    <span className="text-[10px] font-bold bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full text-slate-600 dark:text-slate-400 uppercase tracking-wider">{subscribers.length} Total</span>
                   </div>
-                  <div className="divide-y divide-white/5">
+                  <div className="divide-y divide-slate-100 dark:divide-white/5">
                     {pagedSubs.length > 0 ? pagedSubs.map((sub, i) => (
-                      <div key={i} className="px-8 py-5 flex items-center justify-between hover:bg-white/[0.05] bg-white/[0.02] transition-colors group">
+                      <div key={i} className="px-8 py-5 flex items-center justify-between hover:bg-slate-50 dark:hover:bg-white/[0.03] transition-colors group">
                         <div className="flex items-center gap-4">
-                          <div className="w-12 h-12 rounded-xl bg-white/5 border border-white/10 overflow-hidden relative">
+                          <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 overflow-hidden relative">
                             {sub.fan?.avatar_url ? (
                               <img src={sub.fan.avatar_url} alt="" className="w-full h-full object-cover" />
                             ) : (
-                              <div className="w-full h-full flex items-center justify-center text-slate-700">
+                              <div className="w-full h-full flex items-center justify-center text-slate-400 dark:text-slate-700">
                                 <UsersIcon className="w-6 h-6" />
                               </div>
                             )}
                           </div>
                           <div>
-                            <h4 className="text-white font-bold text-sm group-hover:text-[#F7931A] transition-colors">
+                            <h4 className="text-slate-900 dark:text-white font-bold text-sm group-hover:text-[#F7931A] transition-colors">
                               {sub.fan?.display_name || 'Anonymous Fan'}
                             </h4>
-                            <p className="text-xs text-slate-500 font-medium">@{sub.fan?.username || sub.fan_address?.slice(0, 10)}</p>
+                            <p className="text-xs text-slate-500 dark:text-slate-400 font-medium">@{sub.fan?.username || sub.fan_address?.slice(0, 10)}</p>
                           </div>
                         </div>
                         <div className="text-right">
                           <div className="flex items-center gap-2 justify-end mb-1">
-                            <span className="text-[10px] font-black bg-[#F7931A]/10 text-[#F7931A] px-2 py-0.5 rounded-md uppercase tracking-widest border border-[#F7931A]/10">
+                            <span className="text-[10px] font-bold bg-[#F7931A]/10 text-[#F7931A] px-2 py-0.5 rounded-md uppercase tracking-wider border border-[#F7931A]/20">
                               {sub.plan?.name || 'Standard'}
                             </span>
-                            <p className="text-white font-black text-sm">+{sub.total_paid || 0} MUSD</p>
+                            <p className="text-slate-900 dark:text-white font-bold text-sm">+{sub.total_paid || 0} MUSD</p>
                           </div>
                           <div className="flex items-center justify-end gap-3 mt-1.5">
-                            <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider">
                               Joined {new Date(sub.created_at).toLocaleDateString()}
                             </p>
                             {sub.tx_hash && (
@@ -676,7 +697,7 @@ export default function SubscriptionManager() {
                                 href={`${explorerUrl}/tx/${sub.tx_hash}`}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="text-[#F7931A] text-[10px] font-black uppercase tracking-widest flex items-center gap-1 hover:underline"
+                                className="text-[#F7931A] text-[10px] font-bold uppercase tracking-wider flex items-center gap-1 hover:underline"
                               >
                                 Explorer <ExternalLink size={10} />
                               </a>
@@ -686,19 +707,19 @@ export default function SubscriptionManager() {
                       </div>
                     )) : (
                       <div className="py-20 text-center">
-                        <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">No active subscribers yet</p>
+                        <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-wider text-xs">No active subscribers yet</p>
                       </div>
                     )}
                   </div>
                   {totalMemberPages > 1 && (
-                    <div className="flex items-center justify-center gap-2 px-8 py-6 border-t border-white/5">
+                    <div className="flex items-center justify-center gap-2 px-8 py-6 border-t border-slate-100 dark:border-white/5">
                       {Array.from({ length: totalMemberPages }).map((_, i) => (
                         <button
                           key={i}
                           onClick={() => setMemberPage(i + 1)}
-                          className={`w-10 h-10 rounded-xl text-sm font-black transition-all ${memberPage === i + 1
-                            ? 'bg-[#F7931A] text-black shadow-[0_0_15px_rgba(247,147,26,0.3)]'
-                            : 'bg-white/5 text-slate-400 hover:text-white hover:bg-white/10'
+                          className={`w-10 h-10 rounded-xl text-sm font-bold transition-all cursor-pointer ${memberPage === i + 1
+                            ? 'bg-[#F7931A] text-white dark:text-black shadow-[0_0_15px_rgba(247,147,26,0.3)]'
+                            : 'bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10'
                             }`}
                         >
                           {i + 1}
@@ -718,22 +739,22 @@ export default function SubscriptionManager() {
             exit={{ opacity: 0, y: -10 }}
             className="w-full"
           >
-            <form onSubmit={handleCreatePlan} className="space-y-6">
+            <form onSubmit={handleCreatePlan} className="space-y-8">
               {/* Basic Info Section Card */}
-              <div className="glass-card p-6 md:p-8 border-white/5 bg-white/[0.03] space-y-6">
+              <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 p-6 md:p-8 rounded-[2rem] shadow-md dark:shadow-2xl transition-colors duration-300 space-y-6">
                 <div className="space-y-1">
-                  <h3 className="text-lg font-bold text-white tracking-tight">Tier Details</h3>
-                  <p className="text-sm text-slate-500">Define the core identity and pricing of your access tier.</p>
+                  <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight">Tier Details</h3>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">Define the core identity and pricing of your access tier.</p>
                 </div>
 
                 <div className="space-y-6 pt-2">
                   <div className="space-y-2">
-                    <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Tier Name</label>
+                    <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Tier Name</label>
                     <input
                       required
                       type="text"
                       placeholder="e.g. Diamond Circle"
-                      className="w-full bg-black/20 border border-white/5 rounded-xl py-3.5 px-5 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium transition-all"
+                      className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-xl py-3.5 px-5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium transition-all"
                       value={formData.name}
                       onChange={(e) => setFormData({ ...formData, name: e.target.value })}
                     />
@@ -741,39 +762,39 @@ export default function SubscriptionManager() {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Price (MUSD)</label>
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Price (MUSD)</label>
                       <div className="relative">
                         <input
                           required
                           type="number"
                           placeholder="10"
-                          className="w-full bg-black/20 border border-white/5 rounded-xl py-3.5 px-5 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all"
+                          className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-xl py-3.5 px-5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-2 focus:ring-[#F7931A] focus:outline-none font-medium [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none transition-all"
                           value={formData.price}
                           onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                         />
-                        <MUSDLogo className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6" />
+                        <MUSDLogo className="absolute right-5 top-1/2 -translate-y-1/2 w-6 h-6 opacity-75" />
                       </div>
                     </div>
                     <div className="space-y-2">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Tier Duration</label>
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Tier Duration</label>
                       <select
-                        className="w-full bg-black/20 border border-white/5 rounded-xl py-3.5 px-5 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none appearance-none font-medium transition-all cursor-pointer"
+                        className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-xl py-3.5 px-5 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none appearance-none font-medium transition-all cursor-pointer"
                         value={formData.durationDays}
                         onChange={(e) => setFormData({ ...formData, durationDays: e.target.value })}
                       >
-                        <option value="30" className="bg-[#1a1a1a]">1 Month Access</option>
-                        <option value="90" className="bg-[#1a1a1a]">90 Days Access</option>
-                        <option value="365" className="bg-[#1a1a1a]">Annual Access</option>
+                        <option value="30" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">1 Month Access</option>
+                        <option value="90" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">90 Days Access</option>
+                        <option value="365" className="bg-white dark:bg-[#1a1a1a] text-slate-900 dark:text-white">Annual Access</option>
                       </select>
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <div className="flex items-center justify-between">
-                      <label className="text-xs font-black text-slate-500 uppercase tracking-widest">Tier Description</label>
-                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-full ${formData.description.trim().split(/\s+/).filter(Boolean).length >= 40 && formData.description.trim().split(/\s+/).filter(Boolean).length <= 80
-                        ? 'bg-green-500/10 text-green-500'
-                        : 'bg-yellow-500/10 text-yellow-500'
+                      <label className="text-xs font-bold text-slate-600 dark:text-slate-400 uppercase tracking-wider">Tier Description</label>
+                      <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${formData.description.trim().split(/\s+/).filter(Boolean).length >= 40 && formData.description.trim().split(/\s+/).filter(Boolean).length <= 80
+                        ? 'bg-green-500/10 text-green-600 dark:text-green-400'
+                        : 'bg-yellow-500/10 text-yellow-600 dark:text-yellow-400'
                         }`}>
                         {formData.description.trim().split(/\s+/).filter(Boolean).length} / 80 Words
                       </span>
@@ -781,7 +802,7 @@ export default function SubscriptionManager() {
                     <textarea
                       rows={4}
                       placeholder="Describe your tier... (Aim for 40-80 words for best engagement)"
-                      className="w-full bg-black/20 border border-white/5 rounded-xl py-3.5 px-5 text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none resize-none font-medium transition-all"
+                      className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-xl py-3.5 px-5 text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-2 focus:ring-[#F7931A] focus:outline-none resize-none font-medium transition-all"
                       value={formData.description}
                       onChange={(e) => {
                         const words = e.target.value.trim().split(/\s+/).filter(Boolean);
@@ -790,23 +811,23 @@ export default function SubscriptionManager() {
                         }
                       }}
                     />
-                    <p className="text-[10px] text-slate-500 italic">Pro-tip: 40–80 words is the sweet spot for conversion. Max 80 words.</p>
+                    <p className="text-[10px] text-slate-500 italic font-medium">Pro-tip: 40–80 words is the sweet spot for conversion. Max 80 words.</p>
                   </div>
                 </div>
               </div>
 
               {/* Perks Section Card */}
-              <div className="glass-card p-6 md:p-8 border-white/5 bg-white/[0.03] space-y-6">
+              <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 p-6 md:p-8 rounded-[2rem] shadow-md dark:shadow-2xl transition-colors duration-300 space-y-6">
                 <div className="flex items-center justify-between">
                   <div className="space-y-1">
-                    <h3 className="text-lg font-bold text-white tracking-tight">Included Perks ({formData.perks.length}/5)</h3>
-                    <p className="text-sm text-slate-500">Add exclusive rewards for your subscribers.</p>
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight font-outfit">Included Perks ({formData.perks.length}/5)</h3>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">Add exclusive rewards for your subscribers.</p>
                   </div>
                   {formData.perks.length < 5 && (
                     <button
                       type="button"
                       onClick={() => setFormData({ ...formData, perks: [...formData.perks, { id: Math.random().toString(36).substr(2, 9), text: '' }] })}
-                      className="text-xs font-black text-[#F7931A] uppercase hover:text-white flex items-center gap-1 transition-colors bg-[#F7931A]/10 px-3 py-1.5 rounded-lg border border-[#F7931A]/20"
+                      className="text-xs font-bold text-[#F7931A] uppercase hover:text-white flex items-center gap-1 transition-colors bg-[#F7931A]/10 px-3 py-1.5 rounded-lg border border-[#F7931A]/20 cursor-pointer"
                     >
                       <Plus className="w-3 h-3" /> Add Perk
                     </button>
@@ -821,14 +842,14 @@ export default function SubscriptionManager() {
                 >
                   {formData.perks.map((perk, index) => (
                     <Reorder.Item key={perk.id} value={perk} className="flex items-center gap-3 group/perk">
-                      <div className="w-10 h-12 rounded-xl bg-black/20 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing hover:bg-black/40 transition-colors border border-white/5">
+                      <div className="w-10 h-12 rounded-xl bg-slate-50 dark:bg-black/20 flex items-center justify-center shrink-0 cursor-grab active:cursor-grabbing hover:bg-slate-100 dark:hover:bg-black/40 transition-colors border border-slate-200 dark:border-white/5">
                         <LayoutGrid className="w-4 h-4 text-[#F7931A]/40" />
                       </div>
                       <div className="flex-1">
                         <input
                           type="text"
                           placeholder="e.g. Early access to videos"
-                          className="w-full bg-black/20 border border-white/5 rounded-xl py-3 px-4 text-sm text-white focus:ring-2 focus:ring-[#F7931A] focus:outline-none transition-all"
+                          className="w-full bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-xl py-3 px-4 text-sm text-slate-900 dark:text-white placeholder:text-slate-400 dark:placeholder:text-slate-600 focus:ring-2 focus:ring-[#F7931A] focus:outline-none transition-all"
                           value={perk.text}
                           onChange={(e) => {
                             const newPerks = [...formData.perks];
@@ -843,7 +864,7 @@ export default function SubscriptionManager() {
                           const newPerks = formData.perks.filter((_, i) => i !== index);
                           setFormData({ ...formData, perks: newPerks });
                         }}
-                        className="p-3 text-slate-500 hover:text-red-500 transition-colors rounded-xl hover:bg-red-500/10"
+                        className="p-3 text-slate-500 hover:text-red-500 transition-colors rounded-xl hover:bg-red-500/10 cursor-pointer"
                       >
                         <X className="w-5 h-5" />
                       </button>
@@ -853,29 +874,29 @@ export default function SubscriptionManager() {
               </div>
 
               {/* Welcome Note Section Card */}
-              <div className="glass-card p-6 md:p-8 border-white/5 bg-white/[0.03] space-y-6">
+              <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 p-6 md:p-8 rounded-[2rem] shadow-md dark:shadow-2xl transition-colors duration-300 space-y-6">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <h3 className="text-lg font-bold text-white tracking-tight">Welcome Note</h3>
-                    <span className="text-[9px] bg-[#F7931A]/10 text-[#F7931A] px-2 py-0.5 rounded-full border border-[#F7931A]/20 font-black uppercase tracking-widest">
+                    <h3 className="text-lg font-bold text-slate-900 dark:text-white tracking-tight font-outfit">Welcome Note</h3>
+                    <span className="text-[9px] bg-[#F7931A]/10 text-[#F7931A] px-2 py-0.5 rounded-full border border-[#F7931A]/20 font-bold uppercase tracking-wider">
                       Auto-Sent
                     </span>
                   </div>
-                  <p className="text-sm text-slate-500">This message is shown to fans immediately after they subscribe.</p>
+                  <p className="text-sm text-slate-500 dark:text-slate-400">This message is shown to fans immediately after they subscribe.</p>
                 </div>
 
-                <div className="bg-black/20 border border-white/5 rounded-xl p-6 space-y-4">
+                <div className="bg-slate-50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-xl p-6 space-y-4">
                   <textarea
                     rows={3}
                     placeholder="Thank you for joining my membership! 🎉"
-                    className="w-full bg-transparent text-white resize-none outline-none font-medium text-sm placeholder:text-slate-700 leading-relaxed"
+                    className="w-full bg-transparent text-slate-900 dark:text-white resize-none outline-none font-medium text-sm placeholder:text-slate-400 dark:placeholder:text-slate-600 leading-relaxed"
                     value={formData.welcome_note}
                     onChange={(e) => setFormData({ ...formData, welcome_note: e.target.value })}
                   />
-                  <div className="pt-4 border-t border-white/5 flex items-center justify-between">
-                    <p className="text-[10px] text-slate-500 italic">Included in the welcome email.</p>
-                    <div className="flex items-center gap-1 text-[10px] font-black uppercase text-slate-400">
-                      <Clock className="w-3 h-3" /> Post-Subscribe
+                  <div className="pt-4 border-t border-slate-200 dark:border-white/5 flex items-center justify-between">
+                    <p className="text-[10px] text-slate-500 italic font-medium">Included in the welcome email.</p>
+                    <div className="flex items-center gap-1 text-[10px] font-bold uppercase text-slate-500 dark:text-slate-400">
+                      <Clock className="w-3.5 h-3.5" /> Post-Subscribe
                     </div>
                   </div>
                 </div>
@@ -885,7 +906,7 @@ export default function SubscriptionManager() {
                 <button
                   type="submit"
                   disabled={creating || isConfirming}
-                  className="w-full py-5 bg-[#F7931A] text-black text-xl font-black font-outfit uppercase tracking-tighter flex items-center justify-center gap-3 shadow-2xl shadow-orange-500/40 rounded-2xl hover:scale-[1.01] active:scale-[0.99] transition-all"
+                  className="w-full py-4 bg-[#F7931A] text-white dark:text-black text-lg font-bold font-outfit uppercase tracking-wider flex items-center justify-center gap-3 shadow-md hover:shadow-lg shadow-orange-500/20 rounded-2xl hover:scale-[1.01] active:scale-[0.99] transition-all cursor-pointer"
                 >
                   {creating || isConfirming ? <Loader2 className="w-6 h-6 animate-spin" /> : <Zap className="w-6 h-6 fill-current" />}
                   {creating ? 'Creating Tier...' : isConfirming ? 'Broadcasting...' : 'Go Live with Tier'}

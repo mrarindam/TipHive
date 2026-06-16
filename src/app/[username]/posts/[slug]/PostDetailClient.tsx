@@ -248,7 +248,7 @@ export default function PostDetailClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0B0F19] pt-24">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] pt-24">
         <SinglePostSkeleton />
       </div>
     );
@@ -281,9 +281,9 @@ export default function PostDetailClient() {
         <ArrowLeft className="w-4 h-4" /> Back to Posts
       </button>
 
-      <div className="bg-[#111827]/80 backdrop-blur-xl border border-white/10 rounded-[2rem] overflow-hidden shadow-2xl relative">
+      <div className="relative space-y-8">
         {/* Post Header Info */}
-        <div className="p-6 md:p-8 flex items-center justify-between border-b border-white/5">
+        <div className="pb-6 md:pb-8 flex items-center justify-between border-b border-slate-200 dark:border-white/5">
           <div className="flex items-center gap-4">
             <div className="flex flex-col">
               <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
@@ -301,27 +301,27 @@ export default function PostDetailClient() {
               {post.visibility === 'public' ? <Globe2 className="w-3.5 h-3.5" /> : post.visibility === 'followers' ? <Users className="w-3.5 h-3.5" /> : <Lock className="w-3.5 h-3.5" />}
               {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Supporters Only' : 'Members Only'}
             </span>
-            <button onClick={() => setIsShareModalOpen(true)} className="p-3 bg-white/5 hover:bg-white/10 rounded-2xl transition-colors text-slate-400 hover:text-white border border-white/5">
+            <button onClick={() => setIsShareModalOpen(true)} className="p-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 rounded-2xl transition-colors text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-white border border-slate-200 dark:border-white/5 shadow-sm">
               <Share2 className="w-5 h-5" />
             </button>
           </div>
         </div>
 
         {/* Post Content Body */}
-        <div className="p-6 md:p-10">
-          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-4 font-outfit text-white leading-tight">
+        <div className="py-6 md:py-10">
+          <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-4 font-outfit text-slate-900 dark:text-white leading-tight">
             {post.title as string}
           </h1>
           <div className="w-20 h-1.5 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full mb-10 opacity-50" />
 
           {/* Media Rendering */}
           {!!post.image_url && (
-            <div className="w-full relative rounded-3xl overflow-hidden mb-10 shadow-2xl border border-white/5">
+            <div className="w-full relative rounded-3xl overflow-hidden mb-10 shadow-2xl border border-slate-200 dark:border-white/5">
               {isLocked ? (
-                <div className="w-full aspect-video relative flex flex-col items-center justify-center bg-black/80 backdrop-blur-md p-6 text-center">
+                <div className="w-full aspect-video relative flex flex-col items-center justify-center bg-white/90 dark:bg-black/80 backdrop-blur-md p-6 text-center">
                   <Lock className="w-16 h-16 text-[#F7931A] mb-4" />
-                  <h3 className="text-2xl font-black mb-2 uppercase tracking-tight">{lockTitle}</h3>
-                  <p className="text-slate-400 mb-8 max-w-sm font-medium">{lockMessage}</p>
+                  <h3 className="text-2xl font-black mb-2 uppercase tracking-tight text-slate-900 dark:text-white">{lockTitle}</h3>
+                  <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-sm font-medium">{lockMessage}</p>
                   <Link href={unlockHref} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] flex items-center gap-3 hover:scale-105 transition-all text-sm uppercase tracking-widest">
                     <Zap className="w-4 h-4 fill-current" /> {unlockCta}
                   </Link>
@@ -435,15 +435,15 @@ export default function PostDetailClient() {
                   </div>
                 )}
 
-                <div className="w-full relative rounded-[2.5rem] overflow-hidden aspect-video bg-black/40 backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-white/10 p-1 md:p-2">
+                <div className="w-full relative rounded-[2.5rem] overflow-hidden aspect-video bg-slate-150/40 dark:bg-black/40 backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-white/10 p-1 md:p-2">
                   <div className="w-full h-full rounded-[2rem] overflow-hidden relative">
                     {isLocked ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-black/80 backdrop-blur-xl p-6 text-center z-10">
+                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-black/80 backdrop-blur-xl p-6 text-center z-10">
                         <div className="w-20 h-20 bg-[#F7931A]/10 rounded-full flex items-center justify-center mb-6 border border-[#F7931A]/20">
                           <Lock className="w-10 h-10 text-[#F7931A]" />
                         </div>
-                        <h3 className="text-3xl font-black mb-2 uppercase tracking-tight">{isSupportersPost ? 'Supporters & Members' : 'Exclusive Content'}</h3>
-                        <p className="text-slate-400 mb-8 max-w-sm font-medium">{isSupportersPost ? 'Available for supporters and members. Tip or subscribe to unlock this video.' : 'Unlock this video and support the creator to get full access.'}</p>
+                        <h3 className="text-3xl font-black mb-2 uppercase tracking-tight text-slate-900 dark:text-white">{isSupportersPost ? 'Supporters & Members' : 'Exclusive Content'}</h3>
+                        <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-sm font-medium">{isSupportersPost ? 'Available for supporters and members. Tip or subscribe to unlock this video.' : 'Unlock this video and support the creator to get full access.'}</p>
                         <Link href={unlockHref} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] uppercase tracking-widest text-sm flex items-center gap-3 hover:scale-105 transition-all">
                           <Zap className="w-4 h-4 fill-current" /> {isSupportersPost ? 'Visit Creator' : 'Subscribe to Watch'}
                         </Link>
@@ -474,12 +474,12 @@ export default function PostDetailClient() {
                   <div className="h-4 w-3/4 bg-slate-800 rounded-full animate-pulse" />
                   <div className="h-4 w-5/6 bg-slate-800 rounded-full animate-pulse" />
                 </div>
-                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-[#111827] z-10"></div>
+                <div className="absolute inset-0 bg-gradient-to-b from-transparent to-slate-50 dark:to-[#111827] z-10"></div>
                 <div className="absolute inset-0 flex items-center justify-center z-20">
-                  <div className="bg-[#111827]/90 border border-white/10 p-8 rounded-[2.5rem] shadow-2xl text-center max-w-xs backdrop-blur-xl">
+                  <div className="bg-white/95 dark:bg-[#111827]/90 border border-slate-200 dark:border-white/10 p-8 rounded-[2.5rem] shadow-2xl text-center max-w-xs backdrop-blur-xl">
                     <Lock className="w-12 h-12 text-[#F7931A] mx-auto mb-4" />
-                    <h4 className="font-black uppercase tracking-tight text-white mb-2">Content Locked</h4>
-                    <p className="text-xs text-slate-500 font-bold mb-6 uppercase tracking-widest">{isSupportersPost ? 'Available for Supporters & Members' : 'Available to Members'}</p>
+                    <h4 className="font-black uppercase tracking-tight text-slate-900 dark:text-white mb-2">Content Locked</h4>
+                    <p className="text-xs text-slate-550 dark:text-slate-400 font-bold mb-6 uppercase tracking-widest">{isSupportersPost ? 'Available for Supporters & Members' : 'Available to Members'}</p>
                     <Link href={unlockHref} className="block w-full bg-white text-black font-black py-3 rounded-xl hover:bg-slate-200 transition-colors text-xs uppercase tracking-widest">{isSupportersPost ? 'Visit Creator' : 'Unlock Access'}</Link>
                   </div>
                 </div>
@@ -495,9 +495,9 @@ export default function PostDetailClient() {
         {/* Support / Tip CTA (Public posts only) */}
         {post.visibility === 'public' && creator.wallet_address && !isOwner && (
           <div className="mx-6 md:mx-10 mb-8">
-            <div className="bg-[#0a0a0c] border border-white/10 rounded-[2rem] px-6 py-8 md:px-10 md:py-10 flex flex-col items-center text-center shadow-2xl">
-              <p className="text-slate-400 text-sm md:text-base font-medium mb-2">Enjoy this post?</p>
-              <h4 className="text-xl md:text-2xl font-black text-white mb-6 tracking-tight">
+            <div className="bg-slate-50 dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/10 rounded-[2rem] px-6 py-8 md:px-10 md:py-10 flex flex-col items-center text-center shadow-2xl">
+              <p className="text-slate-500 dark:text-slate-400 text-sm md:text-base font-medium mb-2">Enjoy this post?</p>
+              <h4 className="text-xl md:text-2xl font-black text-slate-900 dark:text-white mb-6 tracking-tight">
                 Love to read this post support {creator.display_name || creator.username}
               </h4>
               <button
@@ -511,27 +511,27 @@ export default function PostDetailClient() {
         )}
 
         {/* Interactions */}
-        <div className="p-6 md:p-8 border-t border-white/5 bg-white/5 flex items-center gap-8">
-          <button onClick={handleLike} className={`flex items-center gap-3 font-black text-sm uppercase tracking-widest transition-all ${isLiked ? 'text-[#F7931A] scale-110' : 'text-slate-400 hover:text-white hover:scale-105'}`}>
+        <div className="py-6 border-t border-slate-200 dark:border-white/5 flex items-center gap-8">
+          <button onClick={handleLike} className={`flex items-center gap-3 font-black text-sm uppercase tracking-widest transition-all ${isLiked ? 'text-[#F7931A] scale-110' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white hover:scale-105'}`}>
             <Heart className={`w-7 h-7 ${isLiked ? 'fill-[#F7931A]' : ''}`} /> {likes} Likes
           </button>
-          <button className="flex items-center gap-3 text-slate-400 hover:text-white font-black text-sm uppercase tracking-widest transition-all hover:scale-105">
+          <button className="flex items-center gap-3 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white font-black text-sm uppercase tracking-widest transition-all hover:scale-105">
             <MessageCircle className="w-7 h-7" /> {comments.length} Comments
           </button>
         </div>
       </div>
 
       {/* Comments Section */}
-      <div className="mt-10 bg-[#111827]/50 backdrop-blur-xl rounded-[2.5rem] p-8 md:p-10 border border-white/5 shadow-xl">
+      <div className="mt-10 border-t border-slate-200 dark:border-white/5 pt-10">
         <div className="flex items-center justify-between mb-8">
-          <h3 className="text-2xl font-black uppercase tracking-tighter font-outfit">Discussion</h3>
-          <span className="bg-white/5 border border-white/10 px-4 py-1.5 rounded-full text-xs font-bold text-slate-500 uppercase tracking-widest">{comments.length} Comments</span>
+          <h3 className="text-2xl font-black uppercase tracking-tighter font-outfit text-slate-900 dark:text-white">Discussion</h3>
+          <span className="bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-4 py-1.5 rounded-full text-xs font-bold text-slate-650 dark:text-slate-400 uppercase tracking-widest">{comments.length} Comments</span>
         </div>
 
         {!isLocked ? (
           <div className="space-y-10">
             <div className="flex gap-6 mb-12">
-              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8A2BE2]/20 to-[#F7931A]/20 border border-white/10 shrink-0 flex items-center justify-center overflow-hidden">
+              <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-[#8A2BE2]/20 to-[#F7931A]/20 border border-slate-200 dark:border-white/10 shrink-0 flex items-center justify-center overflow-hidden">
                 {userAddress || userId ? (
                   <img
                     src={`https://api.dicebear.com/9.x/shapes/svg?seed=${userAddress || userId}`}
@@ -547,7 +547,7 @@ export default function PostDetailClient() {
                   value={commentText}
                   onChange={(e) => setCommentText(e.target.value)}
                   placeholder="Share your thoughts..."
-                  className="w-full bg-[#0B0F19] border border-white/10 rounded-[1.5rem] p-6 text-white resize-none outline-none focus:ring-2 focus:ring-[#8A2BE2] transition-all min-h-[120px] font-medium shadow-inner"
+                  className="w-full bg-slate-50 dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-[1.5rem] p-6 text-slate-900 dark:text-white placeholder:text-slate-400 resize-none outline-none focus:ring-2 focus:ring-[#8A2BE2] transition-all min-h-[120px] font-medium shadow-inner"
                 ></textarea>
                 <div className="flex justify-end mt-4">
                   <button
@@ -564,8 +564,8 @@ export default function PostDetailClient() {
             {/* Comments List */}
             <div className="space-y-6">
               {comments.map((comment) => (
-                <div key={comment.id} className="flex gap-5 p-6 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-[#8A2BE2]/30 transition-all">
-                  <div className="w-12 h-12 rounded-2xl overflow-hidden border border-white/10 shrink-0 bg-black">
+                <div key={comment.id} className="flex gap-5 p-6 bg-slate-50 dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-3xl group hover:border-[#8A2BE2]/30 transition-all">
+                  <div className="w-12 h-12 rounded-2xl overflow-hidden border border-slate-200 dark:border-white/10 shrink-0 bg-black">
                     <img
                       src={comment.sender?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${comment.user_address}`}
                       alt=""
@@ -575,30 +575,30 @@ export default function PostDetailClient() {
                   <div className="flex-1">
                     <div className="flex items-center justify-between mb-2">
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-black text-white">{comment.sender?.display_name || 'Anonymous'}</p>
-                        <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">@{comment.sender?.username || 'user'}</p>
+                        <p className="text-sm font-black text-slate-900 dark:text-white">{comment.sender?.display_name || 'Anonymous'}</p>
+                        <p className="text-[10px] text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest">@{comment.sender?.username || 'user'}</p>
                       </div>
-                      <p className="text-[10px] text-slate-600 font-bold uppercase tracking-widest">
+                      <p className="text-[10px] text-slate-500 dark:text-slate-600 font-bold uppercase tracking-widest">
                         {new Date(comment.created_at).toLocaleDateString()}
                       </p>
                     </div>
-                    <p className="text-slate-400 leading-relaxed font-medium">{comment.content}</p>
+                    <p className="text-slate-650 dark:text-slate-450 leading-relaxed font-medium">{comment.content}</p>
                   </div>
                 </div>
               ))}
 
               {comments.length === 0 && (
-                <div className="text-center py-10 bg-white/5 rounded-3xl border border-white/5 border-dashed">
-                  <MessageCircle className="w-10 h-10 text-slate-800 mx-auto mb-4" />
-                  <p className="text-slate-500 font-bold uppercase tracking-widest text-xs italic">No thoughts shared yet. Be the first!</p>
+                <div className="text-center py-10 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/5 border-dashed">
+                  <MessageCircle className="w-10 h-10 text-slate-500 mx-auto mb-4" />
+                  <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs italic">No thoughts shared yet. Be the first!</p>
                 </div>
               )}
             </div>
           </div>
         ) : (
-          <div className="text-center py-12 bg-white/5 rounded-3xl border border-white/5">
-            <Lock className="w-10 h-10 text-slate-700 mx-auto mb-4" />
-            <p className="text-slate-500 font-bold uppercase tracking-widest text-xs">Join the conversation by becoming a member!</p>
+          <div className="text-center py-12 bg-slate-50 dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/5">
+            <Lock className="w-10 h-10 text-slate-500 mx-auto mb-4" />
+            <p className="text-slate-500 dark:text-slate-400 font-bold uppercase tracking-widest text-xs">Join the conversation by becoming a member!</p>
           </div>
         )}
       </div>

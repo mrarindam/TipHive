@@ -179,7 +179,7 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
       },
       y: {
         grid: {
-          color: 'rgba(255, 255, 255, 0.05)',
+          color: 'rgba(156, 163, 175, 0.1)',
         },
         ticks: {
           color: '#64748b',
@@ -194,7 +194,7 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
       <div className="grid lg:grid-cols-4 gap-8">
         {/* Sidebar Controls */}
         <div className="lg:col-span-1 space-y-4">
-          <div className="glass-card p-4 space-y-2">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-4 space-y-2 shadow-sm dark:shadow-2xl">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-4">Time Analysis</p>
             <TimeButton 
               label="Daily View" 
@@ -216,18 +216,18 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
             />
           </div>
 
-          <div className="glass-card p-4 space-y-2">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-4 space-y-2 shadow-sm dark:shadow-2xl">
             <p className="text-[10px] font-black text-slate-500 uppercase tracking-[0.2em] px-2 mb-4">Chart Style</p>
-            <div className="flex gap-2 p-1 bg-white/5 rounded-xl">
+            <div className="flex gap-2 p-1 bg-slate-100 dark:bg-white/5 rounded-xl">
               <button 
                 onClick={() => setChartType('line')}
-                className={`flex-1 flex items-center justify-center py-2 rounded-lg transition-all ${chartType === 'line' ? (isCreator ? 'bg-[#F7931A]' : 'bg-cyan-500') + ' text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                className={`flex-1 flex items-center justify-center py-2 rounded-lg transition-all ${chartType === 'line' ? (isCreator ? 'bg-[#F7931A]' : 'bg-cyan-500') + ' text-white shadow-lg' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}
               >
                 <LineChartIcon className="w-4 h-4" />
               </button>
               <button 
                 onClick={() => setChartType('bar')}
-                className={`flex-1 flex items-center justify-center py-2 rounded-lg transition-all ${chartType === 'bar' ? (isCreator ? 'bg-[#F7931A]' : 'bg-cyan-500') + ' text-white shadow-lg' : 'text-slate-500 hover:text-white'}`}
+                className={`flex-1 flex items-center justify-center py-2 rounded-lg transition-all ${chartType === 'bar' ? (isCreator ? 'bg-[#F7931A]' : 'bg-cyan-500') + ' text-white shadow-lg' : 'text-slate-500 hover:text-slate-800 dark:hover:text-white'}`}
               >
                 <BarChart3 className="w-4 h-4" />
               </button>
@@ -237,11 +237,11 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
 
         {/* Main Chart Area */}
         <div className="lg:col-span-3 space-y-6">
-          <div className="glass-card p-8 h-[600px] relative overflow-hidden group">
+          <div className="bg-white dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-8 h-[600px] relative overflow-hidden group shadow-sm dark:shadow-2xl">
             <div className={`absolute top-0 right-0 w-64 h-64 blur-[100px] rounded-full -mr-32 -mt-32 ${isCreator ? 'bg-[#F7931A]/5' : 'bg-cyan-500/5'}`} />
             <div className="flex items-center justify-between mb-8 relative z-10">
               <div>
-                <h3 className="text-3xl md:text-4xl font-black text-white font-outfit uppercase tracking-tighter">
+                <h3 className="text-3xl md:text-4xl font-black text-slate-900 dark:text-white font-outfit uppercase tracking-tighter">
                   {isCreator ? 'Earnings' : 'Spending'} <span className={isCreator ? 'text-[#F7931A]' : 'text-cyan-400'}>Analytics</span>
                 </h3>
                 <p className="text-xs font-bold text-slate-500 uppercase tracking-widest mt-1">
@@ -251,7 +251,7 @@ export default function AnalyticsDashboard({ activities, isCreator }: AnalyticsP
               <div className="flex items-center gap-4">
                 <div className="text-right">
                   <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest">{isCreator ? 'Growth Rate' : 'Activity Status'}</p>
-                  <p className={`text-xl font-black flex items-center justify-end gap-1 font-outfit ${isCreator ? (parseFloat(chartData.growthRate) >= 0 ? 'text-green-400' : 'text-red-400') : 'text-cyan-400'}`}>
+                  <p className={`text-xl font-black flex items-center justify-end gap-1 font-outfit ${isCreator ? (parseFloat(chartData.growthRate) >= 0 ? 'text-green-500' : 'text-red-500') : 'text-cyan-400'}`}>
                     {isCreator ? chartData.growthRate : 'Active'} 
                     {isCreator ? (
                       parseFloat(chartData.growthRate) >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />
@@ -281,11 +281,11 @@ function TimeButton({ label, active, onClick, icon }: { label: string, active: b
       onClick={onClick}
       className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-black transition-all ${
         active 
-          ? 'bg-white/5 border border-white/20 text-white shadow-[0_0_20px_rgba(255,255,255,0.02)]' 
-          : 'bg-transparent border border-transparent text-slate-500 hover:text-white hover:bg-white/5'
+          ? 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/20 text-slate-900 dark:text-white shadow-sm' 
+          : 'bg-transparent border border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100 dark:hover:text-white dark:hover:bg-white/5'
       }`}
     >
-      <div className={`p-1.5 rounded-lg ${active ? 'bg-white/10' : 'bg-white/5'}`}>
+      <div className={`p-1.5 rounded-lg ${active ? 'bg-slate-200 dark:bg-white/10' : 'bg-slate-100 dark:bg-white/5'}`}>
         {icon}
       </div>
       {label}

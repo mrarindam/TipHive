@@ -30,7 +30,7 @@ export default function ActivityFeedPage() {
           <div className="w-12 h-1 bg-[#f7931a] rounded-full" />
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#f7931a]">Activity Logs</span>
         </div>
-        <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.85] flex flex-wrap gap-x-4">
+        <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.85] flex flex-wrap gap-x-4">
           <span>Activity</span>
           <span className="text-[#f7931a]">Feed</span>
         </h1>
@@ -39,7 +39,7 @@ export default function ActivityFeedPage() {
         </p>
       </motion.div>
 
-      <div className="bg-[#0f0f14] border border-white/5 rounded-[2.5rem] p-6 md:p-10 space-y-4 shadow-2xl">
+      <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-6 md:p-10 space-y-4 shadow-sm dark:shadow-2xl">
         {paginatedActivities.length > 0 ? (
           <>
             <div className="space-y-3">
@@ -51,34 +51,34 @@ export default function ActivityFeedPage() {
                   activity.event_type === 'close' ? 'Closed Trove — BTC Released' : 'Borrow Activity';
 
                 return (
-                  <div key={activity.id} className="flex items-center justify-between p-5 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-transparent hover:border-white/5 transition-all group">
+                  <div key={activity.id} className="flex items-center justify-between p-5 rounded-2xl bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-slate-100 dark:border-transparent hover:border-slate-200 dark:hover:border-white/5 transition-all group">
                     <div className="flex items-center gap-4">
                       <div className={`w-14 h-14 rounded-2xl flex items-center justify-center transition-transform group-hover:scale-110 ${
                         isBorrow ? 'bg-[#f7931a]/10 text-[#f7931a]' :
-                        activity.type === 'received' ? 'bg-[#f7931a]/10 text-[#f7931a]' : 'bg-white/5 text-slate-400'
+                        activity.type === 'received' ? 'bg-[#f7931a]/10 text-[#f7931a]' : 'bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400'
                       }`}>
                         {isBorrow ? <Bitcoin size={22} /> :
                          activity.source === 'tip' ? <Heart size={22} /> : <Calendar size={22} />}
                       </div>
                       <div>
-                        <h4 className="text-white font-bold text-lg leading-tight">
+                        <h4 className="text-slate-900 dark:text-white font-bold text-lg leading-tight">
                           {isBorrow ? borrowLabel :
                            activity.source === 'tip' ? (activity.type === 'received' ? 'Tip Received' : 'Support Sent') :
                            (activity.type === 'received' ? 'New Subscriber' : 'Joined Circle')}
                         </h4>
                         {!isBorrow && (
                           <p className="text-slate-500 text-sm font-medium mt-1">
-                            {activity.type === 'received' ? 'From' : 'To'}: <span className="text-white">{activity.to_name || 'Anonymous'}</span>
+                            {activity.type === 'received' ? 'From' : 'To'}: <span className="text-slate-800 dark:text-white">{activity.to_name || 'Anonymous'}</span>
                           </p>
                         )}
                         {isBorrow && activity.event_type === 'borrow' && activity.btc_amount !== undefined && (
                           <p className="text-slate-500 text-sm font-medium mt-1">
-                            Locked <span className="text-white font-bold tabular-nums">{activity.btc_amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} BTC</span> as collateral
+                            Locked <span className="text-slate-800 dark:text-white font-bold tabular-nums">{activity.btc_amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} BTC</span> as collateral
                           </p>
                         )}
                         {isBorrow && activity.event_type === 'close' && activity.btc_amount !== undefined && (
                           <p className="text-slate-500 text-sm font-medium mt-1">
-                            Released <span className="text-white font-bold tabular-nums">{activity.btc_amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} BTC</span> back to wallet
+                            Released <span className="text-slate-800 dark:text-white font-bold tabular-nums">{activity.btc_amount.toLocaleString(undefined, { maximumFractionDigits: 6 })} BTC</span> back to wallet
                           </p>
                         )}
                         {isBorrow && activity.event_type === 'repay' && (
@@ -92,7 +92,7 @@ export default function ActivityFeedPage() {
                             <span className="text-[10px] font-black uppercase tracking-widest text-[#f7931a]">{activity.plan_name}</span>
                           </div>
                         )}
-                        <p className="text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">
+                        <p className="text-slate-500 dark:text-slate-600 text-[10px] font-bold uppercase tracking-widest mt-1">
                           {new Date(activity.created_at).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
                         </p>
                         {activity.tx_hash && (
@@ -110,8 +110,8 @@ export default function ActivityFeedPage() {
                     <div className="text-right">
                       <p className={`text-2xl font-black flex items-center justify-end gap-2 font-outfit ${
                         isBorrow
-                          ? (activity.event_type === 'borrow' ? 'text-[#f7931a]' : 'text-slate-300')
-                          : (activity.type === 'received' ? 'text-[#f7931a]' : 'text-slate-300')
+                          ? (activity.event_type === 'borrow' ? 'text-[#f7931a]' : 'text-slate-600 dark:text-slate-300')
+                          : (activity.type === 'received' ? 'text-[#f7931a]' : 'text-slate-600 dark:text-slate-300')
                       }`}>
                         {isBorrow
                           ? (activity.event_type === 'borrow' ? '+' : '−')
@@ -141,8 +141,8 @@ export default function ActivityFeedPage() {
           </>
         ) : (
           <div className="py-20 text-center flex flex-col items-center">
-            <div className="w-20 h-20 rounded-full bg-white/5 flex items-center justify-center mb-6">
-              <History className="w-10 h-10 text-slate-700" />
+            <div className="w-20 h-20 rounded-full bg-slate-50 dark:bg-white/5 flex items-center justify-center mb-6">
+              <History className="w-10 h-10 text-slate-400 dark:text-slate-700" />
             </div>
             <p className="text-slate-500 font-bold uppercase tracking-widest text-sm">No activity recorded yet.</p>
           </div>

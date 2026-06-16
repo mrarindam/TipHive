@@ -2,12 +2,12 @@ import type { Metadata, Viewport } from "next";
 import { Inter, Outfit } from "next/font/google";
 import "./globals.css";
 import { WalletProviderWrapper } from "@/components/providers/WalletProviderWrapper";
-import Navbar from "@/components/layout/Navbar";
-import Footer from "@/components/layout/Footer";
+import RootLayoutContent from "@/components/layout/RootLayoutContent";
 import OnboardingGuard from "@/components/providers/onboarding-guard";
 import WalletSwitchGuard from "@/components/providers/WalletSwitchGuard";
 import PwaRegister from "@/components/providers/PwaRegister";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { ThemeProvider } from "@/components/providers/ThemeProvider";
 
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
 const outfit = Outfit({ subsets: ["latin"], variable: "--font-outfit" });
@@ -210,27 +210,25 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className="dark" suppressHydrationWarning>
-      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased bg-[#050505] text-white`} suppressHydrationWarning>
+    <html lang="en" suppressHydrationWarning>
+      <body className={`${inter.variable} ${outfit.variable} font-sans antialiased`} suppressHydrationWarning>
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
         />
         <PwaRegister />
-        <WalletProviderWrapper>
-          <OnboardingGuard>
-            <WalletSwitchGuard>
-              <div id="root-container" className="flex flex-col min-h-screen bg-[#050505]">
-                <Navbar />
-                <main className="flex-grow">
+        <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+          <WalletProviderWrapper>
+            <OnboardingGuard>
+              <WalletSwitchGuard>
+                <RootLayoutContent>
                   {children}
-                </main>
-                <Footer />
-              </div>
-              <SpeedInsights />
-            </WalletSwitchGuard>
-          </OnboardingGuard>
-        </WalletProviderWrapper>
+                </RootLayoutContent>
+                <SpeedInsights />
+              </WalletSwitchGuard>
+            </OnboardingGuard>
+          </WalletProviderWrapper>
+        </ThemeProvider>
       </body>
     </html>
   );

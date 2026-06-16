@@ -1,716 +1,1246 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
-  ArrowRight,
-  Bitcoin,
-  ShieldCheck,
   Zap,
-  Rocket,
   Globe,
   Star,
-  CheckCircle2,
-  Wallet,
   Plus,
-  ChevronDown,
-  LayoutDashboard,
   Coins,
-  Gem,
-  Clock
+  Clock,
+  Heart,
+  MessageCircle,
+  Share2,
+  Lock,
+  Globe2,
+  Users,
+  Check,
+  ExternalLink,
+  MessageSquare,
+  Send,
+  TrendingUp,
+  Sparkles,
+  Music2,
+  Video
 } from 'lucide-react';
 import Link from 'next/link';
+import { useAccount } from 'wagmi';
+import { useWalletAuth } from '@/lib/wallet-auth-shim';
+import { supabase } from '@/lib/supabase';
+import TipModal from '@/components/profile/TipModal';
+import ShareModal from '@/components/ui/ShareModal';
 import MUSDLogo from '@/components/ui/MUSDLogo';
-import GsapStackingCards from '@/components/GsapStackingCards';
+import { sanitizePostHtml } from '@/lib/sanitize';
+import { Skeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
+
+const extractFirstImage = (html: string) => {
+  const match = html.match(/<img[^>]+src="([^">]+)"/);
+  return match ? match[1] : null;
+};
+
+const formatRelativeTime = (dateString: string) => {
+  const date = new Date(dateString);
+  const now = new Date();
+  const diffMs = now.getTime() - date.getTime();
+  const diffMins = Math.floor(diffMs / 60000);
+  const diffHours = Math.floor(diffMs / 3600000);
+  const diffDays = Math.floor(diffMs / 86400000);
+
+  if (diffMins < 1) return 'Just now';
+  if (diffMins < 60) return `${diffMins}m ago`;
+  if (diffHours < 24) return `${diffHours}h ago`;
+  if (diffDays < 7) return `${diffDays}d ago`;
+  return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+};
+
+function TextThumbnail({ title }: { title: string }) {
+  return (
+    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 dark:from-[#1E1B4B] dark:via-[#0F172A] dark:to-[#311042] relative transition-colors duration-300">
+      <span className="text-base font-black text-slate-800 dark:text-white/80 font-outfit uppercase tracking-tight line-clamp-3 leading-snug">
+        {title}
+      </span>
+    </div>
+  );
+}
+
+interface Creator {
+  id: string;
+  wallet_address: string;
+  username: string;
+  display_name?: string;
+  avatar_url?: string;
+  bio?: string;
+  total_earned?: number;
+  suggested_amounts?: string[];
+  button_text?: string;
+}
+
+interface PostComment {
+  id: string;
+  post_id: string;
+  user_address: string;
+  content: string;
+  created_at: string;
+  sender?: {
+    wallet_address: string;
+    username: string;
+    display_name: string;
+    avatar_url: string;
+  } | null;
+}
+
+interface FeedPost {
+  id: string;
+  creator_id: string;
+  title: string;
+  content: string;
+  image_url: string | null;
+  video_url: string | null;
+  visibility: string;
+  category: string | null;
+  created_at: string;
+  creator: Creator | null;
+  likesCount: number;
+  isLiked: boolean;
+  comments: PostComment[];
+}
+
+interface TippingActivity {
+  id: string;
+  from_address: string;
+  to_address: string;
+  amount: number;
+  created_at: string;
+  message?: string;
+  sender?: Creator | null;
+  receiver?: Creator | null;
+}
+
+interface TopCreatorRow extends Creator {
+  weeklyEarned: number;
+}
 
 export default function HomePageClient() {
-  const containerRef = useRef(null);
+  const { address: userAddress } = useAccount();
+  const { user, authenticated, login, getAccessToken } = useWalletAuth();
+  const userId = user?.id;
+
+  const [posts, setPosts] = useState<FeedPost[]>([]);
+  const [topCreators, setTopCreators] = useState<TopCreatorRow[]>([]);
+  const [recentActivity, setRecentActivity] = useState<TippingActivity[]>([]);
+  
+  const [followingIds, setFollowingIds] = useState<string[]>([]);
+  const [tippedSet, setTippedSet] = useState<Set<string>>(new Set());
+  const [subscribedSet, setSubscribedSet] = useState<Set<string>>(new Set());
+
+  // Infinite Scroll & Pagination
+  const [page, setPage] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingFeed, setLoadingFeed] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [loadingStats, setLoadingStats] = useState(true);
+
+  // Tabs for Feed filter
+  const [activeTab, setActiveTab] = useState<'public' | 'members' | 'tips_members'>('public');
+
+  // Sidebar chain filter
+  const [activeChain, setActiveChain] = useState<number>(31611); // default Mezo Testnet
+
+  // Comment Drawer states
+  const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
+  const [newCommentTexts, setNewCommentTexts] = useState<Record<string, string>>({});
+  const [submittingCommentId, setSubmittingCommentId] = useState<string | null>(null);
+
+  // Modal states
+  const [selectedCreatorForTip, setSelectedCreatorForTip] = useState<any>(null);
+  const [isTipModalOpen, setIsTipModalOpen] = useState(false);
+
+  const [shareUrl, setShareUrl] = useState('');
+  const [shareTitle, setShareTitle] = useState('');
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+
+  // Fetch access rights
+  const loadAccessSets = useCallback(async () => {
+    if (!userAddress) {
+      setTippedSet(new Set());
+      setSubscribedSet(new Set());
+      return;
+    }
+    try {
+      const res = await fetch(`/api/user/access?wallet=${encodeURIComponent(userAddress.toLowerCase())}`);
+      if (res.ok) {
+        const { tipped, subscribed } = await res.json();
+        setTippedSet(new Set((tipped || []).map((a: string) => a.toLowerCase())));
+        setSubscribedSet(new Set((subscribed || []).map((a: string) => a.toLowerCase())));
+      }
+    } catch (err) {
+      console.error('[homepage] loadAccessSets failed:', err);
+    }
+  }, [userAddress]);
+
+  // Fetch followed creators
+  const loadFollowing = useCallback(async () => {
+    const identifier = userAddress ? userAddress.toLowerCase() : userId;
+    if (!identifier) {
+      setFollowingIds([]);
+      return;
+    }
+    try {
+      const { data: currentUser } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('wallet_address', identifier)
+        .maybeSingle();
+
+      if (currentUser) {
+        const { data: follows } = await supabase
+          .from('followers')
+          .select('creator_id')
+          .eq('follower_id', currentUser.id);
+        if (follows) {
+          setFollowingIds(follows.map(f => f.creator_id));
+        }
+      }
+    } catch (err) {
+      console.error('[homepage] loadFollowing failed:', err);
+    }
+  }, [userAddress, userId]);
+
+  // Fetch posts page-by-page (limit 5 per query, absolute limit of 50)
+  const fetchFeed = useCallback(async (pageNum: number, isNew = false) => {
+    if (isNew) {
+      setLoadingFeed(true);
+      setPage(0);
+      setHasMore(true);
+    } else {
+      setLoadingMore(true);
+    }
+
+    const from = pageNum * 5;
+    const to = from + 4;
+
+    // Direct Database Cap of 50 posts total
+    if (from >= 50) {
+      setHasMore(false);
+      setLoadingFeed(false);
+      setLoadingMore(false);
+      return;
+    }
+
+    try {
+      const { data: postsData, error: postsError } = await supabase
+        .from('posts')
+        .select(`
+          id,
+          creator_id,
+          title,
+          content,
+          image_url,
+          video_url,
+          visibility,
+          category,
+          created_at,
+          user_profiles (
+            id,
+            wallet_address,
+            username,
+            display_name,
+            avatar_url,
+            bio,
+            total_earned,
+            suggested_amounts,
+            button_text
+          )
+        `)
+        .order('created_at', { ascending: false })
+        .range(from, Math.min(49, to)); // hardcap at 49 (which is the 50th item)
+
+      if (postsError) throw postsError;
+
+      if (!postsData || postsData.length === 0) {
+        setHasMore(false);
+        if (isNew) setPosts([]);
+        return;
+      }
+
+      const postIds = postsData.map(p => p.id);
+      const identifier = userAddress ? userAddress.toLowerCase() : userId;
+
+      const [likesRes, commentsRes] = await Promise.all([
+        supabase
+          .from('post_likes')
+          .select('post_id, user_address')
+          .in('post_id', postIds),
+        supabase
+          .from('post_comments')
+          .select('id, post_id, user_address, content, created_at')
+          .in('post_id', postIds)
+          .order('created_at', { ascending: false })
+      ]);
+
+      const likesData = likesRes.data || [];
+      const commentsData = commentsRes.data || [];
+
+      const commenterAddresses = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
+      const profileMap = new Map<string, any>();
+
+      if (commenterAddresses.length > 0) {
+        const { data: commenterProfiles } = await supabase
+          .from('user_profiles')
+          .select('wallet_address, username, display_name, avatar_url')
+          .in('wallet_address', commenterAddresses);
+
+        for (const p of commenterProfiles || []) {
+          if (p.wallet_address) {
+            profileMap.set(p.wallet_address.toLowerCase(), p);
+          }
+        }
+      }
+
+      const assembledPosts = postsData.map((post: any) => {
+        const likesForPost = likesData.filter(l => l.post_id === post.id);
+        const commentsForPost = commentsData.filter(c => c.post_id === post.id).map(c => ({
+          ...c,
+          sender: profileMap.get(c.user_address.toLowerCase()) || null
+        }));
+
+        const isLiked = identifier 
+          ? likesForPost.some(l => l.user_address.toLowerCase() === identifier.toLowerCase())
+          : false;
+
+        return {
+          id: post.id,
+          creator_id: post.creator_id,
+          title: post.title,
+          content: post.content,
+          image_url: post.image_url,
+          video_url: post.video_url,
+          visibility: post.visibility,
+          category: post.category,
+          created_at: post.created_at,
+          creator: post.user_profiles as Creator,
+          likesCount: likesForPost.length,
+          isLiked,
+          comments: commentsForPost
+        };
+      });
+
+      setPosts(prev => isNew ? assembledPosts : [...prev, ...assembledPosts]);
+      // setHasMore true if we loaded exactly page size (5) and we haven't crossed 50 yet
+      setHasMore(postsData.length === 5 && (from + postsData.length) < 50);
+    } catch (err) {
+      console.error('[homepage] fetchFeed failed:', err);
+    } finally {
+      setLoadingFeed(false);
+      setLoadingMore(false);
+    }
+  }, [userAddress, userId]);
+
+  // Fetch top creators and recent activities
+  const fetchStats = useCallback(async () => {
+    setLoadingStats(true);
+    try {
+      const oneWeekAgo = new Date();
+      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+      const oneWeekAgoISO = oneWeekAgo.toISOString();
+
+      const { data: weeklyTips } = await supabase
+        .from('tips')
+        .select('to_address, amount, chain_id')
+        .eq('chain_id', activeChain)
+        .gte('created_at', oneWeekAgoISO);
+
+      const weeklyMap = new Map<string, number>();
+      for (const tip of weeklyTips || []) {
+        const addr = tip.to_address.toLowerCase();
+        weeklyMap.set(addr, (weeklyMap.get(addr) || 0) + tip.amount);
+      }
+
+      const sortedAddresses = Array.from(weeklyMap.entries())
+        .sort((a, b) => b[1] - a[1])
+        .map(entry => entry[0]);
+
+      let weeklyCreators: TopCreatorRow[] = [];
+      if (sortedAddresses.length > 0) {
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('id, wallet_address, username, display_name, avatar_url, bio, total_earned, suggested_amounts, button_text')
+          .in('wallet_address', sortedAddresses.slice(0, 10));
+
+        if (profiles) {
+          weeklyCreators = profiles
+            .sort((a, b) => sortedAddresses.indexOf(a.wallet_address.toLowerCase()) - sortedAddresses.indexOf(b.wallet_address.toLowerCase()))
+            .map(p => ({
+              ...p,
+              weeklyEarned: weeklyMap.get(p.wallet_address.toLowerCase()) || 0
+            }));
+        }
+      }
+
+      if (weeklyCreators.length < 10) {
+        const excludedAddresses = weeklyCreators.map(p => p.wallet_address.toLowerCase());
+        const take = 10 - weeklyCreators.length;
+
+        let backfillQuery = supabase
+          .from('user_profiles')
+          .select('id, wallet_address, username, display_name, avatar_url, bio, total_earned, suggested_amounts, button_text')
+          .eq('is_creator', true);
+
+        if (excludedAddresses.length > 0) {
+          backfillQuery = backfillQuery.not('wallet_address', 'in', `(${excludedAddresses.join(',')})`);
+        }
+
+        const { data: allCreators } = await backfillQuery
+          .order('total_earned', { ascending: false })
+          .limit(take);
+
+        const backfilled = (allCreators || []).map(p => ({
+          ...p,
+          weeklyEarned: 0
+        }));
+
+        weeklyCreators = [...weeklyCreators, ...backfilled];
+      }
+
+      setTopCreators(weeklyCreators);
+
+      const { data: recentTips } = await supabase
+        .from('tips')
+        .select('id, from_address, to_address, amount, created_at, message')
+        .order('created_at', { ascending: false })
+        .limit(5);
+
+      if (recentTips && recentTips.length > 0) {
+        const uniqueAddrs = Array.from(new Set([
+          ...recentTips.map(t => t.from_address.toLowerCase()),
+          ...recentTips.map(t => t.to_address.toLowerCase())
+        ]));
+
+        const { data: profiles } = await supabase
+          .from('user_profiles')
+          .select('id, wallet_address, username, display_name, avatar_url')
+          .in('wallet_address', uniqueAddrs);
+
+        const profMap = new Map<string, Creator>();
+        for (const p of profiles || []) {
+          profMap.set(p.wallet_address.toLowerCase(), p);
+        }
+
+        const activity = recentTips.map(t => ({
+          id: t.id,
+          from_address: t.from_address,
+          to_address: t.to_address,
+          amount: t.amount,
+          created_at: t.created_at,
+          message: t.message,
+          sender: profMap.get(t.from_address.toLowerCase()) || null,
+          receiver: profMap.get(t.to_address.toLowerCase()) || null
+        }));
+
+        setRecentActivity(activity);
+      } else {
+        setRecentActivity([]);
+      }
+    } catch (err) {
+      console.error('[homepage] fetchStats failed:', err);
+    } finally {
+      setLoadingStats(false);
+    }
+  }, [activeChain]);
+
+  // Infinite Scroll Observer
+  const observer = useRef<IntersectionObserver | null>(null);
+  const lastElementRef = useCallback((node: HTMLDivElement) => {
+    if (loadingFeed || loadingMore) return;
+    if (observer.current) observer.current.disconnect();
+    observer.current = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting && hasMore) {
+        setPage(prev => {
+          const next = prev + 1;
+          fetchFeed(next);
+          return next;
+        });
+      }
+    });
+    if (node) observer.current.observe(node);
+  }, [loadingFeed, loadingMore, hasMore, fetchFeed]);
+
+  // Initial loading
+  useEffect(() => {
+    loadAccessSets();
+    loadFollowing();
+    fetchFeed(0, true);
+  }, [loadAccessSets, loadFollowing]);
+
+  useEffect(() => {
+    fetchStats();
+  }, [fetchStats]);
+
+  // Live updates trigger
+  useEffect(() => {
+    const refreshData = () => {
+      loadAccessSets();
+      fetchFeed(0, true);
+      fetchStats();
+    };
+    window.addEventListener('tip-success', refreshData);
+    window.addEventListener('subscription-success', refreshData);
+    return () => {
+      window.removeEventListener('tip-success', refreshData);
+      window.removeEventListener('subscription-success', refreshData);
+    };
+  }, [loadAccessSets, fetchStats]);
+
+  // Follow trigger
+  const handleFollowToggle = async (creatorId: string) => {
+    if (!authenticated && !userAddress) {
+      login();
+      return;
+    }
+    const identifier = userAddress ? userAddress.toLowerCase() : userId;
+    if (!identifier) return;
+
+    try {
+      const { data: currentUserProfile } = await supabase
+        .from('user_profiles')
+        .select('id')
+        .eq('wallet_address', identifier)
+        .maybeSingle();
+
+      if (!currentUserProfile) return;
+
+      const isFollowing = followingIds.includes(creatorId);
+      if (isFollowing) {
+        await supabase
+          .from('followers')
+          .delete()
+          .eq('creator_id', creatorId)
+          .eq('follower_id', currentUserProfile.id);
+        setFollowingIds(prev => prev.filter(id => id !== creatorId));
+      } else {
+        await supabase
+          .from('followers')
+          .insert({
+            creator_id: creatorId,
+            follower_id: currentUserProfile.id
+          });
+        setFollowingIds(prev => [...prev, creatorId]);
+      }
+    } catch (err) {
+      console.error('[homepage] follow toggle error:', err);
+    }
+  };
+
+  // Like trigger
+  const handleLikeToggle = async (postId: string) => {
+    if (!authenticated && !userAddress) {
+      login();
+      return;
+    }
+    const identifier = userAddress ? userAddress.toLowerCase() : userId;
+    if (!identifier) return;
+
+    const postIndex = posts.findIndex(p => p.id === postId);
+    if (postIndex === -1) return;
+    const targetPost = posts[postIndex];
+    const isLiked = targetPost.isLiked;
+
+    try {
+      if (isLiked) {
+        await supabase
+          .from('post_likes')
+          .delete()
+          .eq('post_id', postId)
+          .eq('user_address', identifier);
+
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return { ...p, isLiked: false, likesCount: Math.max(0, p.likesCount - 1) };
+          }
+          return p;
+        }));
+      } else {
+        await supabase
+          .from('post_likes')
+          .insert({
+            post_id: postId,
+            user_address: identifier
+          });
+
+        setPosts(prev => prev.map(p => {
+          if (p.id === postId) {
+            return { ...p, isLiked: true, likesCount: p.likesCount + 1 };
+          }
+          return p;
+        }));
+
+        if (targetPost.creator?.wallet_address) {
+          await fetch('/api/notifications', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${await getAccessToken()}`
+            },
+            body: JSON.stringify({
+              wallet: targetPost.creator.wallet_address,
+              action: 'create',
+              type: 'like',
+              actor: identifier,
+              postTitle: targetPost.title
+            }),
+          });
+        }
+      }
+    } catch (err) {
+      console.error('[homepage] like toggle error:', err);
+    }
+  };
+
+  // Comment submission
+  const handlePostComment = async (postId: string) => {
+    if (!authenticated && !userAddress) {
+      login();
+      return;
+    }
+    const identifier = userAddress ? userAddress.toLowerCase() : userId;
+    const commentText = newCommentTexts[postId];
+    if (!identifier || !commentText?.trim()) return;
+
+    const postIndex = posts.findIndex(p => p.id === postId);
+    if (postIndex === -1) return;
+    const targetPost = posts[postIndex];
+
+    setSubmittingCommentId(postId);
+    try {
+      const { data: newComment, error } = await supabase
+        .from('post_comments')
+        .insert({
+          post_id: postId,
+          user_address: identifier,
+          content: commentText.trim()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      const { data: userProfile } = await supabase
+        .from('user_profiles')
+        .select('wallet_address, username, display_name, avatar_url')
+        .eq('wallet_address', identifier)
+        .maybeSingle();
+
+      const commentWithSender = {
+        ...newComment,
+        sender: userProfile
+      };
+
+      setPosts(prev => prev.map(p => {
+        if (p.id === postId) {
+          return {
+            ...p,
+            comments: [commentWithSender, ...p.comments]
+          };
+        }
+        return p;
+      }));
+
+      setNewCommentTexts(prev => ({ ...prev, [postId]: '' }));
+
+      if (targetPost.creator?.wallet_address) {
+        await fetch('/api/notifications', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${await getAccessToken()}`
+          },
+          body: JSON.stringify({
+            wallet: targetPost.creator.wallet_address,
+            action: 'create',
+            type: 'comment',
+            actor: identifier,
+            postTitle: targetPost.title
+          }),
+        });
+      }
+    } catch (err) {
+      console.error('[homepage] comment submission failed:', err);
+      alert('Failed to post comment');
+    } finally {
+      setSubmittingCommentId(null);
+    }
+  };
+
+  // Filtered list based on tabs
+  const filteredPosts = posts.filter(post => {
+    if (activeTab === 'public') {
+      return post.visibility === 'public';
+    } else if (activeTab === 'members') {
+      return post.visibility === 'supporters';
+    } else if (activeTab === 'tips_members') {
+      return post.visibility === 'followers' || post.visibility === 'supporters';
+    }
+    return true;
+  });
 
   return (
-    <div ref={containerRef} className="relative w-full bg-[#050505] selection:bg-[#F7931A]/30">
-      {/* Hero Section */}
-      <section
-        className="relative min-h-[100dvh] flex flex-col items-center justify-center px-4 overflow-hidden bg-cover bg-top bg-no-repeat"
-        style={{ backgroundImage: "url('/images/background/mainhero.webp')" }}
-      >
-        {/* Dark Overlay for Readability */}
-        <div className="absolute inset-0 bg-black/60 z-0" />
-        <div className="w-full px-[5%] md:px-[8%] relative z-10 text-center">
+    <div className="relative w-full bg-slate-50 dark:bg-[#050505] selection:bg-[#F7931A]/30 text-slate-900 dark:text-white font-sans min-h-screen pt-20 pb-24 transition-colors duration-300">
+      
+      {/* Decorative Blur Backgrounds - Only visible in dark mode to save rendering overhead */}
+      <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-[#F7931A]/5 to-purple-600/5 blur-[120px] rounded-full pointer-events-none z-0 hidden dark:block" />
+      <div className="absolute top-[60vh] left-10 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-600/5 to-blue-600/5 blur-[120px] rounded-full pointer-events-none z-0 hidden dark:block" />
 
-          <motion.h1
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.2 }}
-            className="text-[clamp(3.8rem,18vw,9.5rem)] font-black text-white tracking-tighter mb-6 leading-[0.75] font-outfit"
-          >
-            The Bitcoin <br />
-            <span className="text-[#F7931A]">
-              Native Economy
-            </span>
-          </motion.h1>
-
-          <motion.p
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.4 }}
-            className="max-w-4xl mx-auto text-[clamp(1.1rem,4.5vw,1.6rem)] text-slate-300 mb-12 md:mb-16 leading-tight font-medium px-6"
-          >
-            Empower your favorite creators with <span className="text-white font-bold">instant, fee-less</span> Bitcoin-native tips on the Mezo L2 network. Pure value, zero friction.
-          </motion.p>
-
-          <motion.div
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.8, delay: 0.6 }}
-            className="flex flex-col sm:flex-row items-center justify-center gap-5 md:gap-10 px-8"
-          >
-            <Link href="/explore" className="btn-primary group w-full sm:w-auto py-5 md:py-6">
-              <span className="relative z-10 flex items-center justify-center gap-3 text-lg font-black uppercase tracking-tighter">
-                Explore Creators
-                <ArrowRight className="w-5 h-5 md:w-6 md:h-6 group-hover:translate-x-2 transition-transform" />
-              </span>
-            </Link>
-            <Link href="/dashboard" className="btn-secondary group w-full sm:w-auto py-5 md:py-6 text-lg font-black uppercase tracking-tighter">
-              <span className="relative z-10 flex items-center justify-center gap-3">
-                Join as Creator
-                <Rocket className="w-5 h-5 group-hover:-translate-y-1 group-hover:translate-x-1 transition-transform" />
-              </span>
-            </Link>
-          </motion.div>
-        </div>
-
-        {/* Scroll Hint */}
-        <motion.div
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ delay: 2, duration: 1 }}
-          className="absolute bottom-10 left-1/2 -translate-x-1/2 flex flex-col items-center gap-4 text-slate-500"
-        >
-          <span className="text-[10px] font-black uppercase tracking-[0.4em]">Scroll to Explore</span>
-          <motion.div
-            animate={{ y: [0, 10, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <ChevronDown className="w-6 h-6 text-[#F7931A]" />
-          </motion.div>
-        </motion.div>
-      </section>
-
-      {/* Problem Section */}
-      <section className="relative w-full py-24 md:py-40 bg-black/50 overflow-hidden">
-        <div className="w-full px-[5%] md:px-[8%]">
-          {/* Header matching image */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, margin: "-10%" }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="flex items-center gap-6 mb-24 w-full"
-          >
-            <h2 className="text-3xl md:text-4xl text-slate-300 font-medium whitespace-nowrap tracking-wide">The Problem</h2>
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 1, ease: "easeInOut", delay: 0.2 }}
-              className="h-px bg-slate-600 flex-1 origin-left"
-            />
-          </motion.div>
-
-          <div className="grid lg:grid-cols-2 gap-12 md:gap-24 items-center">
-            <motion.div
-              initial={{ opacity: 0, x: -50 }}
-              whileInView={{ opacity: 1, x: 0 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="space-y-6 md:space-y-8"
-            >
-              <h2 className="text-4xl md:text-7xl font-black text-white font-outfit leading-tight tracking-tighter uppercase">
-                Traditional <br /> Tipping is <br /> <span className="text-slate-400 text-slate-600 line-through">Broken.</span>
-              </h2>
-              <div className="space-y-4 md:space-y-6 text-base md:text-lg text-slate-400 text-slate-400 text-slate-400 font-medium">
-                <p>Hidden fees, 30% platform cuts, and delayed payouts are strangling the creator economy.</p>
-                <p>Creators deserve better than centralized gatekeepers taking their hard-earned support.</p>
-              </div>
-            </motion.div>
-
-            <motion.div
-              initial={{ opacity: 0, y: 40 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 0.8, ease: "easeOut", delay: 0.2 }}
-              className="grid grid-cols-1 md:grid-cols-2 gap-6"
-            >
-              <PainPointCard
-                icon={<Coins className="w-8 h-8 text-red-400" />}
-                title="Insane Fees"
-                desc="Up to 40% of every tip is lost to processing and platform fees."
-              />
-              <PainPointCard
-                icon={<Clock className="w-8 h-8 text-orange-400" />}
-                title="Slow Payouts"
-                desc="Wait weeks to access your funds through complex banking systems."
-              />
-              <PainPointCard
-                icon={<ShieldCheck className="w-8 h-8 text-yellow-400" />}
-                title="Censorship"
-                desc="Platforms can freeze your assets or ban you without warning."
-              />
-              <PainPointCard
-                icon={<Globe className="w-8 h-8 text-blue-400" />}
-                title="Bordered"
-                desc="Global fans struggle with local payment restrictions."
-              />
-            </motion.div>
-          </div>
-        </div>
-      </section>
-
-      {/* Solution Section */}
-      <section className="relative w-full py-24 md:py-40 overflow-hidden bg-[#050505]">
-        <div className="w-full px-[5%] md:px-[8%] relative z-10">
-
-          {/* Header matching image */}
-          <motion.div
-            initial={{ opacity: 0, x: -30 }}
-            whileInView={{ opacity: 1, x: 0 }}
-            viewport={{ once: false, margin: "-10%" }}
-            transition={{ duration: 0.8, ease: "easeInOut" }}
-            className="flex items-center gap-6 mb-24 w-full"
-          >
-            <h2 className="text-3xl md:text-4xl text-slate-300 font-medium whitespace-nowrap tracking-wide">The Solutions</h2>
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 1, ease: "easeInOut", delay: 0.2 }}
-              className="h-px bg-slate-600 flex-1 origin-left"
-            />
-          </motion.div>
-
-          <motion.div
-            initial={{ opacity: 0, y: 50 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-10%" }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-center space-y-10 max-w-4xl mx-auto mb-32"
-          >
-            <h2 className="text-5xl md:text-7xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
-              Welcome to the <br /> <span>TipHive Revolution.</span>
-            </h2>
-            <p className="text-xl text-slate-400 text-slate-400 text-slate-400 font-medium leading-relaxed">
-              We leverage the power of Mezo Bitcoin L2 to create a borderless, permissionless, and fee-less economy for everyone.
-            </p>
-          </motion.div>
-
-          {/* Graphic Features - Tipping & Subscribing */}
-          <div className="space-y-32">
-            {/* Tipping Feature */}
-            <motion.div
-              initial={{ opacity: 0, y: 80 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col lg:flex-row items-center gap-16"
-            >
-              <div className="flex-1 space-y-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[#F7931A]/10 text-[#F7931A] font-bold text-sm uppercase tracking-wider border border-[#F7931A]/20">
-                  <Zap className="w-4 h-4" /> Direct Support
-                </div>
-                <h3 className="text-5xl md:text-6xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
-                  Tip Creators <br /> Instantly
-                </h3>
-                <p className="text-xl text-slate-400 text-slate-400 text-slate-400 leading-relaxed max-w-lg">
-                  Send value directly to your favorite creators. No middlemen, no waiting periods. 100% of your tip goes straight into the creator&apos;s wallet in real-time using Bitcoin-backed stablecoins.
-                </p>
-                <ul className="space-y-4">
-                  {[
-                    "Zero platform fees",
-                    "Instant cross-border settlement",
-                    "Complete privacy and control"
-                  ].map((item, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: false }}
-                      transition={{ delay: 0.4 + (i * 0.1) }}
-                      className="flex items-center gap-3 text-slate-300 font-medium"
+      <div className="w-full px-4 md:px-8 relative z-10">
+        
+        {/* Main Double Column Layout */}
+        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
+          
+          {/* LEFT: Unified Feed Column (Spans 2) */}
+          <div className="xl:col-span-2 space-y-8">
+            
+            {/* Feed Tabs Selector */}
+            <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4 transition-colors duration-300">
+              <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-1 rounded-2xl transition-colors duration-300">
+                {[
+                  { id: 'public', label: 'Public Posts', icon: Globe2 },
+                  { id: 'members', label: 'Members Only', icon: Lock },
+                  { id: 'tips_members', label: 'Tips & Members Only', icon: Sparkles }
+                ].map(tab => {
+                  const Icon = tab.icon;
+                  const isActive = activeTab === tab.id;
+                  return (
+                    <button
+                      key={tab.id}
+                      onClick={() => {
+                        setActiveTab(tab.id as any);
+                        setOpenCommentsPostId(null);
+                      }}
+                      className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all ${
+                        isActive 
+                          ? 'text-black bg-[#F7931A] shadow-md' 
+                          : 'text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/50 dark:hover:bg-white/5'
+                      }`}
                     >
-                      <CheckCircle2 className="w-5 h-5 text-[#F7931A]" />
-                      {item}
-                    </motion.li>
-                  ))}
-                </ul>
+                      <Icon className="w-3.5 h-3.5" />
+                      {tab.label}
+                    </button>
+                  );
+                })}
               </div>
-              <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
-                  {/* Decorative background grid */}
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
-                  {/* Animated Tipping UI */}
-                  <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl p-6 shadow-2xl flex flex-col gap-6">
-                    <div className="flex items-center gap-4 border-b border-white/5 pb-4">
-                      <div className="w-12 h-12 rounded-full bg-gradient-to-tr from-[#F7931A] to-orange-400 flex items-center justify-center shadow-lg">
-                        <Bitcoin className="w-6 h-6 text-white" />
-                      </div>
-                      <div>
-                        <div className="text-white font-bold text-lg">Alex Dev</div>
-                        <div className="text-slate-500 text-sm">@alex_dev</div>
-                      </div>
-                    </div>
-                    <div className="text-center py-4">
-                      <div className="text-5xl font-black text-white tracking-tighter mb-2">50.00</div>
-                      <div className="text-[#F7931A] font-bold text-sm tracking-widest uppercase">MUSD Tip</div>
-                    </div>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="w-full py-4 bg-[#F7931A] text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer transition-all hover:shadow-[0_0_20px_rgba(247,147,26,0.3)]"
-                    >
-                      <Zap className="w-5 h-5 fill-black" /> Send Tip Now
-                    </motion.div>
-                  </div>
-
-                  {/* Floating Elements */}
-                  <motion.div
-                    animate={{ y: [-15, 15, -15], rotate: [-5, 5, -5] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[15%] right-[10%] w-16 h-16 bg-[#1a1a1a] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl"
-                  >
-                    <MUSDLogo className="w-8 h-8" />
-                  </motion.div>
-                  <motion.div
-                    animate={{ y: [15, -15, 15], rotate: [5, -5, 5] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 1 }}
-                    className="absolute bottom-[20%] left-[5%] w-14 h-14 bg-[#1a1a1a] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl"
-                  >
-                    <Star className="w-6 h-6 text-yellow-500 fill-yellow-500/20" />
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Subscribing Feature */}
-            <motion.div
-              initial={{ opacity: 0, y: 80 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col lg:flex-row-reverse items-center gap-16"
-            >
-              <div className="flex-1 space-y-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-purple-500/10 text-purple-400 font-bold text-sm uppercase tracking-wider border border-purple-500/20">
-                  <Gem className="w-4 h-4" /> Recurring Value
-                </div>
-                <h3 className="text-5xl md:text-6xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
-                  Subscribe & <br /> Unlock
-                </h3>
-                <p className="text-xl text-slate-400 text-slate-400 text-slate-400 leading-relaxed max-w-lg">
-                  Join a creator&apos;s inner circle. Subscriptions are powered by immutable smart contracts, giving you total transparency and ensuring creators retain full ownership of their audience.
-                </p>
-                <ul className="space-y-4">
-                  {[
-                    "Unstoppable recurring payments",
-                    "Exclusive content access",
-                    "Direct creator-to-fan relationship"
-                  ].map((item, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, x: 20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: false }}
-                      transition={{ delay: 0.4 + (i * 0.1) }}
-                      className="flex items-center gap-3 text-slate-300 font-medium"
-                    >
-                      <CheckCircle2 className="w-5 h-5 text-purple-400" />
-                      {item}
-                    </motion.li>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
-                  {/* Decorative background grid */}
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
-                  {/* Animated Subscription UI */}
-                  <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl overflow-hidden shadow-2xl">
-                    <div className="bg-gradient-to-r from-purple-600 to-blue-600 p-6 flex items-center justify-between">
-                      <div className="text-white font-black text-xl uppercase tracking-wider">Premium Tier</div>
-                      <Star className="w-6 h-6 text-white fill-white/50" />
-                    </div>
-                    <div className="p-6 flex flex-col gap-6">
-                      <div className="flex items-end gap-2">
-                        <div className="text-5xl font-black text-white tracking-tighter">10.00</div>
-                        <div className="text-slate-400 text-slate-400 text-slate-400 font-medium mb-1">MUSD / mo</div>
-                      </div>
-                      <div className="space-y-3">
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
-                          <CheckCircle2 className="w-4 h-4 text-purple-400" /> Exclusive Discord Role
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
-                          <CheckCircle2 className="w-4 h-4 text-purple-400" /> Early Video Access
-                        </div>
-                        <div className="flex items-center gap-3 text-sm text-slate-300">
-                          <CheckCircle2 className="w-4 h-4 text-purple-400" /> Monthly Q&A
-                        </div>
-                      </div>
-                      <motion.div
-                        whileHover={{ scale: 1.05 }}
-                        whileTap={{ scale: 0.95 }}
-                        className="w-full py-4 bg-purple-600 hover:bg-purple-500 transition-colors text-white font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer mt-2 shadow-lg shadow-purple-500/20"
-                      >
-                        Subscribe
-                      </motion.div>
-                    </div>
-                  </div>
-
-                  {/* Floating Elements */}
-                  <motion.div
-                    animate={{ y: [-10, 10, -10], rotate: [0, 10, 0] }}
-                    transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[20%] left-[10%] w-16 h-16 bg-[#1a1a1a] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl"
-                  >
-                    <ShieldCheck className="w-8 h-8 text-purple-400" />
-                  </motion.div>
-                  <motion.div
-                    animate={{ y: [10, -10, 10], rotate: [0, -10, 0] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                    className="absolute bottom-[15%] right-[5%] w-14 h-14 bg-[#1a1a1a] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl"
-                  >
-                    <Gem className="w-6 h-6 text-blue-400" />
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-
-            {/* Posting to Earn Feature */}
-            <motion.div
-              initial={{ opacity: 0, y: 80 }}
-              whileInView={{ opacity: 1, y: 0 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 1, ease: [0.16, 1, 0.3, 1] }}
-              className="flex flex-col lg:flex-row items-center gap-16"
-            >
-              <div className="flex-1 space-y-8">
-                <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-emerald-500/10 text-emerald-400 font-bold text-sm uppercase tracking-wider border border-emerald-500/20">
-                  <Rocket className="w-4 h-4" /> Content Economy
-                </div>
-                <h3 className="text-5xl md:text-6xl font-black text-white font-outfit uppercase tracking-tighter leading-none">
-                  Post to <br /> Earn
-                </h3>
-                <p className="text-xl text-slate-400 text-slate-400 text-slate-400 leading-relaxed max-w-lg">
-                  Share exclusive &quot;Drops&quot; with your inner circle. Whether it&apos;s art, music, or updates, your followers and subscribers can support you directly for every piece of content you create.
-                </p>
-                <ul className="space-y-4">
-                  {[
-                    "Monetize exclusive content drops",
-                    "Public feeds for discovery",
-                    "Direct fan-to-creator engagement"
-                  ].map((item, i) => (
-                    <motion.li
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      whileInView={{ opacity: 1, x: 0 }}
-                      viewport={{ once: false }}
-                      transition={{ delay: 0.4 + (i * 0.1) }}
-                      className="flex items-center gap-3 text-slate-300 font-medium"
-                    >
-                      <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                      {item}
-                    </motion.li>
-                  ))}
-                </ul>
-              </div>
-              <div className="flex-1 w-full relative">
-                <div className="w-full aspect-square md:aspect-[4/3] rounded-[2.5rem] bg-gradient-to-br from-[#1a1a1a] to-[#0a0a0a] border border-white/5 relative overflow-hidden flex items-center justify-center shadow-2xl">
-                  {/* Decorative background grid */}
-                  <div className="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.02)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.02)_1px,transparent_1px)] bg-[size:40px_40px]" />
-
-                  {/* Animated Posting UI */}
-                  <div className="relative z-10 w-[80%] max-w-sm bg-[#111] border border-white/5 rounded-3xl p-6 shadow-2xl flex flex-col gap-6">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 rounded-full bg-emerald-500/20 flex items-center justify-center">
-                          <Rocket className="w-5 h-5 text-emerald-500" />
-                        </div>
-                        <div className="text-white font-bold">New Drop</div>
-                      </div>
-                      <div className="px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-500 text-[10px] font-black uppercase tracking-widest border border-emerald-500/20">
-                        Exclusive
-                      </div>
-                    </div>
-                    <div className="h-24 w-full bg-white/5 rounded-xl border border-white/5 p-4 flex flex-col gap-2">
-                      <div className="w-3/4 h-2 bg-white/10 rounded-full" />
-                      <div className="w-1/2 h-2 bg-white/10 rounded-full" />
-                      <div className="w-2/3 h-2 bg-white/10 rounded-full" />
-                    </div>
-                    <motion.div
-                      whileHover={{ scale: 1.05 }}
-                      whileTap={{ scale: 0.95 }}
-                      className="w-full py-4 bg-emerald-600 hover:bg-emerald-500 transition-colors text-white text-black font-black text-center rounded-2xl uppercase tracking-wider flex items-center justify-center gap-2 cursor-pointer"
-                    >
-                      Share with Fans
-                    </motion.div>
-                  </div>
-
-                  {/* Floating Elements */}
-                  <motion.div
-                    animate={{ y: [-15, 15, -15], scale: [1, 1.1, 1] }}
-                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
-                    className="absolute top-[15%] right-[10%] w-16 h-16 bg-[#1a1a1a] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl"
-                  >
-                    <Plus className="w-8 h-8 text-emerald-400" />
-                  </motion.div>
-                  <motion.div
-                    animate={{ y: [15, -15, 15], rotate: [-10, 10, -10] }}
-                    transition={{ duration: 6, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
-                    className="absolute bottom-[20%] left-[5%] w-14 h-14 bg-[#1a1a1a] border border-white/5 rounded-2xl flex items-center justify-center shadow-xl"
-                  >
-                    <Star className="w-6 h-6 text-emerald-500 fill-emerald-500/20" />
-                  </motion.div>
-                </div>
-              </div>
-            </motion.div>
-
-          </div>
-
-        </div>
-      </section>
-
-
-
-      {/* How it Works */}
-      <section className="relative w-full py-24 md:py-60 px-4">
-        <div className="w-full px-[5%] md:px-[8%]">
-          <div className="flex flex-col lg:flex-row items-end justify-between gap-10 mb-24">
-            <div className="max-w-2xl space-y-6">
-              <h2 className="text-6xl font-black text-white uppercase tracking-tighter font-outfit">How it works</h2>
-              <p className="text-xl text-slate-500 font-medium">Three steps to join the future of the creator economy.</p>
             </div>
-            <motion.div
-              initial={{ scaleX: 0 }}
-              whileInView={{ scaleX: 1 }}
-              viewport={{ once: false, margin: "-10%" }}
-              transition={{ duration: 1.5, ease: [0.16, 1, 0.3, 1] }}
-              className="hidden lg:block h-px flex-1 bg-gradient-to-r from-[#F7931A]/40 to-transparent mx-10 mb-6 origin-left"
-            />
-          </div>
 
-          <div className="grid md:grid-cols-3 gap-12">
-            <StepItem
-              number="01"
-              index={0}
-              icon={<Wallet className="w-10 h-10" />}
-              title="Connect Identity"
-              desc="Link your Mezo wallet. Your address is your unique profile across the Hive."
-            />
-            <StepItem
-              number="02"
-              index={1}
-              icon={<LayoutDashboard className="w-10 h-10" />}
-              title="Set Up Page"
-              desc="Customize your creator dashboard and share your tipping link with your fans."
-            />
-            <StepItem
-              number="03"
-              index={2}
-              icon={<Gem className="w-10 h-10" />}
-              title="Earn in MUSD"
-              desc="Receive Bitcoin-backed stablecoin tips instantly and withdraw anytime."
-            />
-          </div>
-        </div>
-      </section>
-
-      {/* Trusted Platform Section */}
-      <section className="relative w-full py-24 md:py-40 px-4 overflow-hidden bg-[#050505]">
-        <div className="w-full px-[5%] md:px-[8%] text-center space-y-12 relative z-10">
-          <motion.h2
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-10%" }}
-            transition={{ duration: 0.8, ease: "easeOut" }}
-            className="text-4xl md:text-6xl lg:text-7xl xl:text-8xl font-black text-white uppercase tracking-tighter font-outfit leading-tight"
-          >
-            Why is TipHive the Trusted Platform for <br className="hidden lg:block" /> <span className="text-[#F7931A]">Modern Creators?</span>
-          </motion.h2>
-          <motion.p
-            initial={{ opacity: 0, y: 30 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            viewport={{ once: false, margin: "-10%" }}
-            transition={{ duration: 0.8, delay: 0.2, ease: "easeOut" }}
-            className="text-xl md:text-2xl text-slate-400 text-slate-400 text-slate-400 font-medium leading-relaxed max-w-4xl mx-auto"
-          >
-            We&apos;re more than a creator platform. Built on Mezo, TipHive helps creators turn their audience into thriving communities through memberships, exclusive content and seamless supporter experiences.
-          </motion.p>
-        </div>
-      </section>
-
-      {/* Scroll Stacking Cards */}
-      <GsapStackingCards />
-
-      {/* FAQ Section */}
-      <section className="relative w-full py-24 md:py-40 px-4 bg-black/30">
-        <div className="w-full px-[5%] md:px-[8%]">
-          <div className="text-center mb-24 space-y-4">
-            <h2 className="text-5xl font-black text-white uppercase tracking-tighter font-outfit">FAQ</h2>
-            <p className="text-slate-500 text-lg font-medium">Everything you need to know about TipHive.</p>
-          </div>
-
-          <div className="space-y-4">
-            {[
-              {
-                q: "What is Mezo and why use it?",
-                a: "Mezo is a Bitcoin economic layer. It allows for instant, low-cost transactions while being secured by the Bitcoin network. TipHive uses Mezo to ensure your tips settle in seconds, not hours."
-              },
-              {
-                q: "What is MUSD?",
-                a: "MUSD is a Bitcoin-backed stablecoin used on the Mezo network. It maintains a 1:1 value with the US Dollar, allowing creators to receive stable payments without worrying about Bitcoin's volatility."
-              },
-              {
-                q: "How secure is TipHive for users?",
-                a: "Security is our top priority. All interactions are governed by audited smart contracts on the Mezo network. Because we are non-custodial, we never have access to your private keys or funds—you remain in 100% control, protected by the security of the Bitcoin network."
-              },
-              {
-                q: "Are there any platform fees?",
-                a: "Zero. TipHive is built to support the creator economy. We don't take a percentage of your tips. 100% of the MUSD sent goes directly to the creator's contract."
-              },
-              {
-                q: "Is it non-custodial?",
-                a: "Yes. TipHive is non-custodial. We never hold your private keys. All tipping logic is handled by verified smart contracts on the Mezo network, ensuring transparency and security."
-              }
-            ].map((item, i) => (
-              <FAQItem key={i} question={item.q} answer={item.a} delay={i * 0.15} />
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Footer CTA */}
-      <section className="relative w-full py-24 md:py-60 px-4 overflow-hidden">
-        <div className="w-full px-[5%] md:px-[8%]">
-          <div
-            className="p-16 md:p-32 text-center relative overflow-hidden group rounded-[2.5rem] border border-white/10 bg-cover bg-center"
-            style={{ backgroundImage: "url('/images/background/readytojoineconomy.webp')" }}
-          >
-            {/* Dark Overlay for Readability */}
-            <div className="absolute inset-0 bg-black/50 group-hover:bg-black/40 transition-colors duration-500" />
-
-            <motion.div
-              initial={{ opacity: 0, scale: 0.9 }}
-              whileInView={{ opacity: 1, scale: 1 }}
-              viewport={{ once: true }}
-              className="relative z-10 space-y-12"
-            >
-              <h2 className="text-6xl md:text-9xl font-black text-white uppercase tracking-[calc(-0.04em)] font-outfit leading-none">
-                Ready to join the <br /> <span className="text-[#F7931A]">New Economy?</span>
-              </h2>
-              <div className="flex flex-col sm:flex-row items-center justify-center gap-10">
-                <Link href="/dashboard" className="btn-primary px-16 py-6 text-2xl min-w-[300px]">
-                  Get Started
-                </Link>
-                <Link href="/explore" className="btn-secondary px-16 py-6 text-2xl min-w-[300px]">
-                  Browse Feed
-                </Link>
+            {/* Posts Feed */}
+            {loadingFeed ? (
+              <div className="space-y-8">
+                <PostCardSkeleton />
+                <PostCardSkeleton />
               </div>
-            </motion.div>
+            ) : filteredPosts.length === 0 ? (
+              <div className="py-24 text-center bg-slate-100/50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 border-dashed rounded-[3rem] p-12 transition-colors duration-300">
+                <div className="w-12 h-12 bg-slate-200/60 dark:bg-white/[0.03] border border-slate-300/50 dark:border-white/5 rounded-2xl flex items-center justify-center mx-auto mb-4 text-slate-500 transition-colors duration-300">
+                  <MessageSquare className="w-6 h-6" />
+                </div>
+                <h3 className="text-xl font-black uppercase tracking-tight text-slate-800 dark:text-white mb-2">No drops found</h3>
+                <p className="text-slate-500 max-w-sm mx-auto text-xs leading-relaxed">
+                  There are no posts matching this visibility filter at the moment.
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-8">
+                {filteredPosts.map(post => {
+                  if (!post.creator) return null;
+                  const creatorAddr = post.creator.wallet_address.toLowerCase();
+                  
+                  const isOwner = (userAddress || userId)
+                    ? (userAddress?.toLowerCase() === creatorAddr) || (userId === post.creator.wallet_address)
+                    : false;
+
+                  const hasAccess = isOwner
+                    || post.visibility === 'public'
+                    || (post.visibility === 'followers' && (tippedSet.has(creatorAddr) || subscribedSet.has(creatorAddr)))
+                    || (post.visibility === 'supporters' && subscribedSet.has(creatorAddr));
+
+                  const isLocked = !hasAccess;
+                  const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
+                  const isVideo = !isAudio && (post.video_url?.includes('/video/') || post.video_url?.match(/\.(mp4|webm|mov|m4v)$/i));
+
+                  return (
+                    <article
+                      key={post.id}
+                      className="bg-white dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 rounded-[2rem] overflow-hidden shadow-md dark:shadow-2xl relative transition-all duration-300"
+                    >
+                      {/* Post Card Header */}
+                      <div className="p-5 md:p-6 flex items-center justify-between border-b border-slate-200 dark:border-white/5 transition-colors duration-300">
+                        <div className="flex items-center gap-3">
+                          <Link href={`/${post.creator.username}`} className="w-10 h-10 rounded-full overflow-hidden shrink-0 border border-slate-200 dark:border-white/10 relative block bg-[#111827]">
+                            <img
+                              src={post.creator.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(post.creator.display_name || post.creator.username)}`}
+                              alt={post.creator.display_name}
+                              className="w-full h-full object-cover"
+                            />
+                          </Link>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Link href={`/${post.creator.username}`} className="font-bold text-slate-800 dark:text-white hover:text-[#F7931A] dark:hover:text-[#F7931A] transition-colors leading-tight text-xs sm:text-sm">
+                                {post.creator.display_name || post.creator.username}
+                              </Link>
+                              {post.category && (
+                                <span className="text-[8px] font-black text-[#F7931A] uppercase tracking-widest bg-[#F7931A]/10 px-1.5 py-0.5 rounded-md border border-[#F7931A]/20">
+                                  {post.category}
+                                </span>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2 text-slate-500 text-[10px] mt-0.5">
+                              <span className="font-semibold">@{post.creator.username}</span>
+                              <span>•</span>
+                              <span>{formatRelativeTime(post.created_at)}</span>
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          {!isOwner && (
+                            <button
+                              onClick={() => handleFollowToggle(post.creator_id)}
+                              className={`px-3 py-1.5 rounded-lg font-black text-[9px] uppercase tracking-widest transition-all ${
+                                followingIds.includes(post.creator_id)
+                                  ? 'bg-slate-100 dark:bg-white/5 border border-slate-300 dark:border-white/10 text-slate-700 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10'
+                                  : 'bg-[#8A2BE2] text-white hover:bg-[#7828c8]'
+                              }`}
+                            >
+                              {followingIds.includes(post.creator_id) ? 'Following' : 'Follow'}
+                            </button>
+                          )}
+
+                          <span className={`text-[7px] font-black uppercase tracking-widest px-2 py-1 rounded-md flex items-center gap-1 ${
+                            post.visibility === 'public' ? 'text-emerald-600 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-400/10 border border-emerald-200 dark:border-emerald-400/20' :
+                            post.visibility === 'followers' ? 'text-blue-600 bg-blue-50 dark:text-blue-400 dark:bg-blue-400/10 border border-blue-200 dark:border-blue-400/20' :
+                            'text-[#8A2BE2] bg-purple-50 dark:text-[#D8B4FE] dark:bg-[#8A2BE2]/10 border border-purple-200 dark:border-[#8A2BE2]/30'
+                          } transition-all duration-300`}>
+                            {post.visibility === 'public' ? <Globe2 className="w-2.5 h-2.5" /> : post.visibility === 'followers' ? <Users className="w-2.5 h-2.5" /> : <Lock className="w-2.5 h-2.5" />}
+                            {post.visibility === 'public' ? 'Public' : post.visibility === 'followers' ? 'Supporters' : 'Members'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Locked Overlay or Media content */}
+                      {isLocked ? (
+                        <div className="relative aspect-[16/9] bg-slate-900/90 dark:bg-black/80 overflow-hidden flex flex-col items-center justify-center p-6 text-center border-b border-slate-200 dark:border-white/5 transition-colors duration-300">
+                          <div className="relative z-10 max-w-xs space-y-3">
+                            <div className="w-12 h-12 rounded-2xl bg-[#F7931A]/10 border border-[#F7931A]/30 flex items-center justify-center mx-auto">
+                              <Lock className="w-5 h-5 text-[#F7931A]" />
+                            </div>
+                            <h3 className="text-base font-black font-outfit uppercase tracking-tight text-white">
+                              {post.visibility === 'followers' ? 'Supporter Drop Locked' : 'Members Only Drop'}
+                            </h3>
+                            <p className="text-slate-300 dark:text-slate-400 text-[10px] leading-relaxed">
+                              {post.visibility === 'followers'
+                                ? 'Send a tip or subscribe to this creator to instantly unlock.'
+                                : 'Subscribe to a membership tier to unlock.'}
+                            </p>
+                            <div className="flex items-center justify-center gap-2 pt-1">
+                              <button
+                                onClick={() => {
+                                  setSelectedCreatorForTip(post.creator);
+                                  setIsTipModalOpen(true);
+                                }}
+                                className="bg-[#F7931A] text-black font-black py-2 px-4 rounded-lg hover:scale-105 transition-all text-[9px] uppercase tracking-wider flex items-center gap-1"
+                              >
+                                <Zap className="w-3 h-3 fill-current" /> Tip to Unlock
+                              </button>
+                              <Link
+                                href={`/${post.creator.username}/subscriptions`}
+                                className="bg-white/5 border border-white/10 hover:bg-white/10 text-white font-black py-2 px-4 rounded-lg transition-all text-[9px] uppercase tracking-wider block"
+                              >
+                                View Tiers
+                              </Link>
+                            </div>
+                          </div>
+                        </div>
+                      ) : (
+                        <div>
+                          {post.image_url && (
+                            <div className="w-full overflow-hidden border-b border-slate-200 dark:border-white/5 relative bg-slate-100 dark:bg-[#0B0F19] flex items-center justify-center transition-colors duration-300">
+                              <img src={post.image_url} alt={post.title} className="w-full max-h-[500px] md:max-h-[600px] object-contain block mx-auto" />
+                            </div>
+                          )}
+
+                          {isVideo && post.video_url && (
+                            <div className="w-full aspect-video bg-black border-b border-slate-200 dark:border-white/5 relative flex items-center justify-center transition-colors duration-300">
+                              <video src={post.video_url} controls className="w-full h-full object-contain" controlsList="nodownload" />
+                            </div>
+                          )}
+
+                          {isAudio && post.video_url && (
+                            <div className="p-4 bg-slate-100 dark:bg-[#0E0E14] border-b border-slate-200 dark:border-white/5 transition-colors duration-300">
+                              <div className="max-w-md mx-auto bg-white dark:bg-gradient-to-br dark:from-[#1C1917] dark:to-[#0C0A09] border border-slate-200 dark:border-white/10 rounded-xl p-4 flex items-center gap-3 shadow-sm dark:shadow-xl transition-all duration-300">
+                                <div className="w-10 h-10 rounded-lg bg-[#8A2BE2]/10 border border-[#8A2BE2]/20 flex items-center justify-center text-[#8A2BE2] shrink-0">
+                                  <Music2 className="w-5 h-5" />
+                                </div>
+                                <div className="flex-1 min-w-0">
+                                  <audio src={post.video_url} controls className="w-full h-8" controlsList="nodownload" />
+                                </div>
+                              </div>
+                            </div>
+                          )}
+
+                          {!post.image_url && !post.video_url && (
+                            <div className="h-44 border-b border-slate-200 dark:border-white/5 transition-colors duration-300">
+                              <TextThumbnail title={post.title} />
+                            </div>
+                          )}
+                        </div>
+                      )}
+
+                      {/* Post Info Section */}
+                      <div className="p-5 md:p-6 bg-white dark:bg-transparent">
+                        <Link href={`/${post.creator.username}/posts/${encodeURIComponent(post.title)}`} className="block group">
+                          <h2 className="text-lg md:text-xl font-black text-slate-800 dark:text-white group-hover:text-[#F7931A] dark:group-hover:text-[#F7931A] transition-colors leading-tight font-outfit uppercase tracking-tight mb-3">
+                            {post.title}
+                          </h2>
+                        </Link>
+
+                        {!isLocked && (
+                          <div 
+                            className="prose dark:prose-invert max-w-none text-slate-600 dark:text-slate-300 font-medium leading-relaxed text-xs md:text-sm mb-4 line-clamp-3"
+                            dangerouslySetInnerHTML={{ __html: sanitizePostHtml(post.content) }}
+                          />
+                        )}
+
+                        {/* Interactive Buttons Bar: Like, Comment, and Share */}
+                        <div className="flex items-center gap-5 pt-3 border-t border-slate-200 dark:border-white/5 text-[10px] transition-colors duration-300">
+                          <button
+                            onClick={() => handleLikeToggle(post.id)}
+                            className={`flex items-center gap-1.5 font-black uppercase tracking-widest transition-all ${
+                              post.isLiked ? 'text-[#F7931A]' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+                            }`}
+                          >
+                            <Heart className={`w-4 h-4 ${post.isLiked ? 'fill-[#F7931A] text-[#F7931A]' : 'text-slate-400 dark:text-slate-450'}`} />
+                            <span>{post.likesCount} Likes</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => setOpenCommentsPostId(openCommentsPostId === post.id ? null : post.id)}
+                            className={`flex items-center gap-1.5 font-black uppercase tracking-widest transition-all ${
+                              openCommentsPostId === post.id ? 'text-[#8A2BE2]' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+                            }`}
+                          >
+                            <MessageCircle className="w-4 h-4" />
+                            <span>{post.comments.length} Comments</span>
+                          </button>
+                          
+                          <button
+                            onClick={() => {
+                              const url = `${window.location.origin}/${post.creator?.username}/posts/${encodeURIComponent(post.title)}`;
+                              setShareUrl(url);
+                              setShareTitle(`Check out this post by ${post.creator?.display_name || post.creator?.username}: ${post.title}`);
+                              setIsShareModalOpen(true);
+                            }}
+                            className="flex items-center gap-1.5 font-black uppercase tracking-widest text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-all"
+                          >
+                            <Share2 className="w-4 h-4" />
+                            <span>Share</span>
+                          </button>
+                          
+                          <Link
+                            href={`/${post.creator.username}/posts/${encodeURIComponent(post.title)}`}
+                            className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:text-slate-800 dark:text-slate-500 dark:hover:text-white ml-auto"
+                          >
+                            <span>Full</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </Link>
+                        </div>
+                      </div>
+
+                      {/* Comments Inline Expandable Drawer */}
+                      <AnimatePresence>
+                        {openCommentsPostId === post.id && (
+                          <div className="border-t border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-[#0a0a0e] p-4 space-y-4 transition-colors duration-300">
+                            <div className="flex gap-3 items-start border-b border-slate-200 dark:border-white/5 pb-4 transition-colors duration-300">
+                              <div className="w-8 h-8 rounded-lg bg-slate-200 dark:bg-white/5 border border-slate-300 dark:border-white/10 shrink-0 flex items-center justify-center overflow-hidden transition-colors duration-300">
+                                <img
+                                  src={`https://api.dicebear.com/9.x/shapes/svg?seed=${userAddress || 'anonymous'}`}
+                                  alt="You"
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
+                              <div className="flex-1 flex gap-2">
+                                <textarea
+                                  value={newCommentTexts[post.id] || ''}
+                                  onChange={(e) => setNewCommentTexts({ ...newCommentTexts, [post.id]: e.target.value })}
+                                  placeholder="Write a comment..."
+                                  className="flex-1 bg-white dark:bg-white/[0.01] border border-slate-300 dark:border-white/10 rounded-lg px-3 py-1.5 text-xs text-slate-900 dark:text-white focus:outline-none focus:ring-1 focus:ring-[#8A2BE2] outline-none resize-none h-9 transition-all duration-300"
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                      e.preventDefault();
+                                      handlePostComment(post.id);
+                                    }
+                                  }}
+                                />
+                                <button
+                                  onClick={() => handlePostComment(post.id)}
+                                  disabled={submittingCommentId === post.id || !(newCommentTexts[post.id] || '').trim()}
+                                  className="p-2 bg-[#8A2BE2] hover:bg-[#7828c8] text-white rounded-lg transition-all disabled:opacity-40"
+                                >
+                                  <Send className="w-3.5 h-3.5" />
+                                </button>
+                              </div>
+                            </div>
+
+                            <div className="space-y-3 max-h-[200px] overflow-y-auto pr-1">
+                              {post.comments.length === 0 ? (
+                                <div className="text-center py-4 text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest italic">
+                                  No comments yet.
+                                </div>
+                              ) : (
+                                post.comments.map(comment => (
+                                  <div key={comment.id} className="flex gap-2.5 bg-white dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 p-3 rounded-xl transition-all duration-300">
+                                    <div className="w-6 h-6 rounded-md overflow-hidden border border-slate-200 dark:border-white/10 shrink-0 bg-slate-100 dark:bg-[#111] transition-colors duration-300">
+                                      <img
+                                        src={comment.sender?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${comment.user_address}`}
+                                        alt=""
+                                        className="w-full h-full object-cover"
+                                      />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <div className="flex items-center justify-between gap-2 mb-0.5">
+                                        <div className="flex items-center gap-1">
+                                          <span className="text-[10px] font-bold text-slate-800 dark:text-white leading-none">
+                                            {comment.sender?.display_name || 'Anonymous'}
+                                          </span>
+                                          <span className="text-[8px] text-slate-500 font-semibold leading-none">
+                                            @{comment.sender?.username || 'user'}
+                                          </span>
+                                        </div>
+                                        <span className="text-[8px] text-slate-400 dark:text-slate-600 font-black uppercase">
+                                          {formatRelativeTime(comment.created_at)}
+                                        </span>
+                                      </div>
+                                      <p className="text-slate-600 dark:text-slate-300 text-[11px] leading-relaxed">
+                                        {comment.content}
+                                      </p>
+                                    </div>
+                                  </div>
+                                ))
+                              )}
+                            </div>
+                          </div>
+                        )}
+                      </AnimatePresence>
+                    </article>
+                  );
+                })}
+
+                {/* Infinite Scroll target node */}
+                {hasMore && (
+                  <div ref={lastElementRef} className="py-6 flex items-center justify-center">
+                    <div className="w-5 h-5 border-2 border-t-transparent border-[#F7931A] rounded-full animate-spin" />
+                  </div>
+                )}
+                
+                {loadingMore && (
+                  <div className="space-y-4">
+                    <PostCardSkeleton />
+                  </div>
+                )}
+
+                {!hasMore && posts.length > 0 && (
+                  <div className="py-8 text-center text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">
+                    Showing the 50 most recent drops.
+                  </div>
+                )}
+              </div>
+            )}
           </div>
+
+          {/* RIGHT: Stats / Activities Sidebar (Spans 1) */}
+          <div className="space-y-8 xl:sticky xl:top-28 z-20">
+            
+            {/* Blockchain wise Top Earnings */}
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[1.5rem] p-5 md:p-6 shadow-md dark:shadow-2xl relative overflow-hidden transition-all duration-300">
+              <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4 mb-4 transition-colors duration-300">
+                <div>
+                  <h3 className="font-black font-outfit uppercase tracking-tight text-slate-800 dark:text-white text-base flex items-center gap-1.5">
+                    <TrendingUp className="w-4 h-4 text-[#F7931A]" /> Top Creators
+                  </h3>
+                  <p className="text-slate-400 dark:text-slate-500 text-[9px] font-black uppercase tracking-widest mt-0.5">Weekly Tipping</p>
+                </div>
+
+                <div className="flex bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-0.5 rounded-lg transition-colors duration-300">
+                  <button
+                    onClick={() => setActiveChain(31611)}
+                    className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${
+                      activeChain === 31611 ? 'bg-[#F7931A] text-black' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+                    }`}
+                  >
+                    Testnet
+                  </button>
+                  <button
+                    onClick={() => setActiveChain(31612)}
+                    className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${
+                      activeChain === 31612 ? 'bg-[#F7931A] text-black' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
+                    }`}
+                  >
+                    Mainnet
+                  </button>
+                </div>
+              </div>
+
+              {loadingStats ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-8 bg-slate-100 dark:bg-white/5 rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : topCreators.length === 0 ? (
+                <div className="text-center py-4 text-slate-500 dark:text-slate-600 text-[10px] font-semibold uppercase tracking-widest italic">
+                  No creators found.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {topCreators.map((creator, index) => {
+                    const rank = index + 1;
+                    return (
+                      <div key={creator.id} className="flex items-center justify-between gap-2 group text-xs">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className={`font-black font-outfit w-4 text-center text-[10px] ${
+                            rank === 1 ? 'text-[#F7931A]' :
+                            rank === 2 ? 'text-purple-500 dark:text-purple-400' :
+                            rank === 3 ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
+                          }`}>
+                            {rank}
+                          </span>
+
+                          <Link href={`/${creator.username}`} className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-[#111] block relative transition-colors duration-300">
+                            <img
+                              src={creator.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.display_name || creator.username)}`}
+                              alt=""
+                              className="w-full h-full object-cover"
+                            />
+                          </Link>
+
+                          <div className="min-w-0">
+                            <Link href={`/${creator.username}`} className="font-bold text-slate-800 dark:text-white hover:text-[#F7931A] dark:hover:text-[#F7931A] transition-colors truncate block text-[11px]">
+                              {creator.display_name || creator.username}
+                            </Link>
+                            <span className="text-[9px] text-slate-500 font-semibold truncate block">
+                              @{creator.username}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="text-right shrink-0 flex items-center gap-2">
+                          <div className="flex flex-col text-[10px]">
+                            <span className="font-black text-slate-800 dark:text-white">
+                              {creator.weeklyEarned > 0 ? `$${creator.weeklyEarned.toFixed(1)}` : `$0.0`}
+                            </span>
+                          </div>
+
+                          <button
+                            onClick={() => {
+                              setSelectedCreatorForTip(creator);
+                              setIsTipModalOpen(true);
+                            }}
+                            className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-[#F7931A] hover:text-black border border-slate-200 dark:border-white/5 rounded-lg transition-all"
+                            title={`Send Tip`}
+                          >
+                            <Zap className="w-3.5 h-3.5 fill-current" />
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+            {/* Live Tipping Activity Ticker */}
+            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[1.5rem] p-5 md:p-6 shadow-md dark:shadow-2xl relative overflow-hidden transition-all duration-300">
+              <div className="border-b border-slate-200 dark:border-white/5 pb-4 mb-4 transition-colors duration-300">
+                <h3 className="font-black font-outfit uppercase tracking-tight text-slate-800 dark:text-white text-base flex items-center gap-1.5">
+                  <Clock className="w-4 h-4 text-purple-500 dark:text-purple-400" /> Tipping Activity
+                </h3>
+                <p className="text-slate-400 dark:text-slate-500 text-[9px] font-black uppercase tracking-widest mt-0.5">Last 5 Tip Recipients</p>
+              </div>
+
+              {loadingStats ? (
+                <div className="space-y-3">
+                  {[1, 2, 3].map(i => (
+                    <div key={i} className="h-8 bg-slate-100 dark:bg-white/5 rounded animate-pulse" />
+                  ))}
+                </div>
+              ) : recentActivity.length === 0 ? (
+                <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-[10px] font-semibold uppercase tracking-widest italic border border-slate-200 dark:border-white/5 border-dashed rounded-xl transition-colors duration-300">
+                  No tipping activity.
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {recentActivity.map(activity => {
+                    const fromName = activity.sender?.display_name || activity.sender?.username || `${activity.from_address.slice(0, 5)}...${activity.from_address.slice(-3)}`;
+                    const toName = activity.receiver?.display_name || activity.receiver?.username || `${activity.to_address.slice(0, 5)}...${activity.to_address.slice(-3)}`;
+                    
+                    return (
+                      <div key={activity.id} className="flex gap-2.5 bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 p-3 rounded-xl transition-all duration-300 text-xs">
+                        <div className="w-7 h-7 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shrink-0 bg-slate-100 dark:bg-[#111] transition-colors duration-300">
+                          <img
+                            src={activity.sender?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${activity.from_address}`}
+                            alt=""
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+
+                        <div className="flex-1 min-w-0">
+                          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
+                            <span className="font-bold text-slate-800 dark:text-white">{fromName}</span> tipped <span className="font-bold text-[#F7931A]">{toName}</span>
+                          </p>
+                          <div className="flex items-center gap-2 mt-1">
+                            <span className="text-[9px] font-black font-outfit text-emerald-600 dark:text-emerald-400 px-1 py-0.5 bg-emerald-100 dark:bg-emerald-500/10 rounded-md">
+                              +${activity.amount} MUSD
+                            </span>
+                            <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase">
+                              {formatRelativeTime(activity.created_at)}
+                            </span>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+
+          </div>
+
         </div>
-      </section>
-    </div>
-  );
-}
 
-
-function PainPointCard({ icon, title, desc }: { icon: React.ReactNode, title: string, desc: string }) {
-  return (
-    <div className="p-8 bg-white/50 bg-white/[0.02] border border-white/5 rounded-3xl group hover:border-red-500/30 transition-all duration-500">
-      <div className="mb-6 p-4 bg-white/5 rounded-2xl inline-block group-hover:scale-110 transition-transform duration-500">
-        {icon}
       </div>
-      <h3 className="text-2xl font-black text-white mb-3 uppercase tracking-tighter font-outfit">{title}</h3>
-      <p className="text-slate-500 font-medium leading-relaxed">{desc}</p>
-    </div>
-  );
-}
 
-
-function StepItem({ number, icon, title, desc, index }: { number: string, icon: React.ReactNode, title: string, desc: string, index: number }) {
-  return (
-    <div className="relative group">
-      <motion.div
-        initial={{ opacity: 0, scale: 0.8, x: -20 }}
-        whileInView={{ opacity: 1, scale: 1, x: 0 }}
-        viewport={{ once: false }}
-        transition={{ duration: 1, delay: (index * 0.1) + 0.2, ease: "easeOut" }}
-        className="absolute -top-10 -left-6 text-[10rem] font-black text-white/[0.03] select-none group-hover:text-[#F7931A]/5 transition-colors duration-500"
-      >
-        {number}
-      </motion.div>
-      <div className="relative z-10 pt-10">
-        <motion.div
-          initial={{ rotate: 12, scale: 0.8, opacity: 0 }}
-          whileInView={{ rotate: 0, scale: 1, opacity: 1 }}
-          viewport={{ once: false }}
-          transition={{
-            type: "spring",
-            stiffness: 100,
-            damping: 15,
-            delay: (index * 0.1) + 0.3
+      {/* Tip Modal Trigger Integration */}
+      {selectedCreatorForTip && (
+        <TipModal
+          isOpen={isTipModalOpen}
+          onClose={() => {
+            setIsTipModalOpen(false);
+            setSelectedCreatorForTip(null);
           }}
-          className="mb-8 p-6 bg-white/[0.03] border border-white/5 rounded-[2rem] inline-block group-hover:border-[#F7931A]/40 transition-all duration-500 group-hover:-rotate-6"
-        >
-          <div className="text-[#F7931A]">{icon}</div>
-        </motion.div>
-        <h3 className="text-3xl font-black text-white mb-4 uppercase tracking-tighter font-outfit">{title}</h3>
-        <p className="text-slate-500 font-medium leading-relaxed text-lg">{desc}</p>
-      </div>
+          creator={{
+            wallet_address: selectedCreatorForTip.wallet_address,
+            display_name: selectedCreatorForTip.display_name,
+            username: selectedCreatorForTip.username,
+            suggested_amounts: selectedCreatorForTip.suggested_amounts,
+            button_text: selectedCreatorForTip.button_text
+          }}
+        />
+      )}
+
+      {/* Share Modal Integration */}
+      <ShareModal
+        isOpen={isShareModalOpen}
+        onClose={() => setIsShareModalOpen(false)}
+        url={shareUrl}
+        title={shareTitle}
+      />
     </div>
-  );
-}
-
-function FAQItem({ question, answer, delay }: { question: string, answer: string, delay: number }) {
-  const [isOpen, setIsOpen] = useState(false);
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 40 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true, margin: "-5%" }}
-      transition={{
-        duration: 0.8,
-        delay,
-        ease: [0.16, 1, 0.3, 1]
-      }}
-      className="border-b border-white/5"
-    >
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="w-full py-8 text-left flex items-center justify-between group transition-all"
-      >
-        <span className={`text-2xl font-black uppercase tracking-tighter font-outfit transition-colors ${isOpen ? 'text-[#F7931A]' : 'text-white'}`}>
-          {question}
-        </span>
-        <div className={`transition-transform duration-500 ${isOpen ? 'rotate-45' : ''}`}>
-          <Plus className={`w-8 h-8 ${isOpen ? 'text-[#F7931A]' : 'text-slate-600'}`} />
-        </div>
-      </button>
-      <AnimatePresence>
-        {isOpen && (
-          <motion.div
-            initial={{ height: 0, opacity: 0 }}
-            animate={{ height: 'auto', opacity: 1 }}
-            exit={{ height: 0, opacity: 0 }}
-            className="overflow-hidden"
-          >
-            <div className="pb-8 text-slate-400 text-slate-400 text-slate-400 text-lg leading-relaxed font-medium">
-              {answer}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </motion.div>
   );
 }

@@ -80,7 +80,7 @@ export default function GlobalSearch({ isMobile, onSelect }: GlobalSearchProps) 
             setIsOpen(true);
           }}
           onFocus={() => setIsOpen(true)}
-          className="w-full bg-white/5 border border-white/5 rounded-2xl py-2.5 pl-11 pr-4 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#F7931A]/30 transition-all placeholder:text-slate-600 group-hover:bg-white/10"
+          className="w-full bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl py-2.5 pl-11 pr-4 text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-[#F7931A]/30 transition-all placeholder:text-slate-600 group-hover:bg-slate-200/60 dark:group-hover:bg-white/10"
         />
         {loading && (
           <div className="absolute right-4 top-1/2 -translate-y-1/2">
@@ -95,7 +95,7 @@ export default function GlobalSearch({ isMobile, onSelect }: GlobalSearchProps) 
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 10 }}
-            className="absolute top-full mt-2 w-full bg-[#0B0F19] border border-white/10 rounded-[1.5rem] overflow-hidden shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-[110] backdrop-blur-3xl"
+            className="absolute top-full mt-2 w-full bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-[1.5rem] overflow-hidden shadow-2xl z-[110] backdrop-blur-3xl"
           >
             <div className="p-2">
               {results.length > 0 ? (
@@ -103,9 +103,9 @@ export default function GlobalSearch({ isMobile, onSelect }: GlobalSearchProps) 
                   <button
                     key={result.wallet_address}
                     onClick={() => handleSelect(result.username)}
-                    className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-white/5 transition-all group text-left"
+                    className="w-full flex items-center gap-4 p-3 rounded-xl hover:bg-slate-100 dark:hover:bg-white/5 transition-all group text-left"
                   >
-                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-white/5 relative shrink-0">
+                    <div className="w-10 h-10 rounded-lg overflow-hidden border border-slate-200 dark:border-white/5 relative shrink-0">
                       {result.avatar_url ? (
                         <Image
                           src={result.avatar_url}
@@ -115,13 +115,13 @@ export default function GlobalSearch({ isMobile, onSelect }: GlobalSearchProps) 
                           unoptimized
                         />
                       ) : (
-                        <div className="w-full h-full bg-white/5 flex items-center justify-center">
-                          <User className="w-5 h-5 text-slate-700" />
+                        <div className="w-full h-full bg-slate-100 dark:bg-white/5 flex items-center justify-center">
+                          <User className="w-5 h-5 text-slate-400 dark:text-slate-700" />
                         </div>
                       )}
                     </div>
                     <div className="flex-1 overflow-hidden">
-                      <p className="font-bold text-sm text-white truncate group-hover:text-[#F7931A] transition-colors">
+                      <p className="font-bold text-sm text-slate-800 dark:text-white truncate group-hover:text-[#F7931A] transition-colors">
                         {result.display_name}
                       </p>
                       <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest truncate">

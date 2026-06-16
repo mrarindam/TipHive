@@ -19,7 +19,6 @@ export default function Footer() {
       links: [
         { name: 'Explore', href: '/explore' },
         { name: 'Documentation', href: '/docs', target: '_blank', rel: 'noopener noreferrer' },
-        { name: 'Mezo Toolkit', href: '/mezo-toolkit' },
       ]
     },
     {
@@ -40,7 +39,7 @@ export default function Footer() {
   ];
 
   return (
-    <footer className="relative border-t border-white/5 bg-[#050505] pt-24 pb-12 overflow-hidden">
+    <footer className="relative border-t border-slate-200 dark:border-white/5 bg-white dark:bg-[#050505] pt-24 pb-12 overflow-hidden transition-colors duration-300">
       {/* Background Glow */}
       <div className="absolute bottom-0 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-[#F7931A]/5 blur-[120px] rounded-full -z-10" />
 
@@ -54,11 +53,11 @@ export default function Footer() {
                 alt="TipHive"
                 width={48}
                 height={48}
-                className="group-hover:rotate-12 transition-all mix-blend-screen"
+                className="group-hover:rotate-12 transition-all"
                 style={{ height: 'auto' }}
                 unoptimized
               />
-              <span className="text-2xl font-black tracking-tighter text-white font-outfit uppercase">
+              <span className="text-2xl font-black tracking-tighter text-slate-800 dark:text-white font-outfit uppercase">
                 TIP<span className="text-[#F7931A]">HIVE</span>
               </span>
             </Link>
@@ -80,7 +79,7 @@ export default function Footer() {
           {/* Links Sections */}
           {footerLinks.map((section, i) => (
             <div key={i} className="space-y-6">
-              <h4 className="text-sm font-black text-white uppercase tracking-[0.2em]">{section.title}</h4>
+              <h4 className="text-sm font-black text-slate-800 dark:text-white uppercase tracking-[0.2em]">{section.title}</h4>
               <ul className="space-y-4">
                 {section.links.map((link, j) => (
                   <li key={j}>
@@ -101,7 +100,7 @@ export default function Footer() {
         </div>
 
         {/* Bottom Bar */}
-        <div className="pt-12 border-t border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
+        <div className="pt-12 border-t border-slate-200 dark:border-white/5 flex flex-col md:flex-row justify-between items-center gap-6">
           <p className="text-slate-600 text-sm font-bold">
             © {currentYear} TIPHIVE. All rights reserved.
           </p>
@@ -117,7 +116,7 @@ function SocialLink({ icon, href }: { icon: React.ReactNode, href: string }) {
       href={href}
       target="_blank"
       rel="noopener noreferrer"
-      className="w-10 h-10 rounded-xl bg-white/5 border border-white/5 flex items-center justify-center text-slate-400 hover:text-white hover:bg-[#F7931A] hover:border-[#F7931A] transition-all"
+      className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 flex items-center justify-center text-slate-500 dark:text-slate-400 hover:text-white hover:bg-[#F7931A] dark:hover:bg-[#F7931A] hover:border-[#F7931A] dark:hover:border-[#F7931A] transition-all"
     >
       {icon}
     </a>

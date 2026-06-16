@@ -208,18 +208,18 @@ export default function MySubscriptions() {
       <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
-        className="max-w-3xl mx-auto py-20 px-8 text-center glass-card border-dashed border-[#F7931A]/30 bg-white/[0.02]"
+        className="max-w-3xl mx-auto py-20 px-8 text-center bg-white dark:bg-white/[0.02] border border-dashed border-slate-200 dark:border-[#F7931A]/30 rounded-[2.5rem] shadow-sm dark:shadow-2xl"
       >
         <div className="relative w-24 h-24 mx-auto mb-8">
           <div className="absolute inset-0 bg-[#F7931A]/20 blur-3xl rounded-full animate-pulse" />
-          <div className="relative w-24 h-24 bg-black border border-[#F7931A]/30 rounded-3xl flex items-center justify-center">
+          <div className="relative w-24 h-24 bg-white dark:bg-black border border-[#F7931A]/30 rounded-3xl flex items-center justify-center">
             <Zap className="w-12 h-12 text-[#F7931A]" />
           </div>
         </div>
-        <h2 className="text-4xl font-black text-white font-outfit uppercase tracking-tighter mb-4">
+        <h2 className="text-4xl font-black text-slate-900 dark:text-white font-outfit uppercase tracking-tighter mb-4">
           {hasLinkedWallet ? 'Connect Your Wallet' : 'Unlock Supporter Suite'}
         </h2>
-        <p className="text-slate-400 text-lg font-medium mb-10 leading-relaxed max-w-lg mx-auto">
+        <p className="text-slate-600 dark:text-slate-400 text-lg font-medium mb-10 leading-relaxed max-w-lg mx-auto">
           {hasLinkedWallet 
             ? 'Your wallet is linked but not currently connected. Please connect it to view and manage your active subscriptions.'
             : 'To explore creator circles and manage your subscriptions, you need to link a Web3 wallet to your account.'}
@@ -243,13 +243,13 @@ export default function MySubscriptions() {
             {/* Navigation Buttons */}
             <button
               onClick={handlePrev}
-              className="absolute left-2 md:left-4 top-[55%] -translate-y-1/2 z-50 w-11 h-11 md:w-14 md:h-14 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-[#F7931A] transition-all shadow-2xl"
+              className="absolute left-2 md:left-4 top-[55%] -translate-y-1/2 z-50 w-11 h-11 md:w-14 md:h-14 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-md border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-800 dark:text-white hover:bg-[#F7931A] hover:text-white transition-all shadow-md dark:shadow-2xl"
             >
               <ChevronLeft className="w-6 h-6 md:w-8 md:h-8" />
             </button>
             <button
               onClick={handleNext}
-              className="absolute right-2 md:right-4 top-[55%] -translate-y-1/2 z-50 w-11 h-11 md:w-14 md:h-14 rounded-full bg-black/60 backdrop-blur-md border border-white/10 flex items-center justify-center text-white hover:bg-[#F7931A] transition-all shadow-2xl"
+              className="absolute right-2 md:right-4 top-[55%] -translate-y-1/2 z-50 w-11 h-11 md:w-14 md:h-14 rounded-full bg-white/90 dark:bg-black/60 backdrop-blur-md border border-slate-200 dark:border-white/10 flex items-center justify-center text-slate-800 dark:text-white hover:bg-[#F7931A] hover:text-white transition-all shadow-md dark:shadow-2xl"
             >
               <ChevronRight className="w-6 h-6 md:w-8 md:h-8" />
             </button>
@@ -280,13 +280,10 @@ export default function MySubscriptions() {
                     className="absolute w-[280px] md:w-[340px]"
                     onClick={() => setCenterIndex(index)}
                   >
-
-
-                    <div className={`glass-card p-3 border-2 transition-all duration-500 overflow-hidden group ${isActive ? 'border-[#F7931A] shadow-[0_0_50px_rgba(247,147,26,0.3)]' : 'border-white/5'
+                    <div className={`bg-white dark:bg-[#0d0d12] p-3 border-2 transition-all duration-500 overflow-hidden group rounded-[2.5rem] shadow-md dark:shadow-2xl ${isActive ? 'border-[#F7931A] shadow-[0_0_50px_rgba(247,147,26,0.15)] dark:shadow-[0_0_50px_rgba(247,147,26,0.3)]' : 'border-slate-200 dark:border-white/5'
                       }`}>
-                      {/* Image Thumbnail (Like the reference) */}
+                      {/* Image Thumbnail */}
                       <div className="relative w-full h-[140px] md:h-[160px] rounded-2xl overflow-hidden mb-4">
-
                         <Image
                           src={sub.creators?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(sub.creators?.name || 'C')}&background=random`}
                           alt={sub.creators?.name || 'Creator'}
@@ -310,18 +307,17 @@ export default function MySubscriptions() {
                             </div>
                           )}
                         </div>
-
                       </div>
 
                       {/* Content Section */}
                       <div className="px-1 pb-2">
-                        <h3 className="text-xl font-black text-white uppercase tracking-tight mb-0.5 font-outfit line-clamp-1">{sub.creators?.name}</h3>
+                        <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-0.5 font-outfit line-clamp-1">{sub.creators?.name}</h3>
                         <p className="text-[11px] text-[#F7931A] font-bold mb-3">@{sub.creators?.username}</p>
 
                         <div className="flex justify-between items-end mb-4">
                           <div className="space-y-0.5">
                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Selected Plan</span>
-                            <span className="text-base font-black text-white uppercase tracking-tight">{sub.subscription_plans?.name}</span>
+                            <span className="text-base font-black text-slate-900 dark:text-white uppercase tracking-tight">{sub.subscription_plans?.name}</span>
                           </div>
                           <div className="text-right">
                             <span className="text-[9px] font-black text-slate-500 uppercase tracking-widest block">Rate</span>
@@ -331,12 +327,11 @@ export default function MySubscriptions() {
                           </div>
                         </div>
 
-
                         {/* View Description Link */}
                         {sub.subscription_plans?.description && (
                           <button
                             onClick={(e) => { e.stopPropagation(); setShowDescModal(sub.id); }}
-                            className="flex items-center gap-2 mb-4 text-[9px] font-black text-[#F7931A] hover:text-white uppercase tracking-widest transition-colors group/desc"
+                            className="flex items-center gap-2 mb-4 text-[9px] font-black text-[#F7931A] hover:text-orange-600 uppercase tracking-widest transition-colors group/desc"
                           >
                             <AlertCircle className="w-3 h-3" />
                             View Descriptions
@@ -344,15 +339,13 @@ export default function MySubscriptions() {
                           </button>
                         )}
 
-
-
                         {/* Perks */}
                         {sub.subscription_plans?.perks && sub.subscription_plans.perks.length > 0 && (
                           <div className="mb-4">
                             <p className="text-[9px] font-black text-slate-500 uppercase tracking-widest mb-2">Included Perks</p>
                             <div className="space-y-1.5">
                               {sub.subscription_plans.perks.slice(0, 3).map((perk, idx) => (
-                                <div key={idx} className="flex items-center gap-2 text-[11px] text-slate-300 font-medium">
+                                <div key={idx} className="flex items-center gap-2 text-[11px] text-slate-600 dark:text-slate-300 font-medium">
                                   <Zap className="w-2.5 h-2.5 text-[#F7931A] shrink-0" />
                                   {perk}
                                 </div>
@@ -361,24 +354,21 @@ export default function MySubscriptions() {
                           </div>
                         )}
 
-
                         {/* Validity Info */}
-                        <div className="flex items-center justify-between mb-4 pt-3 border-t border-white/5">
+                        <div className="flex items-center justify-between mb-4 pt-3 border-t border-slate-200 dark:border-white/5">
                           <div className="flex items-center gap-2 text-[9px] font-bold text-slate-500 uppercase tracking-widest">
                             <Clock className="w-2.5 h-2.5 text-[#F7931A]" />
                             <span>{isExpired ? 'Expired' : 'Valid until'}</span>
                           </div>
-                          <span className="text-[9px] font-black text-white">{new Date(sub.end_date).toLocaleDateString()}</span>
+                          <span className="text-[9px] font-black text-slate-800 dark:text-white">{new Date(sub.end_date).toLocaleDateString()}</span>
                         </div>
-
-
 
                         <div className="flex flex-col gap-3">
                           <div className="flex gap-2">
                             {!isExpired && sub.active ? (
                               <button
                                 disabled
-                                className="flex-1 py-3 bg-green-500/10 border border-green-500/20 rounded-xl text-[10px] font-black text-green-400 uppercase tracking-widest flex items-center justify-center gap-2"
+                                className="flex-1 py-3 bg-green-500/10 border border-green-500/20 rounded-xl text-[10px] font-black text-green-600 dark:text-green-400 uppercase tracking-widest flex items-center justify-center gap-2"
                               >
                                 <CheckCircle2 className="w-3.5 h-3.5" />
                                 Current Plan Live
@@ -388,7 +378,7 @@ export default function MySubscriptions() {
                                 onClick={(e) => { e.stopPropagation(); handleRenew(sub); }}
                                 disabled={isProcessing || sub.subscription_plans?.active === false}
                                 className={`flex-1 py-3 rounded-xl text-[10px] font-black text-white transition-all uppercase tracking-widest flex items-center justify-center gap-2 shadow-lg ${sub.subscription_plans?.active === false
-                                  ? 'bg-white/5 border border-white/10 text-slate-600 blur-[1px] cursor-not-allowed'
+                                  ? 'bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-slate-400 dark:text-slate-600 blur-[1px] cursor-not-allowed'
                                   : 'bg-[#F7931A] hover:bg-orange-600'
                                   }`}
                               >
@@ -402,13 +392,12 @@ export default function MySubscriptions() {
                             href={`${explorerUrl}/tx/${sub.tx_hash}`}
                             target="_blank"
                             onClick={(e) => e.stopPropagation()}
-                            className="flex items-center justify-center gap-2 text-[9px] text-slate-600 hover:text-[#F7931A] uppercase tracking-widest font-black transition-colors"
+                            className="flex items-center justify-center gap-2 text-[9px] text-slate-500 dark:text-slate-600 hover:text-[#F7931A] uppercase tracking-widest font-black transition-colors"
                           >
                             <ExternalLink className="w-2.5 h-2.5" />
                             View on Explorer
                           </a>
                         </div>
-
                       </div>
 
                       {/* Success Overlay */}
@@ -438,7 +427,7 @@ export default function MySubscriptions() {
               <button
                 key={i}
                 onClick={() => setCenterIndex(i)}
-                className={`h-1.5 rounded-full transition-all duration-300 ${centerIndex === i ? 'w-6 bg-[#F7931A]' : 'w-1.5 bg-white/20'
+                className={`h-1.5 rounded-full transition-all duration-300 ${centerIndex === i ? 'w-6 bg-[#F7931A]' : 'w-1.5 bg-slate-300 dark:bg-white/20'
                   }`}
               />
             ))}
@@ -458,12 +447,12 @@ export default function MySubscriptions() {
                   initial={{ scale: 0.9, opacity: 0, y: 20 }}
                   animate={{ scale: 1, opacity: 1, y: 0 }}
                   exit={{ scale: 0.9, opacity: 0, y: 20 }}
-                  className="glass-card w-full max-w-lg p-8 relative border-white/10"
+                  className="bg-white dark:bg-[#111827] w-full max-w-lg p-8 relative border border-slate-200 dark:border-white/10 rounded-[2.5rem] shadow-2xl"
                   onClick={(e) => e.stopPropagation()}
                 >
                   <button
                     onClick={() => setShowDescModal(null)}
-                    className="absolute top-6 right-6 text-slate-500 hover:text-white"
+                    className="absolute top-6 right-6 text-slate-400 hover:text-slate-600 dark:text-slate-500 dark:hover:text-white"
                   >
                     <XCircle className="w-6 h-6" />
                   </button>
@@ -474,7 +463,7 @@ export default function MySubscriptions() {
                     </div>
                     <div>
                       <h4 className="text-xs font-black text-[#F7931A] uppercase tracking-widest mb-1">Subscription Details</h4>
-                      <h3 className="text-xl font-black text-white uppercase tracking-tight">
+                      <h3 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">
                         {subscriptions.find(s => s.id === showDescModal)?.subscription_plans?.name}
                       </h3>
                     </div>
@@ -483,15 +472,15 @@ export default function MySubscriptions() {
                   <div className="space-y-6">
                     <div>
                       <p className="text-[10px] font-black text-slate-500 uppercase tracking-widest mb-3">Full Description</p>
-                      <p className="text-slate-300 leading-relaxed font-medium">
+                      <p className="text-slate-600 dark:text-slate-300 leading-relaxed font-medium">
                         {subscriptions.find(s => s.id === showDescModal)?.subscription_plans?.description}
                       </p>
                     </div>
 
-                    <div className="p-4 bg-white/5 rounded-2xl border border-white/5">
+                    <div className="p-4 bg-slate-50 dark:bg-white/5 rounded-2xl border border-slate-200 dark:border-white/5">
                       <div className="flex justify-between items-center">
                         <span className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Creator</span>
-                        <span className="text-sm font-bold text-white">
+                        <span className="text-sm font-bold text-slate-900 dark:text-white">
                           {subscriptions.find(s => s.id === showDescModal)?.creators?.name}
                         </span>
                       </div>
@@ -500,7 +489,7 @@ export default function MySubscriptions() {
 
                   <button
                     onClick={() => setShowDescModal(null)}
-                    className="w-full mt-8 py-4 bg-white/5 hover:bg-white/10 border border-white/10 rounded-xl text-xs font-black text-white uppercase tracking-widest transition-all"
+                    className="w-full mt-8 py-4 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/10 rounded-xl text-xs font-black text-slate-800 dark:text-white uppercase tracking-widest transition-all"
                   >
                     Close Preview
                   </button>
@@ -511,12 +500,12 @@ export default function MySubscriptions() {
         </div>
 
       ) : (
-        <div className="py-24 text-center glass-card border-dashed border-white/5 relative overflow-hidden">
+        <div className="py-24 text-center bg-white dark:bg-[#0f0f14] border-2 border-dashed border-slate-200 dark:border-white/5 rounded-[2.5rem] shadow-sm relative overflow-hidden">
           <div className="absolute inset-0 bg-gradient-to-b from-transparent via-[#F7931A]/5 to-transparent opacity-50" />
-          <AlertCircle className="w-12 h-12 text-slate-800 mx-auto mb-6 opacity-50" />
-          <h3 className="text-2xl font-black text-white uppercase tracking-tighter mb-2">No Active Support</h3>
+          <AlertCircle className="w-12 h-12 text-slate-400 dark:text-slate-800 mx-auto mb-6 opacity-50" />
+          <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">No Active Support</h3>
           <p className="text-slate-500 font-medium mb-10 max-w-sm mx-auto">You haven&apos;t joined any creator circles yet. Start supporting your favorite artists!</p>
-          <Link href="/discover" className="btn-primary px-10 py-4 mx-auto inline-flex items-center gap-2 text-lg">
+          <Link href="/explore" className="btn-primary px-10 py-4 mx-auto inline-flex items-center gap-2 text-lg">
             <Zap className="w-5 h-5" />
             Discover Creators
           </Link>

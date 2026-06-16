@@ -124,19 +124,19 @@ export default function PostsClient() {
       <div className="xl:col-span-8 space-y-6">
         <div className="flex items-center justify-between mb-2">
           <div>
-            <h2 className="text-2xl font-black">All Posts</h2>
-            <p className="text-slate-400 text-sm">{filteredPosts.length} posts</p>
+            <h2 className="text-2xl font-black text-slate-900 dark:text-white">All Posts</h2>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{filteredPosts.length} posts</p>
           </div>
           <div className="flex items-center gap-3 relative group">
-            <div className="flex items-center gap-2 bg-[#0a0a0c] border border-white/10 px-4 py-2 rounded-xl text-white text-sm font-bold shadow-lg">
-              <span className="text-slate-400 uppercase text-[10px] tracking-widest mr-1">Sort:</span>
+            <div className="flex items-center gap-2 bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/10 px-4 py-2 rounded-xl text-slate-900 dark:text-white text-sm font-bold shadow-sm">
+              <span className="text-slate-450 dark:text-slate-400 uppercase text-[10px] tracking-widest mr-1">Sort:</span>
               <select
                 value={postSortOrder}
                 onChange={(e) => setPostSortOrder(e.target.value as 'latest' | 'oldest')}
-                className="bg-transparent outline-none cursor-pointer appearance-none pr-6 relative z-10"
+                className="bg-transparent outline-none cursor-pointer appearance-none pr-6 relative z-10 text-slate-900 dark:text-white"
               >
-                <option value="latest" className="bg-[#0a0a0c]">Latest</option>
-                <option value="oldest" className="bg-[#0a0a0c]">Oldest</option>
+                <option value="latest" className="bg-white dark:bg-[#0a0a0c] text-slate-900 dark:text-white">Latest</option>
+                <option value="oldest" className="bg-white dark:bg-[#0a0a0c] text-slate-900 dark:text-white">Oldest</option>
               </select>
               <ChevronDown className="w-4 h-4 text-slate-500 absolute right-3 pointer-events-none" />
             </div>
@@ -161,8 +161,8 @@ export default function PostsClient() {
             const isLocked = !hasAccess;
 
             return (
-              <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="flex flex-col md:flex-row gap-6 p-4 rounded-3xl bg-[#0a0a0c] hover:bg-[#111113] transition-colors border border-white/5 hover:border-white/10 group">
-                <div className="w-full md:w-64 h-48 md:h-36 bg-[#111113] rounded-2xl relative shrink-0 overflow-hidden">
+              <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="flex flex-col md:flex-row gap-6 p-4 rounded-3xl bg-white dark:bg-[#0a0a0c] hover:bg-slate-50 dark:hover:bg-[#111113] transition-colors border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/10 group shadow-sm">
+                <div className="w-full md:w-64 h-48 md:h-36 bg-slate-100 dark:bg-[#111113] rounded-2xl relative shrink-0 overflow-hidden">
                   <div className={`absolute inset-0 ${isLocked ? 'blur-md scale-110' : ''}`}>
                   {(() => {
                     const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
@@ -204,7 +204,7 @@ export default function PostsClient() {
                   </div>
                   {isLocked && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px] z-10">
-                      <div className="bg-[#0a0a0c]/90 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-white shadow-2xl">
+                      <div className="bg-white/90 dark:bg-[#0a0a0c]/90 border border-slate-200 dark:border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-slate-900 dark:text-white shadow-md dark:shadow-2xl">
                         <Lock className="w-3.5 h-3.5 text-[#F7931A]" />
                         <span className="uppercase tracking-widest">Locked</span>
                       </div>
@@ -212,8 +212,8 @@ export default function PostsClient() {
                   )}
                 </div>
                 <div className="flex-1 py-2 flex flex-col justify-center relative">
-                  <h4 className="font-bold text-lg md:text-xl text-white mb-2 line-clamp-2 group-hover:text-[#8A2BE2] transition-colors">{post.title as string}</h4>
-                  <p className="text-sm text-slate-400 mb-4 line-clamp-2 flex-1">{(post.content as string).replace(/<[^>]*>/g, '')}</p>
+                  <h4 className="font-bold text-lg md:text-xl text-slate-900 dark:text-white mb-2 line-clamp-2 group-hover:text-[#8A2BE2] transition-colors">{post.title as string}</h4>
+                  <p className="text-sm text-slate-600 dark:text-slate-400 mb-4 line-clamp-2 flex-1">{(post.content as string).replace(/<[^>]*>/g, '')}</p>
                   <div className="flex items-center justify-between mt-auto">
                     <p className="text-xs text-slate-500 font-bold">{new Date(post.created_at as string).toLocaleDateString()}</p>
                     <div className={`px-3 py-1.5 rounded-full flex items-center gap-2 text-[10px] font-black uppercase tracking-widest ${post.visibility === 'public' ? 'text-emerald-500 bg-emerald-500/10 border border-emerald-500/20' :
@@ -232,11 +232,11 @@ export default function PostsClient() {
       </div>
 
       <div className="xl:col-span-4">
-        <div className={`bg-[#0a0a0c]/80 ${enableBlur ? 'backdrop-blur-xl' : ''} border border-white/10 rounded-[2.5rem] p-8 sticky top-24 shadow-2xl`}>
+        <div className={`bg-white/90 dark:bg-[#0a0a0c]/80 ${enableBlur ? 'backdrop-blur-xl' : ''} border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 sticky top-24 shadow-sm dark:shadow-2xl`}>
 
-          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-white/5">
+          <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100 dark:border-white/5">
             <Filter className="w-5 h-5 text-[#8A2BE2]" />
-            <h3 className="font-black uppercase tracking-tighter text-xl italic">Filter Posts</h3>
+            <h3 className="font-black uppercase tracking-tighter text-xl text-slate-900 dark:text-white italic">Filter Posts</h3>
           </div>
           
           <div className="mb-10">
@@ -259,10 +259,10 @@ export default function PostsClient() {
                       onChange={() => setPostAccessFilter(item.id as 'all' | 'public' | 'supporters' | 'exclusive')}
                       className="hidden" 
                     />
-                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${postAccessFilter === item.id ? 'border-[#8A2BE2] bg-[#8A2BE2]/10' : 'border-white/10 group-hover:border-white/30'}`}>
+                    <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${postAccessFilter === item.id ? 'border-[#8A2BE2] bg-[#8A2BE2]/10' : 'border-slate-200 dark:border-white/10 group-hover:border-slate-350 dark:group-hover:border-white/30'}`}>
                       {postAccessFilter === item.id && <div className="w-2.5 h-2.5 rounded-full bg-[#8A2BE2]" />}
                     </div>
-                    <span className={`text-sm font-bold transition-colors ${postAccessFilter === item.id ? 'text-white' : 'text-slate-500 group-hover:text-slate-300'}`}>
+                    <span className={`text-sm font-bold transition-colors ${postAccessFilter === item.id ? 'text-slate-900 dark:text-white' : 'text-slate-500 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
                       {item.label}
                     </span>
                   </div>

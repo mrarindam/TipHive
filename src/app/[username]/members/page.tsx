@@ -154,18 +154,18 @@ export default function CreatorMembers() {
 
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
         <div>
-          <h2 className="text-3xl font-black uppercase tracking-tighter font-outfit">Audience Insight</h2>
+          <h2 className="text-3xl font-black uppercase tracking-tighter font-outfit text-slate-900 dark:text-white">Audience Insight</h2>
           <p className="text-slate-500 text-sm font-medium mt-1">Detailed view of your growing community</p>
         </div>
-        <div className={`flex flex-wrap items-center gap-3 ${enableBlur ? 'bg-[#0a0a0c]/60 backdrop-blur-xl' : 'bg-[#0a0a0c]'} p-2 rounded-[1.5rem] border border-white/5 shadow-2xl`}>
+        <div className={`flex flex-wrap items-center gap-3 ${enableBlur ? 'bg-white/60 dark:bg-[#0a0a0c]/60 backdrop-blur-xl' : 'bg-white dark:bg-[#0a0a0c]'} p-2 rounded-[1.5rem] border border-slate-200 dark:border-white/5 shadow-sm dark:shadow-2xl`}>
 
-          <button onClick={() => { setMemberFilter('supporters'); setCurrentPage(1); }} className={`px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${memberFilter === 'supporters' ? 'bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+          <button onClick={() => { setMemberFilter('supporters'); setCurrentPage(1); }} className={`px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${memberFilter === 'supporters' ? 'bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}>
             <Crown className="w-3.5 h-3.5" /> Supporters <span className="opacity-50 text-[10px] bg-black/30 px-2 py-0.5 rounded-full">{supporters.length}</span>
           </button>
-          <button onClick={() => { setMemberFilter('followers'); setCurrentPage(1); }} className={`px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${memberFilter === 'followers' ? 'bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+          <button onClick={() => { setMemberFilter('followers'); setCurrentPage(1); }} className={`px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${memberFilter === 'followers' ? 'bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}>
             <Users className="w-3.5 h-3.5" /> Followers <span className="opacity-50 text-[10px] bg-black/30 px-2 py-0.5 rounded-full">{members.length}</span>
           </button>
-          <button onClick={() => { setMemberFilter('following'); setCurrentPage(1); }} className={`px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${memberFilter === 'following' ? 'bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]' : 'text-slate-400 hover:text-white hover:bg-white/5'}`}>
+          <button onClick={() => { setMemberFilter('following'); setCurrentPage(1); }} className={`px-6 py-2.5 rounded-xl font-bold text-xs transition-all flex items-center gap-2 ${memberFilter === 'following' ? 'bg-[#8A2BE2] text-white shadow-[0_0_20px_rgba(138,43,226,0.4)]' : 'text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/5'}`}>
             Following <span className="opacity-50 text-[10px] bg-black/30 px-2 py-0.5 rounded-full">{followingList.length}</span>
           </button>
         </div>
@@ -184,7 +184,7 @@ export default function CreatorMembers() {
                   animate={{ opacity: 1, y: 0 }} 
                   transition={simplifyAnimations ? { duration: 0.2 } : { delay: i * 0.05 }}
                   key={i} 
-                  className="bg-[#0a0a0c] border border-white/5 rounded-[2.5rem] p-6 flex flex-col items-center group hover:border-[#8A2BE2]/40 hover:bg-[#111113] transition-all duration-500 shadow-xl hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
+                  className="bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/5 rounded-[2.5rem] p-6 flex flex-col items-center group hover:border-[#8A2BE2]/40 hover:bg-slate-50 dark:hover:bg-[#111113] transition-all duration-500 shadow-sm dark:shadow-xl hover:shadow-md dark:hover:shadow-[0_20px_50px_rgba(0,0,0,0.5)]"
                 >
                   <div className="mb-6">
                     {memberFilter === 'following' ? (
@@ -194,7 +194,7 @@ export default function CreatorMembers() {
                         <Crown className="w-3 h-3" /> Supporter
                       </span>
                     ) : (
-                      <span className="px-4 py-1.5 bg-white/5 text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-white/10 flex items-center gap-1.5">
+                      <span className="px-4 py-1.5 bg-slate-50 dark:bg-white/5 text-slate-550 dark:text-slate-400 rounded-full text-[10px] font-black uppercase tracking-widest border border-slate-200 dark:border-white/10 flex items-center gap-1.5">
                         <Users className="w-3 h-3" /> Follower
                       </span>
                     )}
@@ -202,7 +202,7 @@ export default function CreatorMembers() {
 
                   <div className="relative mb-6">
                     <div className="absolute -inset-1 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full blur-[2px] opacity-0 group-hover:opacity-40 transition-opacity"></div>
-                    <div className="w-24 h-24 rounded-full border-4 border-[#0a0a0c] overflow-hidden relative shadow-2xl bg-black">
+                    <div className="w-24 h-24 rounded-full border-4 border-white dark:border-[#0a0a0c] overflow-hidden relative shadow-2xl bg-slate-100 dark:bg-black">
                       <Image
                         src={member.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(member.display_name || 'User')}`}
                         alt="Member" fill className="rounded-full object-cover group-hover:scale-110 transition-transform duration-500" unoptimized
@@ -211,7 +211,7 @@ export default function CreatorMembers() {
                   </div>
 
                   <div className="text-center w-full px-2 mb-6">
-                    <h4 className="font-black text-base text-white mb-1 truncate group-hover:text-[#8A2BE2] transition-colors">{member.display_name || `${member.follower_address.slice(0, 6)}...${member.follower_address.slice(-4)}`}</h4>
+                    <h4 className="font-black text-base text-slate-900 dark:text-white mb-1 truncate group-hover:text-[#8A2BE2] transition-colors">{member.display_name || `${member.follower_address.slice(0, 6)}...${member.follower_address.slice(-4)}`}</h4>
                     <p className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Joined {new Date(member.created_at).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
                     {isSupporter && tippedAmount && <p className="text-xs text-[#F7931A] font-black mt-2 tracking-wide">${tippedAmount} tipped</p>}
                   </div>
@@ -219,7 +219,7 @@ export default function CreatorMembers() {
                   <div className="w-full mt-auto">
                     <Link 
                       href={`/dashboard/inbox?chat=${member.wallet_address}`}
-                      className="w-full py-3.5 bg-white/5 border border-white/5 rounded-2xl text-slate-300 hover:text-white hover:bg-white/10 hover:border-[#8A2BE2]/30 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all group/msg"
+                      className="w-full py-3.5 bg-slate-550/5 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-650 dark:text-slate-300 hover:text-slate-950 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-white/10 hover:border-[#8A2BE2]/30 font-black text-[10px] uppercase tracking-widest flex items-center justify-center gap-2 transition-all group/msg shadow-sm"
                     >
                       <MessageSquare className="w-3.5 h-3.5 group-hover/msg:scale-110 transition-transform" /> Message
                     </Link>
@@ -236,8 +236,8 @@ export default function CreatorMembers() {
             />
           </>
         ) : (
-          <div className="col-span-full py-32 text-center bg-[#0a0a0c] border border-dashed border-white/10 rounded-[3rem]">
-            <Users className="w-16 h-16 text-slate-700 mx-auto mb-4 opacity-20" />
+          <div className="col-span-full py-32 text-center bg-white dark:bg-[#0a0a0c] border border-dashed border-slate-200 dark:border-white/10 rounded-[3rem] shadow-sm">
+            <Users className="w-16 h-16 text-slate-400 dark:text-slate-700 mx-auto mb-4 opacity-20" />
             <p className="text-slate-500 font-black uppercase tracking-widest text-sm">No members found in this category</p>
           </div>
         )}

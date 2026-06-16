@@ -26,7 +26,7 @@ export default function SentSupportPage() {
           <div className="h-1.5 w-12 bg-[#F7931A] rounded-full" />
           <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#F7931A]">Supporter Suite</span>
         </div>
-        <h1 className="text-6xl md:text-7xl font-black text-white uppercase tracking-tighter leading-none mb-4 font-outfit">
+        <h1 className="text-6xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-none mb-4 font-outfit">
           SENT <span className="text-[#F7931A]">SUPPORT</span>
         </h1>
         <p className="text-slate-500 text-lg md:text-xl font-medium max-w-2xl">
@@ -34,18 +34,18 @@ export default function SentSupportPage() {
         </p>
       </div>
 
-      <div className="bg-[#0f0f14] border border-white/5 rounded-3xl p-6 md:p-8 space-y-4">
+      <div className="bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 rounded-3xl p-6 md:p-8 space-y-4 shadow-sm dark:shadow-2xl">
         {paginatedSupport.length > 0 ? (
           <>
             <div className="space-y-4">
               {paginatedSupport.map((activity: Activity) => (
-                <div key={activity.id} className="flex items-center justify-between p-4 rounded-2xl bg-white/[0.02] hover:bg-white/[0.04] border border-white/5 transition-all">
+                <div key={activity.id} className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 dark:bg-white/[0.02] hover:bg-slate-100 dark:hover:bg-white/[0.04] border border-slate-200 dark:border-white/5 transition-all">
                   <div className="flex items-center gap-4">
-                    <div className="w-12 h-12 rounded-xl bg-white/5 text-slate-400 flex items-center justify-center">
+                    <div className="w-12 h-12 rounded-xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 flex items-center justify-center">
                       <Heart size={20} />
                     </div>
                     <div>
-                      <h4 className="text-white font-bold">Support Sent</h4>
+                      <h4 className="text-slate-900 dark:text-white font-bold">Support Sent</h4>
                       <p className="text-slate-500 text-xs">To {activity.to_name || 'Creator'} • {new Date(activity.created_at).toLocaleDateString()}</p>
                       {activity.tx_hash && (
                         <a 
@@ -60,7 +60,7 @@ export default function SentSupportPage() {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-xl font-black text-slate-300 flex items-center gap-1">
+                    <p className="text-xl font-black text-slate-600 dark:text-slate-300 flex items-center gap-1">
                       -{activity.amount} <MUSDLogo className="w-4 h-4 opacity-50" />
                     </p>
                   </div>
@@ -76,7 +76,7 @@ export default function SentSupportPage() {
           </>
         ) : (
           <div className="py-20 text-center flex flex-col items-center">
-            <History className="w-12 h-12 text-slate-700 mb-4" />
+            <History className="w-12 h-12 text-slate-400 dark:text-slate-700 mb-4" />
             <p className="text-slate-500">You haven&apos;t sent any tips yet.</p>
           </div>
         )}

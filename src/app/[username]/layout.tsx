@@ -234,7 +234,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0B0F19]">
+      <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19]">
         <ProfileHeaderSkeleton />
         <div className="max-w-7xl mx-auto px-6 py-12">
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
@@ -248,7 +248,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   }
 
   if (!creator) {
-    return <div className="min-h-screen bg-[#0B0F19] flex items-center justify-center pt-24 text-white">Profile not found.</div>;
+    return <div className="min-h-screen bg-slate-50 dark:bg-[#0B0F19] flex items-center justify-center pt-24 text-slate-900 dark:text-white">Profile not found.</div>;
   }
 
   const isOwner = Boolean((userAddress && creator.wallet_address && userAddress.toLowerCase() === creator.wallet_address.toLowerCase()) || 
@@ -279,7 +279,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
   if (isPostPage) {
     return (
       <ProfileContext.Provider value={{ creator, loading, followersCount, postsCount, isFollowing, isOwner, totalEarned, handleFollow, fetchData }}>
-        <div className="min-h-screen bg-[#000] text-white selection:bg-[#F7931A]/30 pb-20 pt-20 md:pt-24">
+        <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white selection:bg-[#F7931A]/30 pb-20 pt-20 md:pt-24 transition-colors duration-300">
           <div className="w-full max-w-7xl mx-auto px-4 md:px-6 lg:px-8">
             <div className="min-h-[50vh]">
               {children}
@@ -292,20 +292,20 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   return (
     <ProfileContext.Provider value={{ creator, loading, followersCount, postsCount, isFollowing, isOwner, totalEarned, handleFollow, fetchData }}>
-      <div className="min-h-screen bg-[#000] text-white selection:bg-[#F7931A]/30 pb-20 pt-28">
+      <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white selection:bg-[#F7931A]/30 pb-20 pt-28 transition-colors duration-300">
         <div className="w-full space-y-8 px-4 md:px-6 lg:px-8 flex flex-col">
 
           {/* Main Creator Card */}
           <motion.div
             layout={enableLayoutTransition}
-            className={`bg-[#0a0a0c] border border-white/5 md:rounded-3xl transition-all duration-500 ${!isHome ? `sticky top-4 z-50 ${enableBlur ? 'backdrop-blur-xl bg-[#0a0a0c]/80' : 'bg-[#111113]'} border-b border-[#8A2BE2]/20 shadow-[0_10px_30px_rgba(0,0,0,0.5)]` : 'relative'}`}
+            className={`bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/5 md:rounded-3xl transition-all duration-500 ${!isHome ? `sticky top-4 z-50 ${enableBlur ? 'backdrop-blur-xl bg-white/80 dark:bg-[#0a0a0c]/80' : 'bg-white dark:bg-[#111113]'} border-b border-slate-200 dark:border-[#8A2BE2]/20 shadow-sm dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)]` : 'relative shadow-sm dark:shadow-none'}`}
           >
 
             <div className="relative">
               <motion.div
                 animate={{ height: isHome ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 225 : 500) : 0, opacity: isHome ? 1 : 0 }}
                 transition={simplifyAnimations ? { duration: 0.2 } : { duration: 0.4, ease: "easeInOut" }}
-                className="w-full relative bg-[#111113] overflow-hidden aspect-[16/9] md:aspect-[3/1] md:rounded-t-3xl"
+                className="w-full relative bg-slate-100 dark:bg-[#111113] overflow-hidden aspect-[16/9] md:aspect-[3/1] md:rounded-t-3xl"
               >
 
                 {creator.banner_url ? (
@@ -313,7 +313,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                 ) : (
                   <Image src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000" alt="Banner" fill className="object-cover opacity-80" unoptimized />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[#0a0a0c] via-transparent to-transparent opacity-80"></div>
+                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0a0c] via-transparent to-transparent opacity-85"></div>
               </motion.div>
 
               {isHome && (
@@ -325,7 +325,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
                   <div className="relative w-24 h-24 md:w-32 md:h-32 group">
                     <div className="absolute -inset-1 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full blur opacity-40 group-hover:opacity-75 transition duration-1000 group-hover:duration-200"></div>
-                    <div className="relative w-full h-full rounded-full border-4 border-[#0a0a0c] overflow-hidden shadow-2xl bg-black">
+                    <div className="relative w-full h-full rounded-full border-4 border-white dark:border-[#0a0a0c] overflow-hidden shadow-2xl bg-slate-100 dark:bg-black">
                       <Image
                         src={(creator.avatar_url as string) || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.display_name as string)}`}
                         alt={creator.display_name as string}
@@ -365,10 +365,10 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                       </motion.div>
                     )}
                     <motion.div layout={enableLayoutTransition} className="space-y-1">
-                      <motion.h1 layout={enableLayoutTransition} className={`${isHome ? 'text-4xl md:text-5xl' : 'text-xl'} font-black flex items-center gap-3`}>
+                      <motion.h1 layout={enableLayoutTransition} className={`${isHome ? 'text-4xl md:text-5xl' : 'text-xl'} font-black flex items-center gap-3 text-slate-900 dark:text-white`}>
 
                         {creator.display_name as string}
-                        <CheckCircle2 className={`${isHome ? 'w-8 h-8' : 'w-4 h-4'} text-[#D8B4FE]`} />
+                        <CheckCircle2 className={`${isHome ? 'w-8 h-8' : 'w-4 h-4'} text-[#8A2BE2] dark:text-[#D8B4FE]`} />
                       </motion.h1>
                       {isHome && (
                         <p className="text-[#8A2BE2] font-black text-base tracking-wide">@{creator.username}</p>
@@ -378,18 +378,18 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
                   {isHome && (
                     <div className="mt-4 space-y-6">
-                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-slate-300 text-lg md:text-xl font-medium leading-relaxed italic border-l-4 border-[#8A2BE2] pl-4">
+                      <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="text-slate-700 dark:text-slate-300 text-lg md:text-xl font-medium leading-relaxed italic border-l-4 border-[#8A2BE2] pl-4">
                         {creator.creator_description as string || 'Content Creator'}
                       </motion.p>
 
-                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap items-center gap-6 text-slate-400">
+                      <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap items-center gap-6 text-slate-500 dark:text-slate-400">
                         {creator.location && (
-                          <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                          <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/5">
                             <MapPin className="w-4 h-4 text-[#F7931A]" />
                             <span className="text-sm font-bold uppercase tracking-widest">{creator.location}</span>
                           </div>
                         )}
-                        <div className="flex items-center gap-2 bg-white/5 px-3 py-1.5 rounded-xl border border-white/5">
+                        <div className="flex items-center gap-2 bg-slate-100 dark:bg-white/5 px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/5">
                           <Calendar className="w-4 h-4 text-[#8A2BE2]" />
                           <span className="text-sm font-bold uppercase tracking-widest">Joined {new Date(creator.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })}</span>
                         </div>
@@ -398,13 +398,13 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                       <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="flex flex-wrap items-center gap-3 pt-2">
                         {creator.social_links && (Array.isArray(creator.social_links) ?
                           creator.social_links.map((url, i) => (
-                            <a key={i} href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-[#111113] hover:bg-[#8A2BE2]/20 border border-white/5 rounded-2xl transition-all text-slate-400 hover:text-white hover:scale-110 shadow-lg">
+                            <a key={i} href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-[#111113] dark:hover:bg-[#8A2BE2]/20 border border-slate-200 dark:border-white/5 rounded-2xl transition-all text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:scale-110 shadow-sm">
                               {getSocialIcon(url)}
                             </a>
                           )) :
                           Object.entries(creator.social_links).map(([, url], i) => (
                             url && (
-                              <a key={i} href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-[#111113] hover:bg-[#8A2BE2]/20 border border-white/5 rounded-2xl transition-all text-slate-400 hover:text-white hover:scale-110 shadow-lg">
+                              <a key={i} href={url.startsWith('http') ? url : `https://${url}`} target="_blank" rel="noopener noreferrer" className="p-3 bg-slate-100 hover:bg-slate-200 dark:bg-[#111113] dark:hover:bg-[#8A2BE2]/20 border border-slate-200 dark:border-white/5 rounded-2xl transition-all text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white hover:scale-110 shadow-sm">
                                 {getSocialIcon(url)}
                               </a>
                             )
@@ -416,18 +416,18 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                 </motion.div>
 
                 <motion.div layout={enableLayoutTransition} className="flex flex-col md:flex-row items-center gap-8">
-                  <motion.div layout={enableLayoutTransition} className={`flex items-center gap-8 ${enableBlur ? 'bg-white/5 backdrop-blur-md' : 'bg-white/10'} border border-white/5 px-6 py-3 rounded-2xl ${isHome ? '' : 'hidden md:flex'}`}>
+                  <motion.div layout={enableLayoutTransition} className={`flex items-center gap-8 ${enableBlur ? 'bg-slate-100 dark:bg-white/5 backdrop-blur-md' : 'bg-slate-200 dark:bg-white/10'} border border-slate-200 dark:border-white/5 px-6 py-3 rounded-2xl ${isHome ? '' : 'hidden md:flex'}`}>
 
                     <div className="text-center">
-                      <p className="text-xl font-black text-white leading-tight">{followersCount}</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white leading-tight">{followersCount}</p>
                       <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Followers</p>
                     </div>
-                    <div className="w-px h-8 bg-white/10" />
+                    <div className="w-px h-8 bg-slate-300 dark:bg-white/10" />
                     <div className="text-center">
-                      <p className="text-xl font-black text-white leading-tight">{postsCount}</p>
+                      <p className="text-xl font-black text-slate-900 dark:text-white leading-tight">{postsCount}</p>
                       <p className="text-[10px] uppercase tracking-[0.2em] text-slate-500 font-bold">Posts</p>
                     </div>
-                    <div className="w-px h-8 bg-white/10" />
+                    <div className="w-px h-8 bg-slate-300 dark:bg-white/10" />
                     <div className="text-center">
                       <div className="flex items-center justify-center gap-1.5">
                         <MUSDLogo className="w-4 h-4" />
@@ -444,24 +444,24 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                         Dashboard
                       </Link>
                     ) : (
-                      <button onClick={handleFollow} className={`flex items-center justify-center gap-2 border font-bold rounded-2xl transition-all shadow-lg ${isFollowing ? 'border-white/20 text-white bg-white/5 hover:bg-white/10' : 'border-[#8A2BE2] bg-[#8A2BE2] text-white shadow-[0_0_15px_rgba(138,43,226,0.3)] hover:bg-[#7828c8]'} ${isHome ? 'py-3 px-8' : 'py-2 px-6 text-sm'}`}>
+                      <button onClick={handleFollow} className={`flex items-center justify-center gap-2 border font-bold rounded-2xl transition-all shadow-lg ${isFollowing ? 'border-slate-200 dark:border-white/20 text-slate-700 dark:text-white bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10' : 'border-[#8A2BE2] bg-[#8A2BE2] text-white shadow-[0_0_15px_rgba(138,43,226,0.3)] hover:bg-[#7828c8]'} ${isHome ? 'py-3 px-8' : 'py-2 px-6 text-sm'}`}>
                         {isFollowing ? 'Following' : 'Follow'}
                       </button>
                     )}
-                    <button onClick={() => setIsShareModalOpen(true)} className="p-3 bg-white/5 hover:bg-white/10 border border-white/5 rounded-2xl text-slate-400 hover:text-white transition-all">
+                    <button onClick={() => setIsShareModalOpen(true)} className="p-3 bg-slate-100 dark:bg-white/5 hover:bg-slate-200 dark:hover:bg-white/10 border border-slate-200 dark:border-white/5 rounded-2xl text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-all shadow-sm">
                       <Share2 className="w-5 h-5" />
                     </button>
                   </motion.div>
                 </motion.div>
               </div>
 
-              <div className={`flex items-center gap-8 mt-6 border-t border-white/5 pt-4 overflow-x-auto no-scrollbar`}>
-                <Link href={`/${username}`} className={`pb-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'home' ? 'border-[#8A2BE2] text-white shadow-[0_4px_10px_rgba(138,43,226,0.3)]' : 'border-transparent text-slate-400 hover:text-white'}`}>Home</Link>
+              <div className={`flex items-center gap-8 mt-6 border-t border-slate-200 dark:border-white/5 pt-4 overflow-x-auto no-scrollbar`}>
+                <Link href={`/${username}`} className={`pb-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'home' ? 'border-[#8A2BE2] text-slate-900 dark:text-white shadow-[0_4px_10px_rgba(138,43,226,0.15)] dark:shadow-[0_4px_10px_rgba(138,43,226,0.3)]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>Home</Link>
                 {isOwner && (
-                  <Link href={`/${username}/members`} className={`pb-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'members' ? 'border-[#8A2BE2] text-white shadow-[0_4px_10px_rgba(138,43,226,0.3)]' : 'border-transparent text-slate-400 hover:text-white'}`}>Members</Link>
+                  <Link href={`/${username}/members`} className={`pb-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'members' ? 'border-[#8A2BE2] text-slate-900 dark:text-white shadow-[0_4px_10px_rgba(138,43,226,0.15)] dark:shadow-[0_4px_10px_rgba(138,43,226,0.3)]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-white'}`}>Members</Link>
                 )}
-                <Link href={`/${username}/subscriptions`} className={`pb-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'subscriptions' ? 'border-[#8A2BE2] text-white shadow-[0_4px_10px_rgba(138,43,226,0.3)]' : 'border-transparent text-slate-400 hover:text-white'}`}>Subscriptions</Link>
-                <Link href={`/${username}/posts`} className={`pb-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'posts' ? 'border-[#8A2BE2] text-white shadow-[0_4px_10px_rgba(138,43,226,0.3)]' : 'border-transparent text-slate-400 hover:text-white'}`}>Posts</Link>
+                <Link href={`/${username}/subscriptions`} className={`pb-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'subscriptions' ? 'border-[#8A2BE2] text-slate-900 dark:text-white shadow-[0_4px_10px_rgba(138,43,226,0.15)] dark:shadow-[0_4px_10px_rgba(138,43,226,0.3)]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>Subscriptions</Link>
+                <Link href={`/${username}/posts`} className={`pb-2 border-b-2 font-bold text-sm transition-all whitespace-nowrap ${activeTab === 'posts' ? 'border-[#8A2BE2] text-slate-900 dark:text-white shadow-[0_4px_10px_rgba(138,43,226,0.15)] dark:shadow-[0_4px_10px_rgba(138,43,226,0.3)]' : 'border-transparent text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white'}`}>Posts</Link>
               </div>
             </motion.div>
           </motion.div>

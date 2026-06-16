@@ -20,7 +20,7 @@ export default function EarningAnalysisPage() {
            <div className="w-12 h-1 bg-[#f7931a] rounded-full" />
            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#f7931a]">Creator Suite</span>
         </div>
-        <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.85] flex flex-wrap gap-x-4">
+        <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.85] flex flex-wrap gap-x-4">
           <span>Earning</span>
           <span className="text-[#f7931a]">Analysis</span>
         </h1>

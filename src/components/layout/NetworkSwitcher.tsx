@@ -58,7 +58,7 @@ export default function NetworkSwitcher() {
       <button
         type="button"
         onClick={() => setIsOpen((value) => !value)}
-        className="p-2.5 bg-white/5 border border-white/5 rounded-xl text-white hover:bg-white/10 transition-all flex items-center justify-center shadow-lg shadow-black/20"
+        className="p-2.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl text-slate-800 dark:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all flex items-center justify-center shadow-sm"
         aria-label="Switch network"
       >
         <Globe className="w-5 h-5" />
@@ -71,9 +71,9 @@ export default function NetworkSwitcher() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
             transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 w-72 rounded-2xl border border-white/10 bg-[#0b0b10] shadow-2xl backdrop-blur-3xl z-50 overflow-hidden"
+            className="absolute right-0 mt-2 w-72 rounded-2xl border border-slate-200 dark:border-white/10 bg-white dark:bg-[#0b0b10] shadow-2xl backdrop-blur-3xl z-50 overflow-hidden text-slate-900 dark:text-white"
           >
-            <div className="px-4 py-3 border-b border-white/5">
+            <div className="px-4 py-3 border-b border-slate-200 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
               <p className="text-[10px] font-black uppercase tracking-widest text-slate-500">Network</p>
             </div>
             <div className="p-2 space-y-1">
@@ -90,13 +90,13 @@ export default function NetworkSwitcher() {
                     className={`w-full flex items-center gap-3 p-3 rounded-xl border transition-all text-left ${
                       active
                         ? 'bg-[#F7931A]/10 border-[#F7931A]/40'
-                        : 'bg-white/[0.02] border-white/5 hover:border-white/20'
+                        : 'bg-slate-50 dark:bg-white/[0.02] border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20'
                     }`}
                   >
                     <img src="/mezo.png" alt="" className="h-6 w-6" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-black text-white text-sm uppercase tracking-tight truncate">
+                        <span className="font-black text-slate-900 dark:text-white text-sm uppercase tracking-tight truncate">
                           {network.name}
                         </span>
                         {active && <div className="w-1.5 h-1.5 rounded-full bg-[#F7931A] animate-pulse" />}

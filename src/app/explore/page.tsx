@@ -357,12 +357,12 @@ export default function Explore() {
   }, [page, fetchCreators]);
 
   return (
-    <div className="w-full py-12 pt-32">
+    <div className="w-full py-12 pt-32 text-slate-900 dark:text-white">
       {/* Full Width Header */}
       <div className="px-4 md:px-12 mb-16">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-8">
           <div className="max-w-full">
-            <h1 className="text-4xl md:text-8xl font-black text-white mb-4 font-outfit uppercase tracking-tighter leading-[0.9] flex flex-wrap items-center gap-x-2 md:gap-x-4 overflow-visible">
+            <h1 className="text-4xl md:text-8xl font-black text-slate-900 dark:text-white mb-4 font-outfit uppercase tracking-tighter leading-[0.9] flex flex-wrap items-center gap-x-2 md:gap-x-4 overflow-visible">
               <span>Discover</span>
               <span className="text-transparent bg-clip-text bg-gradient-to-r from-[#F7931A] to-[#8A2BE2]">Creators</span>
             </h1>
@@ -371,8 +371,8 @@ export default function Explore() {
           
           <div className="relative w-full md:w-[400px] group">
             <div className="absolute -inset-1 bg-gradient-to-r from-[#F7931A] to-[#8A2BE2] rounded-3xl blur opacity-20 group-focus-within:opacity-40 transition duration-500"></div>
-            <div className="relative bg-[#0B0F19] border border-white/10 rounded-3xl p-1.5 flex items-center shadow-2xl">
-              <div className="pl-5 text-slate-500">
+            <div className="relative bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/10 rounded-3xl p-1.5 flex items-center shadow-sm dark:shadow-2xl">
+              <div className="pl-5 text-slate-400 dark:text-slate-500">
                 <Search className="w-5 h-5" />
               </div>
               <input 
@@ -380,7 +380,7 @@ export default function Explore() {
                 placeholder="Find a creator..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full bg-transparent border-none py-3.5 px-4 text-white focus:outline-none placeholder:text-slate-600 font-bold text-lg"
+                className="w-full bg-transparent border-none py-3.5 px-4 text-slate-900 dark:text-white focus:outline-none placeholder:text-slate-450 dark:placeholder:text-slate-650 font-bold text-lg"
               />
             </div>
           </div>
@@ -395,7 +395,7 @@ export default function Explore() {
           {/* Live Posting Header */}
           <div className="flex items-center gap-3 mb-12">
             <div className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_10px_#10b981]" />
-            <h2 className="text-xl font-black uppercase tracking-tighter text-white font-outfit">Live posting</h2>
+            <h2 className="text-xl font-black uppercase tracking-tighter text-slate-900 dark:text-white font-outfit">Live posting</h2>
           </div>
         </div>
       )}

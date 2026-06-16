@@ -4,15 +4,26 @@ import { useState, useEffect, useCallback, ReactNode, createContext, useContext 
 import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from 'wagmi';
 import { useWalletAuth, type User } from '@/lib/wallet-auth-shim';
 import {
-  Globe, Users, Calendar, Edit3,
-  Inbox, Menu, X, LayoutDashboard, Wallet, History, TrendingUp, Settings, Heart, Gift, Bitcoin
+  Wallet,
+  User as UserIcon,
+  DollarSign,
+  TrendingUp,
+  History,
+  Bitcoin,
+  Sparkles,
+  Share2,
+  Heart,
+  Calendar,
+  Edit3,
+  ArrowRight,
+  Palette,
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
-import Link from 'next/link';
-import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { TIPPING_ABI, SUBSCRIPTION_ABI } from '@/lib/contracts';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
+import { motion } from 'framer-motion';
+import MUSDLogo from '@/components/ui/MUSDLogo';
+import Link from 'next/link';
 
 export interface CreatorProfile {
   address: string;
@@ -81,7 +92,7 @@ export default function DashboardLayoutWrapper({ children }: { children: ReactNo
 
 function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const { address } = useAccount();
-  const { ready, authenticated, user, linkWallet, logout, getAccessToken } = useWalletAuth();
+  const { ready, authenticated, user, linkWallet, logout, getAccessToken, login } = useWalletAuth();
   const { contracts, chainId } = useNetworkConfig();
   const pathname = usePathname();
   const router = useRouter();
@@ -90,26 +101,15 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   const [activities, setActivities] = useState<Activity[]>([]);
   const [totalSent, setTotalSent] = useState(0);
   const [totalEarned, setTotalEarned] = useState(0);
-  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
   const [walletSwitched, setWalletSwitched] = useState(false);
   const [switchedToAddress, setSwitchedToAddress] = useState<string | undefined>(undefined);
 
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768);
-    checkMobile();
-    window.addEventListener('resize', checkMobile);
-    return () => window.removeEventListener('resize', checkMobile);
-  }, []);
-
-  // Detect wallet mismatch: active wallet in wallet manager vs wallet linked to TipHive account
-  // Only show banner if user has a wallet linked to their account AND it's different from the active one
+  // Detect wallet mismatch: active wallet vs linked wallet
   useEffect(() => {
     const linkedWallet = creatorProfile?.address?.toLowerCase();
     const activeWallet = address?.toLowerCase();
 
     if (!linkedWallet || !activeWallet) {
-      // No linked wallet or no active wallet → no mismatch possible
       setWalletSwitched(false);
       setSwitchedToAddress(undefined);
       return;
@@ -119,7 +119,6 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
       setWalletSwitched(true);
       setSwitchedToAddress(address);
     } else {
-      // User switched back to their TipHive-linked wallet → dismiss banner
       setWalletSwitched(false);
       setSwitchedToAddress(undefined);
     }
@@ -248,185 +247,151 @@ function DashboardLayoutInner({ children }: { children: ReactNode }) {
   };
 
   if (!ready) {
-    return <div className="min-h-screen bg-black" />;
+    return <div className="min-h-screen bg-slate-50 dark:bg-black" />;
   }
-
-  if (!authenticated) {
-    return (
-      <div className="w-full min-h-screen bg-[#000] flex flex-col items-center justify-center px-4 text-center">
-        <div className="mb-8 h-24 w-24 flex items-center justify-center rounded-[2rem] border border-white/5 bg-[#0f0f14] shadow-2xl">
-          <Wallet className="h-10 w-10 text-[#f7931a]" />
-        </div>
-        <h2 className="text-5xl font-black text-white mb-4 uppercase tracking-tighter">Gateway Locked</h2>
-        <p className="text-slate-500 mb-12 max-w-md mx-auto">Please login to access your creator dashboard.</p>
-      </div>
-    );
-  }
-
-  const SidebarContent = () => (
-    <div className="flex flex-col min-h-full pb-24 md:pb-8">
-      <div className="flex items-center justify-between mb-12">
-        <div className="flex items-center gap-4">
-          <div className="w-14 h-14 rounded-2xl flex items-center justify-center shadow-[0_0_30px_rgba(255,193,7,0.1)] transform hover:rotate-6 transition-transform overflow-hidden border border-white/5 bg-[#0f0f14]">
-            <Image
-              src="/logo.png"
-              alt="TipHive Logo"
-              width={56}
-              height={56}
-              className="w-full h-full object-cover"
-              unoptimized
-            />
-          </div>
-          <span className="text-2xl font-black text-white tracking-tighter uppercase leading-none">TipHive</span>
-        </div>
-        <button onClick={() => setIsSidebarOpen(false)} className="w-12 h-12 rounded-full bg-white/5 flex items-center justify-center text-slate-500 hover:text-white transition-colors">
-          <X size={24} />
-        </button>
-      </div>
-
-      <div className="space-y-1 mb-8">
-        <SidebarItem icon={<LayoutDashboard size={20} />} label="Hive" active={pathname === '/dashboard'} href="/dashboard" onClick={() => setIsSidebarOpen(false)} />
-        <SidebarItem icon={<Gift size={20} />} label="Referrals" active={pathname === '/dashboard/referrals'} href="/dashboard/referrals" onClick={() => setIsSidebarOpen(false)} />
-        <SidebarItem icon={<Globe />} label="My Page" href={`/${creatorProfile?.username || ''}`} external onClick={() => setIsSidebarOpen(false)} />
-        <SidebarItem icon={<Bitcoin size={20} />} label="Borrow MUSD" active={pathname === '/dashboard/borrow-musd'} href="/dashboard/borrow-musd" onClick={() => setIsSidebarOpen(false)} />
-      </div>
-      <div className="mb-8">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Earn</div>
-        <div className="space-y-1">
-          <SidebarItem icon={<Users />} label="Tip Circles" active={pathname === '/dashboard/tipcircle'} href="/dashboard/tipcircle" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<Calendar size={20} />} label="Subscriptions" active={pathname === '/dashboard/subscriptions'} href="/dashboard/subscriptions" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<Edit3 />} label="Posting" active={pathname === '/dashboard/posts'} href="/dashboard/posts" onClick={() => setIsSidebarOpen(false)} />
-        </div>
-      </div>
-      <div className="mb-8">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Messaging</div>
-        <div className="space-y-1">
-          <SidebarItem icon={<Inbox />} label="Inbox" active={pathname === '/dashboard/inbox'} href="/dashboard/inbox" onClick={() => setIsSidebarOpen(false)} />
-        </div>
-      </div>
-      <div className="mb-8">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Activity & Logs</div>
-        <div className="space-y-1">
-          <SidebarItem icon={<History />} label="Activity Feed" active={pathname === '/dashboard/activityfeed'} href="/dashboard/activityfeed" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<TrendingUp />} label="Analytics" active={pathname === '/dashboard/earninganalysis'} href="/dashboard/earninganalysis" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<Heart size={18} />} label="Sent Support" active={pathname === '/dashboard/sentsupport'} href="/dashboard/sentsupport" onClick={() => setIsSidebarOpen(false)} />
-          <SidebarItem icon={<Calendar size={18} />} label="My Subscriptions" active={pathname === '/dashboard/mysubsriptions'} href="/dashboard/mysubsriptions" onClick={() => setIsSidebarOpen(false)} />
-        </div>
-      </div>
-
-      <div className="mt-auto pt-8 border-t border-white/5">
-        <div className="text-[10px] font-black uppercase tracking-widest text-slate-500 px-4 mb-3">Settings</div>
-        <div className="space-y-1">
-          <SidebarItem icon={<Settings size={18} />} label="Visual Toolkit" active={pathname === '/dashboard/visual-toolkit'} href="/dashboard/visual-toolkit" onClick={() => setIsSidebarOpen(false)} />
-        </div>
-      </div>
-    </div>
-  );
 
   const isCreatePost = pathname?.includes('/dashboard/createposts');
 
-  if (isCreatePost) {
-    return (
-      <DashboardContext.Provider value={{ creatorProfile, activities, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, fetchData, address, totalSent, totalEarned, linkWallet, walletSwitched, switchedToAddress, dismissWalletSwitch, handleSwitchAccount, user, authenticated, getAccessToken }}>
-        {children}
-      </DashboardContext.Provider>
-    );
-  }
-
   return (
     <DashboardContext.Provider value={{ creatorProfile, activities, loading, onChainBalanceFormatted, totalOnChainBalance, isAnyWithdrawing, handleWithdraw, fetchData, address, totalSent, totalEarned, linkWallet, walletSwitched, switchedToAddress, dismissWalletSwitch, handleSwitchAccount, user, authenticated, getAccessToken }}>
-      <div className="min-h-screen bg-[#000] flex">
-        {/* Redesigned Hanging Menu Trigger */}
-        <motion.div
-          className="fixed md:top-20 md:left-12 top-24 left-0 z-[60] flex flex-col items-center pointer-events-none"
-          initial={isMobile ? { rotate: 0 } : { rotate: -4 }}
-          animate={isMobile ? { rotate: 0 } : { rotate: 4 }}
-          transition={{
-            repeat: isMobile ? 0 : Infinity,
-            repeatType: "mirror",
-            duration: 2.5,
-            ease: "easeInOut"
-          }}
-          style={{ transformOrigin: "top center" }}
-        >
-          {/* The Rope (Hanging Thread) */}
-          <div className="hidden md:block w-[2px] h-32 bg-gradient-to-b from-[#F7931A] via-white/60 to-[#F7931A] shadow-[0_0_12px_rgba(247,147,26,0.3)]" />
-
-          {/* The Circular Hanging Button */}
-          <motion.button
-            onClick={() => setIsSidebarOpen(true)}
-            whileHover={{ scale: 1.1, rotate: [0, -10, 10, 0] }}
-            whileTap={{ scale: 0.9 }}
-            className="md:w-16 md:h-16 w-12 h-12 bg-[#0f0f14] border-2 border-[#F7931A] md:rounded-full rounded-r-2xl rounded-l-none flex items-center justify-center shadow-[0_20px_40px_rgba(0,0,0,0.8),0_0_25px_rgba(247,147,26,0.2)] text-[#F7931A] hover:text-white hover:bg-[#F7931A] transition-all pointer-events-auto group relative -mt-1"
-            title="Open Dashboard Menu"
-          >
-            <Menu className="md:w-8 md:h-8 w-6 h-6 transition-transform" />
-
-            {/* Decorative Hanging Ring/Hook */}
-            <div className="hidden md:block absolute -top-2 left-1/2 -translate-x-1/2 w-4 h-4 border-2 border-[#F7931A] rounded-full bg-[#0f0f14]" />
-
-            {/* Glow effect */}
-            <div className="absolute inset-0 rounded-full bg-[#F7931A]/20 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-          </motion.button>
-        </motion.div>
-
-        {/* Sidebar Overlay & Blur Effect */}
-        <AnimatePresence>
-          {isSidebarOpen && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/60 z-[100] backdrop-blur-xl"
-              onClick={() => setIsSidebarOpen(false)}
-            >
-              <motion.aside
-                initial={{ x: '-100%' }}
-                animate={{ x: 0 }}
-                exit={{ x: '-100%' }}
-                transition={{ type: 'spring', bounce: 0, duration: 0.4 }}
-                className="w-80 h-full bg-[#050507] border-r border-white/5 p-10 overflow-y-auto"
-                onClick={e => e.stopPropagation()}
-              >
-                {SidebarContent()}
-              </motion.aside>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        {/* Main Content with dynamic blur */}
-        <main className={`flex-1 min-h-screen pt-28 pb-12 w-full transition-all duration-500 ${isSidebarOpen ? 'blur-md scale-[0.98]' : 'blur-0 scale-100'}`}>
-          <div className="max-w-[1700px] w-full mx-auto px-6 md:px-16">
-            {children}
-          </div>
-        </main>
-      </div>
+      {isCreatePost && authenticated ? (
+        children
+      ) : (
+        <div className="min-h-screen bg-slate-50 dark:bg-[#050505] text-slate-900 dark:text-white transition-colors duration-300 flex">
+          {/* Main Content Area */}
+          <main className="flex-1 min-h-screen pt-28 pb-12 w-full">
+            <div className="max-w-[1700px] w-full mx-auto px-6 md:px-16">
+              {!authenticated ? (
+                <DashboardPreview login={login} />
+              ) : (
+                children
+              )}
+            </div>
+          </main>
+        </div>
+      )}
     </DashboardContext.Provider>
   );
 }
 
-function SidebarItem({ icon, label, active, href, external, onClick, disabled }: { icon: ReactNode, label: string, active?: boolean, href?: string, external?: boolean, onClick?: () => void, disabled?: boolean }) {
-  const content = (
-    <>
-      {active && <div className="absolute left-0 top-1/2 -translate-y-1/2 w-1.5 h-10 bg-[#f7931a] rounded-r-full shadow-[0_0_20px_#f7931a]" />}
-      <div className={`w-6 h-6 transition-colors ${active ? 'text-[#f7931a]' : 'text-slate-500 group-hover:text-slate-300'}`}>
-        {icon}
+function DashboardPreview({ login }: { login: () => void }) {
+  return (
+    <div className="space-y-8 pb-12">
+      {/* PAGE HEADER */}
+      <motion.div
+        initial={{ opacity: 0, y: -10 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="px-4 md:px-0 space-y-2"
+      >
+        <div className="flex items-center gap-2 text-xs font-bold text-[#f7931a] uppercase tracking-wider">
+          <span>Creator Suite (Preview)</span>
+        </div>
+        <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-900 dark:text-white">
+          My <span className="text-[#f7931a]">Hive</span>
+        </h1>
+        <p className="text-slate-550 dark:text-slate-400 text-base max-w-2xl font-medium leading-relaxed">
+          Welcome to your creator control center. Connect your wallet to access your earnings, vault, subscribers, and tipping page settings.
+        </p>
+      </motion.div>
+
+      {/* MOCK CREATOR HEADER */}
+      <div className="bg-white/80 dark:bg-[#0f0f14]/80 border border-slate-200 dark:border-white/5 rounded-3xl p-6 md:p-8 flex flex-col md:flex-row gap-6 md:items-center justify-between relative overflow-hidden shadow-md dark:shadow-2xl backdrop-blur-md transition-colors duration-300">
+        <div className="absolute top-0 right-0 w-64 h-64 bg-[#f7931a]/5 blur-[80px] rounded-full pointer-events-none" />
+
+        <div className="flex items-center gap-6 relative z-10 filter blur-[1px] opacity-65">
+          <div className="w-20 h-20 md:w-24 md:h-24 rounded-2xl border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-black shrink-0 flex items-center justify-center transition-colors duration-300">
+            <UserIcon className="w-10 h-10 text-slate-400 dark:text-slate-700" />
+          </div>
+          <div>
+            <div className="flex items-center gap-3 mb-1">
+              <h2 className="text-xl md:text-2xl font-bold text-slate-900 dark:text-white tracking-tight">Creator Name</h2>
+            </div>
+            <div className="flex items-center gap-3 text-xs">
+              <span className="font-bold text-[#f7931a]">@username</span>
+              <span className="text-slate-300 dark:text-slate-800">•</span>
+              <span className="text-slate-550 dark:text-slate-400 font-mono">0x000...0000</span>
+            </div>
+          </div>
+        </div>
+
+        <div className="flex flex-col gap-3 relative z-20 shrink-0">
+          <button
+            onClick={login}
+            className="flex items-center justify-center gap-2 bg-[#f7931a] text-white px-6 py-3 rounded-xl font-bold transition-all hover:bg-[#e08215] shadow-md hover:scale-102 cursor-pointer"
+          >
+            <Wallet className="w-4 h-4" />
+            Connect Wallet
+          </button>
+        </div>
       </div>
-      <span className={`text-base font-black tracking-tight whitespace-nowrap transition-colors ${active ? 'text-white' : 'text-slate-400 group-hover:text-slate-200'}`}>
-        {label}
-      </span>
-      {active && <div className="absolute inset-0 bg-gradient-to-r from-[#f7931a]/10 to-transparent rounded-2xl pointer-events-none" />}
-    </>
+
+      {/* GLOWING WALLET CONNECTION CTA PROMPT */}
+      <div className="relative border border-slate-200 dark:border-white/5 rounded-[2.5rem] bg-white dark:bg-[#0c0c10]/95 p-8 md:p-12 overflow-hidden shadow-md dark:shadow-2xl flex flex-col items-center text-center max-w-3xl mx-auto border-t-[#f7931a]/20 transition-colors duration-300">
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-64 h-1 bg-gradient-to-r from-transparent via-[#f7931a]/40 to-transparent" />
+        <div className="absolute -top-32 w-96 h-96 bg-[#f7931a]/5 blur-[100px] rounded-full pointer-events-none" />
+        
+        <div className="w-20 h-20 bg-slate-100 dark:bg-white/5 rounded-3xl border border-slate-200 dark:border-white/10 flex items-center justify-center mb-8 shadow-inner relative transition-colors duration-300">
+          <div className="absolute inset-0 bg-[#f7931a]/10 rounded-3xl animate-ping opacity-75" style={{ animationDuration: '2s' }} />
+          <Wallet className="w-8 h-8 text-[#f7931a] relative z-10" />
+        </div>
+
+        <h3 className="text-2xl md:text-3xl font-bold text-slate-900 dark:text-white tracking-tight mb-4">
+          Unlock Your Creator Suite
+        </h3>
+        <p className="text-slate-650 dark:text-slate-400 font-medium max-w-lg mb-10 leading-relaxed text-sm md:text-base">
+          Sign in with your Ethereum or Bitcoin-L2 wallet to view your real-time analytics, edit your tipping page, manage subscribers, write posts, and claim support tips.
+        </p>
+
+        <button
+          onClick={login}
+          className="px-10 py-4 bg-[#f7931a] text-white rounded-2xl font-bold uppercase tracking-wider text-sm transition-all hover:bg-[#e08215] hover:shadow-[0_0_40px_rgba(247,147,26,0.3)] active:scale-95 cursor-pointer"
+        >
+          Connect & Sign In
+        </button>
+      </div>
+
+      {/* BLURRED MOCK EARNINGS CARDS */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 relative select-none">
+        {/* Overlay blur barrier */}
+        <div className="absolute inset-0 bg-white/20 dark:bg-black/10 backdrop-blur-[3px] rounded-3xl z-10 border border-slate-200 dark:border-white/5 flex items-center justify-center pointer-events-none" />
+
+        <div className="bg-white/50 dark:bg-[#0f0f14]/40 border border-slate-200 dark:border-white/5 rounded-[2rem] p-8 relative overflow-hidden transition-colors duration-300">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mb-8 text-orange-500/50">
+            <DollarSign className="w-5 h-5" />
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500/50 mb-4">Total Earnings</p>
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-950/50 dark:text-white/50">$1,420.00</h3>
+            <MUSDLogo className="w-8 h-8 opacity-30" />
+          </div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400/50 dark:text-slate-700">Tips + Subscriptions</p>
+        </div>
+
+        <div className="bg-white/50 dark:bg-[#0f0f14]/40 border border-slate-200 dark:border-white/5 rounded-[2rem] p-8 relative overflow-hidden transition-colors duration-300">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mb-8 text-green-500/50">
+            <TrendingUp className="w-5 h-5" />
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500/50 mb-4">Claimable Funds</p>
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-950/50 dark:text-white/50">$420.00</h3>
+            <MUSDLogo className="w-8 h-8 opacity-30" />
+          </div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400/50 dark:text-slate-700">Ready for Withdrawal</p>
+        </div>
+
+        <div className="bg-white/50 dark:bg-[#0f0f14]/40 border border-slate-200 dark:border-white/5 rounded-[2rem] p-8 relative overflow-hidden transition-colors duration-300">
+          <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mb-8 text-blue-400/50">
+            <History className="w-5 h-5" />
+          </div>
+          <p className="text-[10px] font-bold uppercase tracking-wider text-slate-500/50 mb-4">Sent By You</p>
+          <div className="flex items-center gap-3 mb-4">
+            <h3 className="text-3xl md:text-4xl font-bold tracking-tight text-slate-950/50 dark:text-white/50">$150.00</h3>
+            <MUSDLogo className="w-8 h-8 opacity-30" />
+          </div>
+          <p className="text-[10px] font-semibold uppercase tracking-wider text-slate-400/50 dark:text-slate-700">Your Contributions</p>
+        </div>
+      </div>
+    </div>
   );
-
-  const className = `group relative flex items-center gap-4 px-6 py-4 rounded-2xl transition-all ${active ? 'bg-white/5' : 'hover:bg-white/[0.03]'} ${disabled ? 'blur-[1.5px] opacity-40 cursor-not-allowed pointer-events-none' : 'cursor-pointer'}`;
-
-  if (href) {
-    return (
-      <Link href={href} onClick={onClick} className={className} target={external ? "_blank" : undefined}>
-        {content}
-      </Link>
-    );
-  }
-  return <div className={className} onClick={onClick}>{content}</div>;
 }
+

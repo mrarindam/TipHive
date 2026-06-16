@@ -23,6 +23,7 @@ import {
 } from 'lucide-react';
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
+import ThemeToggle from '@/components/layout/ThemeToggle';
 
 // Icons
 const GithubIcon = ({ className }: { className?: string }) => (
@@ -4694,7 +4695,7 @@ res.cloudinary.com             // Cloudinary media delivery`}
   if (!isMounted) return <div className="min-h-screen bg-black" />;
 
   return (
-    <div className="h-screen w-screen overflow-hidden bg-[#050505] text-white selection:bg-[#F7931A]/30 font-outfit flex flex-col">
+    <div className="docs-page-container h-screen w-screen overflow-hidden bg-[#050505] text-white selection:bg-[#F7931A]/30 font-outfit flex flex-col">
       {/* Global Top Header */}
       <header className="shrink-0 h-16 bg-black border-b border-white/5 px-6 flex items-center justify-between z-[60] w-full relative">
         {/* Left: Logo & Title */}
@@ -4721,11 +4722,13 @@ res.cloudinary.com             // Cloudinary media delivery`}
 
         {/* Right: Actions / Menu */}
         <div className="flex items-center gap-4">
+          <ThemeToggle />
+          
           <Link 
             href="https://github.com/mrarindam/TipHive" 
             target="_blank" 
             rel="noopener noreferrer" 
-            className="text-slate-400 hover:text-white transition-colors hidden lg:block"
+            className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors hidden lg:block"
           >
             <GithubIcon className="w-5 h-5" />
           </Link>
@@ -4844,6 +4847,245 @@ res.cloudinary.com             // Cloudinary media delivery`}
         }
         .custom-scrollbar::-webkit-scrollbar-thumb:hover {
           background: rgba(247, 147, 26, 0.2);
+        }
+
+        /* Light mode overrides for Docs Page */
+        html:not(.dark) .docs-page-container {
+          background-color: #f8fafc !important;
+          color: #0f172a !important;
+        }
+
+        html:not(.dark) .docs-page-container header {
+          background-color: #ffffff !important;
+          border-color: #cbd5e1 !important;
+          color: #0f172a !important;
+        }
+
+        html:not(.dark) .docs-page-container header span {
+          color: #0f172a !important;
+        }
+
+        html:not(.dark) .docs-page-container aside {
+          background-color: #ffffff !important;
+          border-color: #cbd5e1 !important;
+        }
+
+        html:not(.dark) .docs-page-container aside p {
+          color: #475569 !important;
+        }
+
+        html:not(.dark) .docs-page-container aside button {
+          color: #475569 !important;
+        }
+
+        html:not(.dark) .docs-page-container aside button:hover {
+          background-color: #f1f5f9 !important;
+          color: #0f172a !important;
+        }
+
+        html:not(.dark) .docs-page-container aside button[class~="bg-[#F7931A]/10"] {
+          background-color: rgba(247, 147, 26, 0.1) !important;
+          color: #c2410c !important;
+          border-color: rgba(247, 147, 26, 0.3) !important;
+        }
+
+        /* Sidebar footer open source container */
+        html:not(.dark) .docs-page-container aside [class~="bg-white/5"] {
+          background-color: #f1f5f9 !important;
+        }
+
+        html:not(.dark) .docs-page-container aside [class~="bg-white/5"] [class~="text-slate-400"] {
+          color: #475569 !important;
+        }
+
+        /* Main content pane background */
+        html:not(.dark) #docs-content-container {
+          background-color: #f8fafc !important;
+        }
+
+        /* Callout cards styling */
+        html:not(.dark) .docs-page-container [class~="bg-blue-500/10"] {
+          background-color: rgba(59, 130, 246, 0.08) !important;
+          border-color: rgba(59, 130, 246, 0.2) !important;
+        }
+        html:not(.dark) .docs-page-container [class~="bg-blue-500/10"] h4,
+        html:not(.dark) .docs-page-container [class~="bg-blue-500/10"] [class~="text-blue-400"] {
+          color: #1d4ed8 !important;
+        }
+
+        html:not(.dark) .docs-page-container [class~="bg-yellow-500/10"] {
+          background-color: rgba(234, 179, 8, 0.08) !important;
+          border-color: rgba(234, 179, 8, 0.2) !important;
+        }
+        html:not(.dark) .docs-page-container [class~="bg-yellow-500/10"] h4,
+        html:not(.dark) .docs-page-container [class~="bg-yellow-500/10"] [class~="text-yellow-400"] {
+          color: #a16207 !important;
+        }
+
+        html:not(.dark) .docs-page-container [class~="bg-green-500/10"],
+        html:not(.dark) .docs-page-container [class~="bg-emerald-500/10"] {
+          background-color: rgba(16, 185, 129, 0.08) !important;
+          border-color: rgba(16, 185, 129, 0.2) !important;
+        }
+        html:not(.dark) .docs-page-container [class~="bg-green-500/10"] h4,
+        html:not(.dark) .docs-page-container [class~="bg-green-500/10"] [class~="text-green-400"],
+        html:not(.dark) .docs-page-container [class~="bg-emerald-500/10"] h4,
+        html:not(.dark) .docs-page-container [class~="bg-emerald-500/10"] [class~="text-emerald-400"] {
+          color: #047857 !important;
+        }
+
+        /* Default backgrounds for code/pre, code containers, cards, tables, panels */
+        html:not(.dark) .docs-page-container main [class~="bg-[#0A0A0C]"],
+        html:not(.dark) .docs-page-container main [class~="bg-[#050507]"],
+        html:not(.dark) .docs-page-container main [class~="bg-[#050505]"],
+        html:not(.dark) .docs-page-container main [class~="bg-black/40"],
+        html:not(.dark) .docs-page-container main [class~="bg-black/60"],
+        html:not(.dark) .docs-page-container main [class~="bg-black"] {
+          background-color: #ffffff !important;
+          border-color: #cbd5e1 !important;
+        }
+
+        html:not(.dark) .docs-page-container main [class~="bg-white/5"] {
+          background-color: #f1f5f9 !important;
+          border-color: #cbd5e1 !important;
+        }
+
+        html:not(.dark) .docs-page-container main [class~="bg-white/[0.02]"] {
+          background-color: #f8fafc !important;
+          border-color: #cbd5e1 !important;
+        }
+
+        html:not(.dark) .docs-page-container main [class~="bg-white/10"] {
+          background-color: #e2e8f0 !important;
+          border-color: #cbd5e1 !important;
+        }
+
+        /* Default border overrides */
+        html:not(.dark) .docs-page-container main [class~="border-white/5"],
+        html:not(.dark) .docs-page-container main [class~="border-white/10"],
+        html:not(.dark) .docs-page-container main [class~="border-white/20"] {
+          border-color: #cbd5e1 !important;
+        }
+
+        /* High-contrast text color overrides inside main container */
+        html:not(.dark) .docs-page-container main h1,
+        html:not(.dark) .docs-page-container main h2,
+        html:not(.dark) .docs-page-container main h3,
+        html:not(.dark) .docs-page-container main h4,
+        html:not(.dark) .docs-page-container main strong,
+        html:not(.dark) .docs-page-container main [class~="text-white"] {
+          color: #0f172a !important;
+        }
+
+        html:not(.dark) .docs-page-container main [class~="text-slate-300"],
+        html:not(.dark) .docs-page-container main [class~="text-slate-400"],
+        html:not(.dark) .docs-page-container main [class~="text-slate-500"],
+        html:not(.dark) .docs-page-container main [class~="text-slate-350"] {
+          color: #334155 !important;
+        }
+
+        /* Brand highlights */
+        html:not(.dark) .docs-page-container main [class~="text-[#F7931A]"] {
+          color: #c2410c !important;
+        }
+
+        /* Status Colors */
+        html:not(.dark) .docs-page-container main [class~="text-emerald-400"] {
+          color: #047857 !important;
+        }
+        html:not(.dark) .docs-page-container main [class~="text-yellow-400"] {
+          color: #b45309 !important;
+        }
+        html:not(.dark) .docs-page-container main [class~="text-red-400"] {
+          color: #b91c1c !important;
+        }
+
+        /* Inline code and code blocks */
+        html:not(.dark) .docs-page-container main code {
+          background-color: #f1f5f9 !important;
+          color: #0f172a !important;
+          border: 1px solid #cbd5e1 !important;
+        }
+
+        html:not(.dark) .docs-page-container main pre,
+        html:not(.dark) .docs-page-container main pre *,
+        html:not(.dark) .docs-page-container main [class~="font-mono"] {
+          background-color: #f8fafc !important;
+          color: #0f172a !important;
+          border-color: #cbd5e1 !important;
+        }
+
+        /* Tables overrides */
+        html:not(.dark) .docs-page-container main table thead tr {
+          background-color: #f1f5f9 !important;
+          border-color: #cbd5e1 !important;
+        }
+
+        html:not(.dark) .docs-page-container main table th {
+          color: #0f172a !important;
+        }
+
+        html:not(.dark) .docs-page-container main table td {
+          border-color: #cbd5e1 !important;
+          color: #334155 !important;
+        }
+
+        html:not(.dark) .docs-page-container main table td [class~="text-white"] {
+          color: #0f172a !important;
+        }
+
+        html:not(.dark) .docs-page-container main table tbody {
+          background-color: #ffffff !important;
+        }
+
+        /* Search inputs in header and mobile sidebar */
+        html:not(.dark) .docs-page-container input {
+          background-color: #f1f5f9 !important;
+          border-color: #cbd5e1 !important;
+          color: #0f172a !important;
+        }
+        html:not(.dark) .docs-page-container input::placeholder {
+          color: #94a3b8 !important;
+        }
+
+        /* Step list step counters */
+        html:not(.dark) .docs-page-container .absolute.left-0.top-0.w-10.h-10 {
+          background-color: #f1f5f9 !important;
+          border-color: #cbd5e1 !important;
+        }
+        html:not(.dark) .docs-page-container .absolute.left-0.top-0.w-10.h-10 span {
+          color: #c2410c !important;
+        }
+        html:not(.dark) .docs-page-container [class*="absolute left-[19px]"] {
+          background-color: #cbd5e1 !important;
+        }
+
+        /* Custom scrollbars */
+        html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: rgba(0, 0, 0, 0.15) !important;
+        }
+        html:not(.dark) .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: rgba(247, 147, 26, 0.5) !important;
+        }
+
+        /* Buttons and links */
+        html:not(.dark) .docs-page-container main button[class~="bg-white/5"],
+        html:not(.dark) .docs-page-container main a[class~="bg-white/5"] {
+          background-color: #ffffff !important;
+          border-color: #cbd5e1 !important;
+          color: #0f172a !important;
+        }
+        html:not(.dark) .docs-page-container main button[class~="bg-white/5"]:hover,
+        html:not(.dark) .docs-page-container main a[class~="bg-white/5"]:hover {
+          background-color: #f1f5f9 !important;
+          border-color: #94a3b8 !important;
+        }
+        
+        html:not(.dark) .docs-page-container main button [class~="text-white"],
+        html:not(.dark) .docs-page-container main a [class~="text-white"],
+        html:not(.dark) .docs-page-container main button[class~="text-white"],
+        html:not(.dark) .docs-page-container main a[class~="text-white"] {
+          color: #0f172a !important;
         }
       `}</style>
     </div>

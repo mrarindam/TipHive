@@ -235,7 +235,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
   if (loading && creatorAddress?.startsWith('0x')) return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 animate-pulse">
       {[1, 2].map(i => (
-        <div key={i} className="h-80 bg-white/5 rounded-[2rem] border border-white/5" />
+        <div key={i} className="h-80 bg-slate-100 dark:bg-white/5 rounded-[2rem] border border-slate-200 dark:border-white/5" />
       ))}
     </div>
   );
@@ -244,13 +244,13 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
     <motion.div
       initial={{ opacity: 0, y: 10 }}
       animate={{ opacity: 1, y: 0 }}
-      className="py-20 text-center glass-card border-dashed border-white/10 bg-white/[0.02]"
+      className="py-20 text-center bg-white dark:bg-white/[0.02] border border-dashed border-slate-200 dark:border-white/10 rounded-[3rem] shadow-sm"
     >
       <div className="relative w-16 h-16 mx-auto mb-6">
         <div className="absolute inset-0 bg-[#F7931A]/20 blur-2xl rounded-full" />
-        <Zap className="w-16 h-16 text-slate-700 relative opacity-40" />
+        <Zap className="w-16 h-16 text-slate-400 dark:text-slate-700 relative opacity-45" />
       </div>
-      <h3 className="text-xl font-black text-white font-outfit uppercase tracking-tighter mb-2">No active tiers yet</h3>
+      <h3 className="text-xl font-black text-slate-900 dark:text-white font-outfit uppercase tracking-tighter mb-2">No active tiers yet</h3>
       <p className="text-slate-500 font-medium max-w-xs mx-auto text-sm leading-relaxed">
         {creatorName} hasn&apos;t launched any exclusive subscription tiers for this page yet.
       </p>
@@ -274,13 +274,13 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
                 ) : (
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                 )}
-                <p className="text-sm font-bold text-white tracking-tight">
+                <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                   {notification.message}
                 </p>
               </div>
               <button
                 onClick={() => setNotification(null)}
-                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4 text-slate-400" />
               </button>
@@ -303,24 +303,24 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
             {/* Animated Gradient Border */}
             <div className="absolute inset-0 bg-gradient-to-br from-[#8A2BE2] via-white/10 to-[#F7931A] opacity-30 group-hover:opacity-100 transition-opacity duration-700 blur-[1px]" />
 
-            <div className="relative h-full w-full bg-[#0B0F19] rounded-3xl p-6 flex flex-col z-10 overflow-hidden">
+            <div className="relative h-full w-full bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/5 rounded-3xl p-6 flex flex-col z-10 overflow-hidden shadow-sm dark:shadow-none">
               {/* Decorative Background Glows */}
               <div className="absolute top-0 left-0 w-32 h-32 bg-[#8A2BE2]/10 blur-[60px] rounded-full -ml-16 -mt-16 pointer-events-none" />
               <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#F7931A]/10 blur-[60px] rounded-full -mr-16 -mb-16 pointer-events-none" />
 
               <div className="flex justify-between items-start mb-6">
                 <div className="space-y-1">
-                  <h3 className="text-3xl font-black text-white font-outfit uppercase tracking-tighter leading-none group-hover:text-[#F7931A] transition-colors duration-300">
+                  <h3 className="text-3xl font-black text-slate-900 dark:text-white font-outfit uppercase tracking-tighter leading-none group-hover:text-[#F7931A] transition-colors duration-300">
                     {plan.name}
                   </h3>
-                  <div className="flex items-center gap-2 px-3 py-1 bg-white/5 rounded-full border border-white/5 w-fit">
+                  <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-white/5 rounded-full border border-slate-200 dark:border-white/5 w-fit">
                     <Clock className="w-3 h-3 text-[#8A2BE2]" />
-                    <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{plan.duration / 86400} DAYS ACCESS</span>
+                    <span className="text-[10px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">{plan.duration / 86400} DAYS ACCESS</span>
                   </div>
                 </div>
                 <div className="text-right flex flex-col items-end">
                   <div className="flex items-center gap-2">
-                    <span className="text-4xl font-black text-white font-outfit tracking-tighter">{plan.price}</span>
+                    <span className="text-4xl font-black text-slate-900 dark:text-white font-outfit tracking-tighter">{plan.price}</span>
                     <div className="relative">
                       <div className="absolute inset-0 bg-white blur-md opacity-20" />
                       <div className="relative bg-[#FF0055] p-1.5 rounded-full shadow-[0_0_15px_rgba(255,0,85,0.4)]">
@@ -339,20 +339,20 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
               <div className="flex-grow flex flex-col justify-between">
                 <div className="space-y-6">
                   <div className="min-h-[80px] flex items-center">
-                    <p className="text-slate-400 leading-relaxed font-medium transition-all duration-300 text-[13px]">
+                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium transition-all duration-300 text-[13px]">
                       {plan.description || `Elevate your experience with ${plan.name}—unlocking a universe of premium content and direct creator access.`}
                     </p>
                   </div>
 
                   <div className={`${plans.length === 1 ? 'space-y-3' : 'flex flex-wrap gap-2'} pb-8`}>
                     {(plan.perks?.length ? plan.perks : ['Exclusive Content Access', 'Direct Messaging', 'VIP Badge']).map((perk, i) => (
-                      <div key={i} className={`flex items-center gap-3 transition-all duration-300 group/perk ${plans.length === 1 ? '' : 'px-3 py-2 rounded-xl bg-white/5 border border-white/5 hover:bg-white/10'
+                      <div key={i} className={`flex items-center gap-3 transition-all duration-300 group/perk ${plans.length === 1 ? '' : 'px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
                         }`}>
                         <div className={`flex items-center justify-center text-[#8A2BE2] ${plans.length === 1 ? 'w-6 h-6 rounded-lg bg-[#8A2BE2]/10 border border-[#8A2BE2]/20' : ''
                           }`}>
                           <Check className={plans.length === 1 ? 'w-3.5 h-3.5' : 'w-3 h-3'} />
                         </div>
-                        <span className={`${plans.length === 1 ? 'text-xs' : 'text-[10px]'} font-bold text-slate-400 uppercase tracking-widest group-hover/perk:text-white transition-colors`}>
+                        <span className={`${plans.length === 1 ? 'text-xs' : 'text-[10px]'} font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest group-hover/perk:text-slate-900 dark:group-hover/perk:text-white transition-colors`}>
                           {perk}
                         </span>
                       </div>
@@ -402,21 +402,21 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
               onClick={(event) => event.stopPropagation()}
             >
               <div className="absolute right-0 top-0 h-40 w-40 rounded-full bg-[#F7931A]/20 blur-3xl" />
-              <h3 className="relative font-outfit text-4xl font-black uppercase tracking-tighter text-white">{previewPlan.name}</h3>
-              <p className="relative mt-2 text-slate-400">{previewPlan.description || `Support ${creatorName} and unlock this tier.`}</p>
-              <div className="relative my-6 rounded-2xl border border-white/5 bg-white/5 p-5">
+              <h3 className="relative font-outfit text-4xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">{previewPlan.name}</h3>
+              <p className="relative mt-2 text-slate-600 dark:text-slate-400">{previewPlan.description || `Support ${creatorName} and unlock this tier.`}</p>
+              <div className="relative my-6 rounded-2xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 p-5">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black uppercase tracking-widest text-slate-500">Price</span>
                   <span className="flex items-center gap-2 text-2xl font-black text-[#F7931A]">{previewPlan.price} <MUSDLogo className="h-5 w-5" /></span>
                 </div>
                 <div className="mt-3 flex items-center justify-between">
                   <span className="text-xs font-black uppercase tracking-widest text-slate-500">Duration</span>
-                  <span className="text-sm font-black text-white">{previewPlan.duration / 86400} days</span>
+                  <span className="text-sm font-black text-slate-900 dark:text-white">{previewPlan.duration / 86400} days</span>
                 </div>
               </div>
               <div className="relative space-y-3">
                 {(previewPlan.perks?.length ? previewPlan.perks : ['Exclusive Content Access']).map((perk, index) => (
-                  <div key={index} className="flex items-center gap-3 text-sm font-bold text-slate-300">
+                  <div key={index} className="flex items-center gap-3 text-sm font-bold text-slate-600 dark:text-slate-300">
                     <Check className="h-4 w-4 text-[#F7931A]" />
                     {perk}
                   </div>

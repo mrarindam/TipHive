@@ -98,7 +98,7 @@ export default function DropsPage() {
            <div className="w-12 h-1 bg-[#f7931a] rounded-full" />
            <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#f7931a]">Creator Suite</span>
         </div>
-        <h1 className="text-5xl md:text-7xl font-black text-white uppercase tracking-tighter leading-[0.85] flex flex-wrap gap-x-4">
+        <h1 className="text-5xl md:text-7xl font-black text-slate-900 dark:text-white uppercase tracking-tighter leading-[0.85] flex flex-wrap gap-x-4">
           <span>Content</span>
           <span className="text-[#f7931a]">Posts</span>
         </h1>
@@ -116,7 +116,7 @@ export default function DropsPage() {
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
             onClick={() => router.push(`/dashboard/createposts?type=${type.id}`)}
-            className="group relative flex flex-col items-center justify-center gap-4 p-8 rounded-2xl bg-[#0f0f14] border border-white/5 hover:border-white/20 transition-all duration-300 hover:scale-[1.03] hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]"
+            className="group relative flex flex-col items-center justify-center gap-4 p-8 rounded-2xl bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 hover:scale-[1.03] shadow-sm hover:shadow-[0_0_30px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]"
           >
             <div
               className="w-16 h-16 rounded-2xl flex items-center justify-center transition-all duration-300 group-hover:scale-110"
@@ -125,7 +125,7 @@ export default function DropsPage() {
               <type.icon className="w-7 h-7" style={{ color: type.color }} />
             </div>
             <div className="text-center">
-              <p className="text-white font-bold text-lg">{type.label}</p>
+              <p className="text-slate-900 dark:text-white font-bold text-lg">{type.label}</p>
               <p className="text-slate-500 text-xs mt-1 hidden md:block">{type.desc}</p>
             </div>
             {/* Hover glow */}
@@ -138,19 +138,19 @@ export default function DropsPage() {
       </div>
 
       {/* Divider */}
-      <div className="border-t border-white/5" />
+      <div className="border-t border-slate-200 dark:border-white/5" />
 
       {/* Published Section */}
       <div>
         <div className="flex items-center gap-6 mb-6">
-          <h2 className="text-xl font-black text-white uppercase tracking-tight">Published</h2>
-          <span className="text-sm text-slate-500 bg-white/5 px-3 py-1 rounded-full font-bold">{posts.length} posts</span>
+          <h2 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tight">Published</h2>
+          <span className="text-sm text-slate-600 dark:text-slate-500 bg-slate-100 dark:bg-white/5 px-3 py-1 rounded-full font-bold">{posts.length} posts</span>
         </div>
 
         {loading ? (
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map(i => (
-              <div key={i} className="flex items-center gap-4 p-5 bg-[#0f0f14] rounded-2xl border border-white/5">
+              <div key={i} className="flex items-center gap-4 p-5 bg-white dark:bg-[#0f0f14] rounded-2xl border border-slate-200 dark:border-white/5">
                 <Skeleton className="w-12 h-12 md:w-16 md:h-16 rounded-xl shrink-0" />
                 <div className="flex-1 space-y-2">
                   <Skeleton className="h-6 w-1/3" />
@@ -160,11 +160,11 @@ export default function DropsPage() {
             ))}
           </div>
         ) : posts.length === 0 ? (
-          <div className="py-20 text-center flex flex-col items-center bg-[#0f0f14] rounded-3xl border border-white/5">
-            <div className="w-20 h-20 bg-white/5 rounded-full flex items-center justify-center mb-6 border border-white/10">
+          <div className="py-20 text-center flex flex-col items-center bg-white dark:bg-[#0f0f14] rounded-3xl border border-slate-200 dark:border-white/5">
+            <div className="w-20 h-20 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-6 border border-slate-200 dark:border-white/10">
               <FileText className="w-10 h-10 text-slate-600" />
             </div>
-            <h3 className="text-2xl font-black text-white mb-2">Publish your first post</h3>
+            <h3 className="text-2xl font-black text-slate-900 dark:text-white mb-2">Publish your first post</h3>
             <p className="text-slate-500 max-w-md text-sm">Post public posts or make them exclusive to your supporters or members. Creators who post exclusively tend to earn more support.</p>
           </div>
         ) : (
@@ -177,10 +177,10 @@ export default function DropsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: i * 0.05 }}
                   onClick={() => username && router.push(`/${username}/posts/${encodeURIComponent(post.title)}`)}
-                  className="flex items-center gap-4 p-5 bg-[#0f0f14] rounded-2xl border border-white/5 hover:border-white/20 hover:bg-white/[0.04] transition-all group cursor-pointer"
+                  className="flex items-center gap-4 p-5 bg-white dark:bg-[#0f0f14] rounded-2xl border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 hover:bg-slate-50 dark:hover:bg-white/[0.04] transition-all group cursor-pointer"
                 >
                 {/* Thumbnail */}
-                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden shrink-0 border border-white/10 bg-[#1A2234] flex items-center justify-center relative group">
+                <div className="w-12 h-12 md:w-16 md:h-16 rounded-xl overflow-hidden shrink-0 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-[#1A2234] flex items-center justify-center relative group">
                   {(() => {
                     const contentImage = extractFirstImage(post.content);
                     const hasImage = post.image_url || contentImage;
@@ -224,7 +224,7 @@ export default function DropsPage() {
                     
                     // Case 3: Pure text post, no media at all
                     return (
-                      <div className="w-full h-full flex items-center justify-center bg-white/5">
+                      <div className="w-full h-full flex items-center justify-center bg-slate-50 dark:bg-white/5">
                         <FileText className="w-5 h-5 md:w-6 md:h-6 text-slate-600" />
                       </div>
                     );
@@ -233,7 +233,7 @@ export default function DropsPage() {
 
                 {/* Info */}
                 <div className="flex-1 min-w-0">
-                  <h3 className="text-white font-bold truncate">{post.title || 'Untitled'}</h3>
+                  <h3 className="text-slate-900 dark:text-white font-bold truncate">{post.title || 'Untitled'}</h3>
                   <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
                     <span className="flex items-center gap-1">
                       <Calendar className="w-3 h-3" />
@@ -250,7 +250,7 @@ export default function DropsPage() {
                 <div className="flex items-center gap-2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity shrink-0">
                   <button
                     onClick={(e) => { e.stopPropagation(); setDeleteId(post.id); }}
-                    className="p-3 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all bg-white/5 md:bg-transparent"
+                    className="p-3 rounded-xl text-slate-500 hover:text-red-400 hover:bg-red-500/10 transition-all bg-slate-100 dark:bg-white/5 md:bg-transparent"
                     title="Delete"
                   >
                     <Trash2 size={18} />
@@ -284,19 +284,19 @@ export default function DropsPage() {
               initial={{ scale: 0.9, opacity: 0, y: 20 }}
               animate={{ scale: 1, opacity: 1, y: 0 }}
               exit={{ scale: 0.9, opacity: 0, y: 20 }}
-              className="relative w-full max-w-sm bg-[#111827] border border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-center"
+              className="relative w-full max-w-sm bg-white dark:bg-[#111827] border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 shadow-2xl text-center"
             >
               <div className="w-20 h-20 bg-red-500/10 rounded-3xl flex items-center justify-center text-red-500 mx-auto mb-6">
                 <AlertTriangle size={40} />
               </div>
-              <h3 className="text-2xl font-black text-white uppercase tracking-tight mb-2">Delete Post?</h3>
+              <h3 className="text-2xl font-black text-slate-900 dark:text-white uppercase tracking-tight mb-2">Delete Post?</h3>
               <p className="text-slate-500 text-sm font-medium leading-relaxed mb-8">
                 This action cannot be undone. All media and data associated with this post will be permanently removed.
               </p>
               <div className="flex gap-3">
                 <button 
                   onClick={() => setDeleteId(null)}
-                  className="flex-1 px-6 py-4 rounded-2xl bg-white/5 text-slate-400 font-bold hover:bg-white/10 transition-all"
+                  className="flex-1 px-6 py-4 rounded-2xl bg-slate-100 dark:bg-white/5 text-slate-500 dark:text-slate-400 font-bold hover:bg-slate-200 dark:hover:bg-white/10 transition-all"
                 >
                   Cancel
                 </button>

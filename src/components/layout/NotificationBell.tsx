@@ -146,7 +146,7 @@ export default function NotificationBell() {
     <div className="relative" ref={bellRef}>
       <button
         onClick={() => setIsOpen(!isOpen)}
-        className="relative p-2.5 bg-white/5 border border-white/5 rounded-xl text-slate-400 hover:text-white hover:bg-white/10 transition-all group"
+        className="relative p-2.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 rounded-xl text-slate-700 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200 dark:hover:bg-white/10 transition-all group"
       >
         {unreadCount > 0 ? (
           <BellRing className="w-5 h-5 text-[#F7931A] animate-pulse" />
@@ -168,11 +168,11 @@ export default function NotificationBell() {
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -10, scale: 0.95 }}
             transition={{ duration: 0.15, ease: "easeOut" }}
-            className="fixed left-1/2 top-20 z-[150] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-white/5 bg-[#070707] text-white shadow-2xl shadow-black/60 backdrop-blur-3xl md:absolute md:left-auto md:right-0 md:top-full md:mt-3 md:w-[380px] md:translate-x-0 md:rounded-[2rem] transform-gpu"
+            className="fixed left-1/2 top-20 z-[150] w-[95vw] -translate-x-1/2 overflow-hidden rounded-b-[2rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-[#070707] text-slate-900 dark:text-white shadow-2xl shadow-black/60 backdrop-blur-3xl md:absolute md:left-auto md:right-0 md:top-full md:mt-3 md:w-[380px] md:translate-x-0 md:rounded-[2rem] transform-gpu"
           >
-            <div className="p-5 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
+            <div className="p-5 border-b border-slate-200 dark:border-white/5 flex items-center justify-between bg-slate-50/50 dark:bg-white/[0.02]">
               <div>
-                <h3 className="text-sm font-black text-white uppercase tracking-widest">Notifications</h3>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Notifications</h3>
                 <p className="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-0.5">
                   {unreadCount} Unread Messages
                 </p>
@@ -181,16 +181,16 @@ export default function NotificationBell() {
                 <button
                   onClick={markAllRead}
                   disabled={markingRead}
-                  className="text-[10px] font-black text-[#F7931A] uppercase tracking-widest hover:text-white transition-colors"
+                  className="text-[10px] font-black text-[#F7931A] uppercase tracking-widest hover:text-slate-800 dark:hover:text-white transition-colors"
                 >
                   {markingRead ? 'Marking...' : 'Mark All Read'}
                 </button>
               )}
             </div>
 
-            <div className="max-h-[400px] overflow-y-auto custom-scrollbar">
+            <div className="max-h-[400px] overflow-y-auto no-scrollbar">
               {notifications.length > 0 ? (
-                <div className="divide-y divide-white/5">
+                <div className="divide-y divide-slate-100 dark:divide-white/5">
                   {notifications.map((notification) => {
                     const displayType = notification.content.startsWith('❤️') ? 'like' : 
                                         notification.content.startsWith('💬') ? 'comment' :
@@ -199,7 +199,7 @@ export default function NotificationBell() {
                     return (
                       <div
                         key={notification.id}
-                        className={`p-5 transition-colors hover:bg-white/[0.03] relative ${
+                        className={`p-5 transition-colors hover:bg-slate-50 dark:hover:bg-white/[0.03] relative ${
                           !notification.is_read ? 'bg-[#F7931A]/5' : ''
                         }`}
                       >
@@ -208,12 +208,12 @@ export default function NotificationBell() {
                         )}
                         <div className="flex gap-4">
                           <div className={`w-10 h-10 rounded-2xl flex items-center justify-center shrink-0 ${
-                            displayType === 'welcome' ? 'bg-blue-500/10 text-blue-400' :
+                            displayType === 'welcome' ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' :
                             displayType === 'tip' ? 'bg-[#F7931A]/10 text-[#F7931A]' :
-                            displayType === 'like' ? 'bg-red-500/10 text-red-400' :
-                            displayType === 'comment' ? 'bg-green-500/10 text-green-400' :
-                            displayType === 'follow' ? 'bg-blue-500/10 text-blue-400' :
-                            'bg-purple-500/10 text-purple-400'
+                            displayType === 'like' ? 'bg-red-500/10 text-red-500 dark:text-red-400' :
+                            displayType === 'comment' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
+                            displayType === 'follow' ? 'bg-blue-500/10 text-blue-500 dark:text-blue-400' :
+                            'bg-purple-500/10 text-purple-600 dark:text-purple-400'
                           }`}>
                             {displayType === 'welcome' ? <Info className="w-5 h-5" /> :
                              displayType === 'tip' ? <Zap className="w-5 h-5" /> :
@@ -223,7 +223,7 @@ export default function NotificationBell() {
                              <Star className="w-5 h-5" />}
                           </div>
                           <div className="flex-1 min-w-0">
-                            <p className="text-xs font-medium text-slate-300 leading-relaxed">
+                            <p className="text-xs font-medium text-slate-700 dark:text-slate-300 leading-relaxed">
                               {notification.content}
                             </p>
                             <p className="text-[10px] font-bold text-slate-600 uppercase tracking-widest mt-2">
@@ -237,8 +237,8 @@ export default function NotificationBell() {
                 </div>
               ) : (
                 <div className="py-12 px-6 text-center">
-                  <div className="w-16 h-16 bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-white/5">
-                    <Bell className="w-8 h-8 text-slate-700" />
+                  <div className="w-16 h-16 bg-slate-100 dark:bg-white/5 rounded-full flex items-center justify-center mx-auto mb-4 border border-slate-200 dark:border-white/5">
+                    <Bell className="w-8 h-8 text-slate-400 dark:text-slate-700" />
                   </div>
                   <p className="text-slate-500 text-sm font-medium">All caught up! No new notifications.</p>
                 </div>
@@ -246,17 +246,17 @@ export default function NotificationBell() {
             </div>
 
             {notifications.length > 0 && (
-              <div className="p-4 bg-white/[0.02] border-t border-white/5 text-center">
+              <div className="p-4 bg-slate-50/50 dark:bg-white/[0.02] border-t border-slate-200 dark:border-white/5 text-center">
                 {hasMore ? (
                   <button 
                     onClick={handleLoadMore}
                     disabled={loading}
-                    className="text-[10px] font-black text-[#F7931A] uppercase tracking-[0.2em] hover:text-white transition-colors disabled:opacity-50"
+                    className="text-[10px] font-black text-[#F7931A] uppercase tracking-[0.2em] hover:text-slate-800 dark:hover:text-white transition-colors disabled:opacity-50"
                   >
                     {loading ? 'Loading...' : 'Read More'}
                   </button>
                 ) : (
-                  <p className="text-[10px] font-black text-slate-600 uppercase tracking-[0.2em]">End of feed</p>
+                  <p className="text-[10px] font-black text-slate-500 dark:text-slate-600 uppercase tracking-[0.2em]">End of feed</p>
                 )}
               </div>
             )}

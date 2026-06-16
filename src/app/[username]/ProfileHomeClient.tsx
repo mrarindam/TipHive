@@ -340,18 +340,18 @@ export default function ProfileHomeClient() {
 
       <div className="grid grid-cols-1 xl:grid-cols-12 gap-8">
         <div className="xl:col-span-4 space-y-8">
-          <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-8">
-            <h3 className="text-sm font-black uppercase tracking-widest mb-4">About Creator</h3>
-            <p className="text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">{creator!.bio as string || 'This creator hasn\'t written a bio yet.'}</p>
+          <div className="bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/5 rounded-3xl p-8 shadow-sm">
+            <h3 className="text-sm font-black uppercase tracking-widest mb-4 text-slate-900 dark:text-white">About Creator</h3>
+            <p className="text-slate-600 dark:text-slate-400 text-sm leading-relaxed whitespace-pre-wrap">{creator!.bio as string || 'This creator hasn\'t written a bio yet.'}</p>
           </div>
 
-          <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-8">
-            <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2">
+          <div className="bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/5 rounded-3xl p-8 shadow-sm">
+            <h3 className="text-sm font-black uppercase tracking-widest mb-6 flex items-center gap-2 text-slate-900 dark:text-white">
               <Heart className="w-4 h-4 text-red-500" /> Recent Tips
             </h3>
             <div className="space-y-4">
               {recentTips.length > 0 ? recentTips.map((tip) => (
-                <div key={tip.id} className="flex gap-4 p-3 rounded-2xl bg-white/5 border border-white/5 hover:border-[#8A2BE2]/30 transition-colors">
+                <div key={tip.id} className="flex gap-4 p-3 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/5 hover:border-[#8A2BE2]/30 hover:bg-slate-100/50 dark:hover:bg-white/10 transition-colors">
                   <Link href={tip.sender_profile ? `/${tip.sender_profile.username}` : '#'} className="relative w-10 h-10 shrink-0">
                     <Image
                       src={tip.sender_profile?.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(tip.sender_profile?.display_name || 'User')}`}
@@ -363,13 +363,13 @@ export default function ProfileHomeClient() {
                   </Link>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center justify-between mb-1">
-                      <Link href={tip.sender_profile ? `/${tip.sender_profile.username}` : '#'} className="font-bold text-sm text-white hover:text-[#8A2BE2] truncate transition-colors">
+                      <Link href={tip.sender_profile ? `/${tip.sender_profile.username}` : '#'} className="font-bold text-sm text-slate-900 dark:text-white hover:text-[#8A2BE2] truncate transition-colors">
                         {tip.sender_profile?.display_name || 'Anonymous Supporter'}
                       </Link>
                       <span className="text-[#F7931A] font-black text-xs">${tip.amount}</span>
                     </div>
                     {tip.message && (
-                      <p className="text-xs text-slate-400 mt-1 line-clamp-2 italic">&quot;{tip.message}&quot;</p>
+                      <p className="text-xs text-slate-500 dark:text-slate-400 mt-1 line-clamp-2 italic">&quot;{tip.message}&quot;</p>
                     )}
                   </div>
                 </div>
@@ -382,16 +382,16 @@ export default function ProfileHomeClient() {
 
         <div className="xl:col-span-8 space-y-8">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 items-start">
-            <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-5 md:p-8 shadow-xl flex flex-col">
+            <div className="bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/5 rounded-3xl p-5 md:p-8 shadow-sm dark:shadow-xl flex flex-col">
               <div className="mb-6 flex items-center justify-between">
                 <div>
-                  <h3 className="text-xl font-black uppercase tracking-tighter text-white font-outfit">SUBSCRIPTIONS</h3>
+                  <h3 className="text-xl font-black uppercase tracking-tighter text-slate-900 dark:text-white font-outfit">SUBSCRIPTIONS</h3>
                   <p className="text-slate-500 text-[10px] font-medium mt-1 uppercase tracking-widest">Exclusive Access</p>
                 </div>
                 {hasMorePlans && (
                   <Link
                     href={`/${creator!.username}/subscriptions`}
-                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 border border-white/5 text-slate-500 hover:text-[#F7931A] hover:bg-[#F7931A]/5 hover:border-[#F7931A]/20 transition-all duration-300 group"
+                    className="flex items-center gap-2 px-4 py-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-slate-500 hover:text-[#F7931A] hover:bg-[#F7931A]/5 hover:border-[#F7931A]/20 transition-all duration-300 group"
                   >
                     <span className="text-[10px] font-black uppercase tracking-widest">More Perks</span>
                     <ArrowRight className="w-3 h-3 group-hover:translate-x-1 transition-transform" />
@@ -410,10 +410,10 @@ export default function ProfileHomeClient() {
               />
             </div>
 
-            <div className="bg-gradient-to-b from-[#0a0a0c] to-[#111113] border border-white/5 rounded-3xl p-6 md:p-8 shadow-2xl relative overflow-hidden flex flex-col min-h-[400px]">
+            <div className="bg-white dark:bg-gradient-to-b dark:from-[#0a0a0c] dark:to-[#111113] border border-slate-200 dark:border-white/5 rounded-3xl p-6 md:p-8 shadow-sm dark:shadow-2xl relative overflow-hidden flex flex-col min-h-[400px]">
               <div className="absolute top-0 right-0 w-48 h-48 bg-[#F7931A]/10 blur-[60px] rounded-full pointer-events-none" />
               <div className="relative z-10 flex flex-col h-full">
-                <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 font-outfit text-white/70">
+                <h3 className="text-sm font-black uppercase tracking-widest mb-4 flex items-center gap-2 font-outfit text-slate-900/70 dark:text-white/70">
                   <Heart className="w-4 h-4 text-red-500" /> Support with Tip
                 </h3>
 
@@ -424,7 +424,7 @@ export default function ProfileHomeClient() {
                         <button
                           key={val}
                           onClick={() => { setAmount(val); setCustomAmount(''); }}
-                          className={`py-3 rounded-2xl font-black transition-all text-xs border ${amount === val && !customAmount ? 'bg-[#F7931A] text-black border-[#F7931A] shadow-[0_10px_20px_rgba(247,147,26,0.2)]' : 'bg-white/5 text-slate-300 border-white/5 hover:bg-white/10 hover:border-white/10'}`}
+                          className={`py-3 rounded-2xl font-black transition-all text-xs border ${amount === val && !customAmount ? 'bg-[#F7931A] text-black border-[#F7931A] shadow-[0_10px_20px_rgba(247,147,26,0.2)]' : 'bg-slate-50 dark:bg-white/5 text-slate-700 dark:text-slate-300 border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10 hover:border-slate-350 dark:hover:border-white/10'}`}
                         >
                           ${val}
                         </button>
@@ -432,14 +432,14 @@ export default function ProfileHomeClient() {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="flex items-center bg-white/5 border border-white/10 rounded-2xl px-4 py-1.5 focus-within:ring-2 focus-within:ring-[#F7931A] transition-all">
+                      <div className="flex items-center bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-4 py-1.5 focus-within:ring-2 focus-within:ring-[#F7931A] transition-all">
                         <span className="text-slate-400 font-black mr-2">$</span>
                         <input
                           type="number"
                           placeholder="Custom"
                           value={customAmount}
                           onChange={e => setCustomAmount(e.target.value)}
-                          className="w-full bg-transparent border-none py-2 text-white outline-none text-base font-black placeholder:text-slate-600"
+                          className="w-full bg-transparent border-none py-2 text-slate-900 dark:text-white outline-none text-base font-black placeholder:text-slate-400 dark:placeholder:text-slate-600"
                         />
                       </div>
 
@@ -447,7 +447,7 @@ export default function ProfileHomeClient() {
                         placeholder="Leave a message..."
                         value={message}
                         onChange={e => setMessage(e.target.value)}
-                        className="w-full bg-white/5 border border-white/10 rounded-2xl px-5 py-4 text-white focus:ring-2 focus:ring-[#F7931A] outline-none resize-none h-32 text-sm font-medium placeholder:text-slate-600 transition-all"
+                        className="w-full bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-2xl px-5 py-4 text-slate-900 dark:text-white focus:ring-2 focus:ring-[#F7931A] outline-none resize-none h-32 text-sm font-medium placeholder:text-slate-400 dark:placeholder:text-slate-600 transition-all"
                       />
                     </div>
 
@@ -464,10 +464,10 @@ export default function ProfileHomeClient() {
                   </div>
                 ) : (
                   <div className="flex-1 flex flex-col items-center justify-center text-center py-12 px-4">
-                    <div className="w-16 h-16 rounded-3xl bg-white/5 border border-white/10 flex items-center justify-center mb-6">
-                      <Lock className="w-8 h-8 text-slate-600" />
+                    <div className="w-16 h-16 rounded-3xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 flex items-center justify-center mb-6">
+                      <Lock className="w-8 h-8 text-slate-400 dark:text-slate-600" />
                     </div>
-                    <h4 className="text-xl font-black text-white uppercase tracking-tighter mb-2">No tip setup yet</h4>
+                    <h4 className="text-xl font-black text-slate-900 dark:text-white uppercase tracking-tighter mb-2">No tip setup yet</h4>
                     <p className="text-slate-500 text-sm font-medium max-w-[200px]">This creator hasn&apos;t linked a wallet to receive tips.</p>
                   </div>
                 )}
@@ -480,10 +480,10 @@ export default function ProfileHomeClient() {
       <div className="mt-8">
         <div className="flex items-center justify-between mb-8 px-2">
           <div className="space-y-1">
-            <h3 className="text-2xl font-black uppercase tracking-tighter text-white font-outfit">Recent Feed</h3>
+            <h3 className="text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white font-outfit">Recent Feed</h3>
             <p className="text-slate-500 text-xs font-bold uppercase tracking-[0.2em]">Latest updates from {creator!.display_name}</p>
           </div>
-          <Link href={`/${creator!.username}/posts`} className="p-3 bg-[#0a0a0c] border border-white/5 rounded-2xl text-[#8A2BE2] text-xs font-bold hover:bg-[#8A2BE2] hover:text-white transition-all flex items-center gap-2 shadow-lg group">
+          <Link href={`/${creator!.username}/posts`} className="p-3 bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/5 rounded-2xl text-[#8A2BE2] text-xs font-bold hover:bg-[#8A2BE2] hover:text-white transition-all flex items-center gap-2 shadow-md dark:shadow-lg group">
             Explore All <ChevronRight className="w-4 h-4 transition-transform group-hover:translate-x-1" />
           </Link>
         </div>
@@ -498,8 +498,8 @@ export default function ProfileHomeClient() {
               || (post.visibility === 'supporters' && isSubscribed);
             const isLocked = !hasAccess;
             return (
-              <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="bg-[#0a0a0c] border border-white/5 rounded-[2rem] overflow-hidden group hover:border-[#8A2BE2]/50 transition-all block shadow-xl hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
-                <div className="h-52 bg-[#111113] relative overflow-hidden">
+              <Link href={`/${creator!.username}/posts/${encodeURIComponent(post.title as string)}`} key={post.id as string} className="bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/5 rounded-[2rem] overflow-hidden group hover:border-[#8A2BE2]/50 transition-all block shadow-sm dark:shadow-xl hover:shadow-md dark:hover:shadow-[0_20px_40px_rgba(0,0,0,0.4)]">
+                <div className="h-52 bg-slate-100 dark:bg-[#111113] relative overflow-hidden">
                   {(() => {
                     const contentImage = extractFirstImage(post.content);
                     const isAudio = post.video_url?.match(/\.(mp3|wav|ogg|m4a|aac)$/i);
@@ -538,10 +538,10 @@ export default function ProfileHomeClient() {
 
                     return <TextThumbnail title={post.title} />;
                   })()}
-                  <div className="absolute top-4 left-4 px-3 py-1.5 bg-black/60 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/10">Post</div>
+                  <div className="absolute top-4 left-4 px-3 py-1.5 bg-slate-900/80 dark:bg-black/60 backdrop-blur-md rounded-xl text-[10px] font-black uppercase tracking-widest text-white border border-white/10">Post</div>
                   {isLocked && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center backdrop-blur-[2px]">
-                      <div className="bg-[#0a0a0c]/90 border border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-white shadow-2xl">
+                      <div className="bg-white/90 dark:bg-[#0a0a0c]/90 border border-slate-200 dark:border-white/10 px-4 py-2 rounded-full flex items-center gap-2 text-xs font-black text-slate-900 dark:text-white shadow-md dark:shadow-2xl">
                         <Lock className="w-3.5 h-3.5 text-[#F7931A]" />
                         <span className="uppercase tracking-widest">Locked</span>
                       </div>
@@ -549,7 +549,7 @@ export default function ProfileHomeClient() {
                   )}
                 </div>
                 <div className="p-6">
-                  <h4 className="font-black text-lg mb-2 truncate group-hover:text-[#8A2BE2] transition-colors">{post.title as string}</h4>
+                  <h4 className="font-black text-lg mb-2 truncate text-slate-900 dark:text-white group-hover:text-[#8A2BE2] transition-colors">{post.title as string}</h4>
                   <div className="flex items-center justify-between mt-4">
                     <p className="text-[10px] text-slate-500 font-black uppercase tracking-widest">{new Date(post.created_at as string).toLocaleDateString()}</p>
                     <div className={`px-2 py-1 rounded-md text-[8px] font-black uppercase tracking-widest ${post.visibility === 'public' ? 'text-emerald-500 bg-emerald-500/10' :

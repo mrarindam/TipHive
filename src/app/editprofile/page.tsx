@@ -228,17 +228,17 @@ export default function ConnectedProfilePage() {
   );
 
   if (!ready) {
-    return <div className="min-h-[70vh] bg-black" />;
+    return <div className="min-h-[70vh] bg-transparent" />;
   }
 
   if (!authenticated) {
     return (
       <div className="mx-auto flex min-h-[70vh] max-w-3xl flex-col items-center justify-center px-4 text-center">
-        <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] border border-white/5 bg-white/5 shadow-2xl shadow-orange-500/10">
+        <div className="mb-8 flex h-24 w-24 items-center justify-center rounded-[2rem] border border-slate-200 dark:border-white/5 bg-white dark:bg-white/5 shadow-2xl shadow-orange-500/10">
           <UserRound className="h-10 w-10 text-[#F7931A]" />
         </div>
-        <h1 className="font-outfit text-5xl font-black uppercase tracking-tighter text-white">Gateway Locked</h1>
-        <p className="mt-4 max-w-lg text-lg font-medium text-slate-400">
+        <h1 className="font-outfit text-5xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Gateway Locked</h1>
+        <p className="mt-4 max-w-lg text-lg font-medium text-slate-500 dark:text-slate-400">
           You must be logged in to access your universal profile.
         </p>
       </div>
@@ -248,7 +248,7 @@ export default function ConnectedProfilePage() {
   if (loading) {
     return (
       <div className="mx-auto max-w-6xl px-4 py-16">
-        <div className="h-[520px] animate-pulse rounded-[2rem] border border-white/5 bg-white/5" />
+        <div className="h-[520px] animate-pulse rounded-[2rem] border border-slate-200 dark:border-white/5 bg-slate-100 dark:bg-white/5" />
       </div>
     );
   }
@@ -258,7 +258,7 @@ export default function ConnectedProfilePage() {
       <div className="max-w-4xl mx-auto mb-4">
         <Link
           href="/dashboard"
-          className="inline-flex items-center gap-2 text-slate-400 hover:text-white transition-colors font-semibold text-sm"
+          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors font-semibold text-sm"
         >
           <ArrowLeft size={18} />
           Back to Dashboard
@@ -270,7 +270,7 @@ export default function ConnectedProfilePage() {
             <ShieldCheck className="h-4 w-4" />
             Universal profile settings
           </p>
-          <h1 className="font-outfit text-5xl font-black uppercase tracking-tighter text-white">
+          <h1 className="font-outfit text-5xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
             Profile <span className="text-[#F7931A]">Settings</span>
           </h1>
         </div>
@@ -289,7 +289,7 @@ export default function ConnectedProfilePage() {
               <Pencil className="h-5 w-5" />
             </div>
             <div>
-              <h2 className="font-outfit text-2xl font-black uppercase tracking-tighter text-white">Profile Settings</h2>
+              <h2 className="font-outfit text-2xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">Profile Settings</h2>
               <p className="text-sm font-medium text-slate-500">Update your off-chain metadata for this wallet.</p>
             </div>
           </div>
@@ -324,7 +324,7 @@ export default function ConnectedProfilePage() {
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Field label="Avatar">
-                <div className="relative overflow-hidden rounded-2xl border border-dashed border-white/5 bg-white/5 p-4 transition hover:border-[#F7931A]/50">
+                <div className="relative overflow-hidden rounded-2xl border border-dashed border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 p-4 transition hover:border-[#F7931A]/50">
                   <input
                     type="file"
                     accept="image/*"
@@ -332,18 +332,18 @@ export default function ConnectedProfilePage() {
                     onChange={(event) => setAvatarFile(event.target.files?.[0] || null)}
                   />
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#F7931A]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-[#F7931A]">
                       <Upload className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-black text-white truncate max-w-[120px]">{avatarFile ? avatarFile.name : 'Change Avatar'}</p>
+                      <p className="text-xs font-black text-slate-950 dark:text-white truncate max-w-[120px]">{avatarFile ? avatarFile.name : 'Change Avatar'}</p>
                     </div>
                   </div>
                 </div>
               </Field>
 
               <Field label="Banner">
-                <div className="relative overflow-hidden rounded-2xl border border-dashed border-white/5 bg-white/5 p-4 transition hover:border-[#F7931A]/50">
+                <div className="relative overflow-hidden rounded-2xl border border-dashed border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 p-4 transition hover:border-[#F7931A]/50">
                   <input
                     type="file"
                     accept="image/*"
@@ -361,11 +361,11 @@ export default function ConnectedProfilePage() {
                     }}
                   />
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-white/10 text-[#F7931A]">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-[#F7931A]">
                       <Upload className="h-4 w-4" />
                     </div>
                     <div>
-                      <p className="text-xs font-black text-white truncate max-w-[120px]">{bannerFile ? 'New Banner' : 'Change Banner'}</p>
+                      <p className="text-xs font-black text-slate-950 dark:text-white truncate max-w-[120px]">{bannerFile ? 'New Banner' : 'Change Banner'}</p>
                     </div>
                   </div>
                 </div>
@@ -420,15 +420,15 @@ export default function ConnectedProfilePage() {
               />
             </Field>
 
-            <div className="pt-6 border-t border-white/5 space-y-6">
+            <div className="pt-6 border-t border-slate-200 dark:border-white/5 space-y-6">
               <div className="flex items-center justify-between">
-                <h3 className="text-sm font-black text-white uppercase tracking-widest">Connect Socials</h3>
+                <h3 className="text-sm font-black text-slate-900 dark:text-white uppercase tracking-widest">Connect Socials</h3>
                 <span className="text-[10px] text-slate-500 font-bold uppercase tracking-widest">Optional</span>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-xs uppercase">X</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 font-black text-xs uppercase">X</span>
                   <input
                     type="text"
                     value={twitterVal}
@@ -438,7 +438,7 @@ export default function ConnectedProfilePage() {
                   />
                 </div>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-[10px] uppercase">GH</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase">GH</span>
                   <input
                     type="text"
                     value={githubVal}
@@ -448,7 +448,7 @@ export default function ConnectedProfilePage() {
                   />
                 </div>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-black text-[10px] uppercase">DS</span>
+                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase">DS</span>
                   <input
                     type="text"
                     value={discordVal}
@@ -458,7 +458,7 @@ export default function ConnectedProfilePage() {
                   />
                 </div>
                 <div className="relative">
-                  <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500" />
+                  <Globe className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
                   <input
                     type="url"
                     value={websiteVal}
@@ -483,7 +483,7 @@ export default function ConnectedProfilePage() {
                 <p className="text-[10px] font-black uppercase tracking-widest text-slate-500 ml-1">Extra Links</p>
                 {extraLinks.map((link, index) => (
                   <div key={index} className="flex items-center gap-2 relative">
-                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600" />
+                    <LinkIcon className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400" />
                     <input
                       value={link}
                       onChange={(e) => {
@@ -511,7 +511,7 @@ export default function ConnectedProfilePage() {
                 <button
                   type="button"
                   onClick={() => setFormData({ ...formData, social_links: [...formData.social_links, ''] })}
-                  className="flex items-center gap-2 rounded-xl border border-white/5 bg-white/5 px-4 py-3 text-xs font-bold text-slate-400 hover:bg-white/10 hover:text-white transition-all w-full justify-center"
+                  className="flex items-center gap-2 rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-white/5 px-4 py-3 text-xs font-bold text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/10 hover:text-slate-900 dark:hover:text-white transition-all w-full justify-center"
                 >
                   <LinkIcon className="w-3 h-3" /> Add extra social link
                 </button>
@@ -531,7 +531,7 @@ export default function ConnectedProfilePage() {
         <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F7931A]/15 text-[#F7931A]">
           <Crown className="h-8 w-8" />
         </div>
-        <h2 className="font-outfit text-3xl font-black uppercase tracking-tighter text-white">
+        <h2 className="font-outfit text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
           {profile?.is_creator ? 'Creator Profile' : 'Become a Creator'}
         </h2>
         <p className="mt-4 max-w-xl text-sm font-medium text-slate-500">
@@ -558,13 +558,13 @@ export default function ConnectedProfilePage() {
             exit={{ opacity: 0, y: 100 }}
             className="fixed bottom-10 left-1/2 -translate-x-1/2 z-[200] w-[90%] max-w-md"
           >
-            <div className="bg-[#111113]/90 backdrop-blur-2xl border border-[#F7931A]/30 rounded-[2rem] p-6 shadow-[0_20px_50px_rgba(247,147,26,0.2)] flex items-center gap-6">
+            <div className="bg-white/90 dark:bg-[#111113]/90 backdrop-blur-2xl border border-[#F7931A]/30 rounded-[2rem] p-6 shadow-[0_20px_50px_rgba(247,147,26,0.2)] flex items-center gap-6">
               <div className="w-14 h-14 rounded-2xl bg-[#F7931A] flex items-center justify-center shadow-lg shadow-orange-500/30 shrink-0">
                 <ShieldCheck className="w-8 h-8 text-black" />
               </div>
               <div className="flex-1">
-                <h4 className="text-white font-black uppercase tracking-tight text-xl">Profile Saved</h4>
-                <p className="text-slate-400 text-sm font-bold uppercase tracking-widest">Changes are now live!</p>
+                <h4 className="text-slate-900 dark:text-white font-black uppercase tracking-tight text-xl">Profile Saved</h4>
+                <p className="text-slate-500 dark:text-slate-400 text-sm font-bold uppercase tracking-widest">Changes are now live!</p>
               </div>
               <button
                 onClick={() => setShowSuccess(false)}
