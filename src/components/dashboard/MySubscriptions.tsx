@@ -10,7 +10,7 @@ import Link from 'next/link';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import { SUBSCRIPTION_ABI } from '@/lib/contracts';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
-import { useDashboard } from '@/app/dashboard/layout';
+import { useDashboard } from '@/components/providers/DashboardProvider';
 import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { Plus } from 'lucide-react';
 

@@ -314,7 +314,7 @@ export default function ProfileHomeClient() {
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-2xl max-md:px-4"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4"
           >
             <div className={`glass-card p-4 flex items-center justify-between border ${notification.type === 'error' ? 'border-red-500/50 bg-red-500/10' : 'border-green-500/50 bg-green-500/10'} shadow-[0_20px_40px_rgba(0,0,0,0.4)]`}>
               <div className="flex items-center gap-3">
@@ -323,13 +323,13 @@ export default function ProfileHomeClient() {
                 ) : (
                   <CheckCircle2 className="w-5 h-5 text-green-500" />
                 )}
-                <p className="text-sm font-bold text-white tracking-tight">
+                <p className="text-sm font-bold text-slate-900 dark:text-white tracking-tight">
                   {notification.message}
                 </p>
               </div>
               <button
                 onClick={() => setNotification(null)}
-                className="p-1 hover:bg-white/10 rounded-lg transition-colors"
+                className="p-1 hover:bg-slate-100 dark:hover:bg-white/10 rounded-lg transition-colors"
               >
                 <X className="w-4 h-4 text-slate-400" />
               </button>
@@ -455,10 +455,10 @@ export default function ProfileHomeClient() {
                       <button
                         onClick={handleTip}
                         disabled={tipStatus === 'approving' || tipStatus === 'tipping'}
-                        className="w-full bg-[#8A2BE2] text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-[#7828c8] hover:scale-[1.01] active:scale-[0.98] transition-all shadow-[0_20px_40px_rgba(138,43,226,0.2)] text-xs uppercase tracking-[0.2em]"
+                        className="w-full bg-[#8A2BE2] text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-[#731cb3] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-md hover:shadow-lg text-xs uppercase tracking-[0.2em]"
                       >
                         {tipStatus === 'approving' ? 'Confirming Approval...' :
-                          tipStatus === 'tipping' ? 'Sending Tip...' : `Send ${creator!.button_text || 'Tip'}`}
+                          tipStatus === 'tipping' ? 'Sending Tip...' : `${creator!.button_text || 'Tip'}`}
                       </button>
                     </div>
                   </div>

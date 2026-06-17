@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { motion } from 'framer-motion';
-import { useDashboard, Activity } from '../layout';
+import { useDashboard, type Activity } from '@/components/providers/DashboardProvider';
 import { History, Heart, Calendar, ExternalLink, Bitcoin } from 'lucide-react';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import Pagination from '@/components/ui/Pagination';

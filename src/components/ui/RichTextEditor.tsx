@@ -48,7 +48,7 @@ const RichTextEditor = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
   const toolbarRef = useRef<HTMLDivElement>(null);
   const pathname = usePathname();
-  const isDropsPage = pathname?.includes('/dashboard/posts') || pathname?.includes('/dashboard/createposts');
+  const isDropsPage = pathname?.includes('/posts') || pathname?.includes('/createposts');
 
   // Measure actual toolbar height for accurate padding
   useEffect(() => {

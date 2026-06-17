@@ -62,6 +62,7 @@ const BannerCropper: React.FC<BannerCropperProps> = ({ image, onCropComplete, on
             </div>
           </div>
           <button
+            type="button"
             onClick={onCancel}
             className="flex h-10 w-10 items-center justify-center rounded-full bg-white/5 text-slate-400 transition hover:bg-white/10 hover:text-white"
           >
@@ -74,7 +75,7 @@ const BannerCropper: React.FC<BannerCropperProps> = ({ image, onCropComplete, on
             image={image}
             crop={crop}
             zoom={zoom}
-            aspect={16 / 9}
+            aspect={3 / 1}
             onCropChange={onCropChange}
             onCropComplete={onCropCompleteInternal}
             onZoomChange={onZoomChange}
@@ -82,16 +83,6 @@ const BannerCropper: React.FC<BannerCropperProps> = ({ image, onCropComplete, on
                 containerClassName: "rounded-b-[2rem]",
             }}
           />
-          {/* Desktop 3:1 Crop Guide */}
-          <div className="pointer-events-none absolute inset-0 flex items-center justify-center">
-            <div className="w-full border-y border-dashed border-white/40 bg-black/20" style={{ height: '59.25%' }}>
-                <div className="absolute top-1 left-4 text-[8px] font-bold uppercase tracking-widest text-white/60">Desktop View Area (3:1)</div>
-            </div>
-            {/* Safe Area Indicator */}
-            <div className="h-full w-[60%] border-x border-dashed border-[#F7931A]/30 bg-[#F7931A]/5">
-                <div className="absolute bottom-2 left-1/2 -translate-x-1/2 text-[10px] font-bold uppercase tracking-widest text-[#F7931A]/60">Mobile Safe Area (60%)</div>
-            </div>
-          </div>
         </div>
 
         <div className="p-6">
@@ -111,12 +102,14 @@ const BannerCropper: React.FC<BannerCropperProps> = ({ image, onCropComplete, on
 
           <div className="flex gap-3">
             <button
+              type="button"
               onClick={onCancel}
               className="flex-1 rounded-2xl border border-white/5 bg-white/5 py-4 text-sm font-bold text-slate-400 transition hover:bg-white/10 hover:text-white"
             >
               Cancel
             </button>
             <button
+              type="button"
               onClick={handleCrop}
               className="flex-[2] btn-primary flex items-center justify-center gap-2 py-4 text-sm"
             >

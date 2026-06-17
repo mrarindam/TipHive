@@ -23,7 +23,7 @@ export const viewport: Viewport = {
 export const metadata: Metadata = {
   metadataBase: new URL('https://tiphive.xyz'),
   title: {
-    default: "TipHive — The Bitcoin-Native Tipping Platform on Mezo L2",
+    default: "TipHive - The Bitcoin-Native Tipping Platform on Mezo L2",
     template: "%s | TipHive"
   },
   description: "Empowering the creator economy with instant, fee-less Bitcoin-native tips on Mezo L2. Monetize your content, build memberships, and interact with fans directly.",
@@ -74,7 +74,7 @@ export const metadata: Metadata = {
     },
   },
   openGraph: {
-    title: "TipHive — The Bitcoin-Native Tipping Platform on Mezo L2",
+    title: "TipHive - The Bitcoin-Native Tipping Platform on Mezo L2",
     description: "Empowering the creator economy with instant, fee-less Bitcoin-native tips on Mezo L2. Monetize your content with 0% platform fees.",
     url: "https://tiphive.xyz",
     siteName: "TipHive",
@@ -91,7 +91,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TipHive — The Bitcoin-Native Tipping Platform on Mezo L2",
+    title: "TipHive - The Bitcoin-Native Tipping Platform on Mezo L2",
     description: "Empowering the creator economy with instant, fee-less Bitcoin-native tips on Mezo L2. Monetize your content with 0% platform fees.",
     creator: "@TipHive",
     images: ["https://tiphive.xyz/logo.png"],
@@ -188,7 +188,7 @@ const jsonLd = {
           "name": "Is TipHive safe?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Yes. TipHive is non-custodial—we never hold your funds. Money goes directly to your wallet."
+            "text": "Yes. TipHive is non-custodial - we never hold your funds. Money goes directly to your wallet."
           }
         },
         {

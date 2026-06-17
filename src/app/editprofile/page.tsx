@@ -6,13 +6,10 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { useAccount } from 'wagmi';
 import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import {
-  ArrowLeft,
   AtSign,
-  Crown,
   ExternalLink,
   Loader2,
   Pencil,
-  Rocket,
   Save,
   ShieldCheck,
   Upload,
@@ -64,6 +61,29 @@ export default function ConnectedProfilePage() {
 
   const [tempBannerUrl, setTempBannerUrl] = useState<string | null>(null);
   const [isCropping, setIsCropping] = useState(false);
+
+  const hasChanges = (() => {
+    if (!profile) return false;
+    if (avatarFile !== null || bannerFile !== null) return true;
+
+    const socialLinksMatch = (() => {
+      const formSocials = formData.social_links.filter(url => url.trim() !== '');
+      const profileSocials = Array.isArray(profile.social_links) ? profile.social_links : [];
+      if (formSocials.length !== profileSocials.length) return false;
+      return formSocials.every((val, index) => val === profileSocials[index]);
+    })();
+
+    return (
+      formData.username !== (profile.username || '') ||
+      formData.display_name !== (profile.display_name || '') ||
+      formData.bio !== (profile.bio || '') ||
+      formData.avatar_url !== (profile.avatar_url || '') ||
+      formData.banner_url !== (profile.banner_url || '') ||
+      formData.creator_description !== (profile.creator_description || '') ||
+      formData.location !== (profile.location || '') ||
+      !socialLinksMatch
+    );
+  })();
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -180,8 +200,19 @@ export default function ConnectedProfilePage() {
       const data = await response.json();
       if (!response.ok) throw new Error(data.error || 'Profile update failed');
       setProfile(data.profile);
-      window.dispatchEvent(new CustomEvent('wallet-profile-updated', { detail: data.profile }));
+      setFormData({
+        username: data.profile?.username || '',
+        display_name: data.profile?.display_name || '',
+        bio: data.profile?.bio || '',
+        avatar_url: data.profile?.avatar_url || '',
+        banner_url: data.profile?.banner_url || '',
+        social_links: Array.isArray(data.profile?.social_links) ? data.profile.social_links : [],
+        creator_description: data.profile?.creator_description || '',
+        location: data.profile?.location || '',
+      });
       setAvatarFile(null);
+      setBannerFile(null);
+      window.dispatchEvent(new CustomEvent('wallet-profile-updated', { detail: data.profile }));
       setShowSuccess(true);
       setTimeout(() => setShowSuccess(false), 3000);
     } catch (error) {
@@ -255,21 +286,8 @@ export default function ConnectedProfilePage() {
 
   return (
     <div className="w-full px-4 pt-28 pb-10 sm:px-6 lg:px-8">
-      <div className="max-w-4xl mx-auto mb-4">
-        <Link
-          href="/dashboard"
-          className="inline-flex items-center gap-2 text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white transition-colors font-semibold text-sm"
-        >
-          <ArrowLeft size={18} />
-          Back to Dashboard
-        </Link>
-      </div>
-      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between max-w-4xl mx-auto">
+      <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between w-full">
         <div>
-          <p className="mb-3 inline-flex items-center gap-2 rounded-full border border-[#F7931A]/25 bg-[#F7931A]/10 px-4 py-2 text-xs font-black uppercase tracking-[0.24em] text-[#F7931A]">
-            <ShieldCheck className="h-4 w-4" />
-            Universal profile settings
-          </p>
           <h1 className="font-outfit text-5xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
             Profile <span className="text-[#F7931A]">Settings</span>
           </h1>
@@ -282,7 +300,7 @@ export default function ConnectedProfilePage() {
         )}
       </div>
 
-      <div className="mx-auto max-w-4xl">
+      <div className="w-full">
         <section className="glass-card p-8">
           <div className="mb-8 flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-[#F7931A]/15 text-[#F7931A]">
@@ -332,9 +350,23 @@ export default function ConnectedProfilePage() {
                     onChange={(event) => setAvatarFile(event.target.files?.[0] || null)}
                   />
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-[#F7931A]">
-                      <Upload className="h-4 w-4" />
-                    </div>
+                    {avatarFile ? (
+                      <img
+                        src={URL.createObjectURL(avatarFile)}
+                        alt="Preview"
+                        className="h-10 w-10 rounded-xl object-cover border border-[#F7931A]/30 shrink-0"
+                      />
+                    ) : formData.avatar_url ? (
+                      <img
+                        src={formData.avatar_url}
+                        alt="Current Avatar"
+                        className="h-10 w-10 rounded-xl object-cover border border-slate-200 dark:border-white/10 shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-[#F7931A] shrink-0">
+                        <Upload className="h-4 w-4" />
+                      </div>
+                    )}
                     <div>
                       <p className="text-xs font-black text-slate-950 dark:text-white truncate max-w-[120px]">{avatarFile ? avatarFile.name : 'Change Avatar'}</p>
                     </div>
@@ -361,9 +393,23 @@ export default function ConnectedProfilePage() {
                     }}
                   />
                   <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-[#F7931A]">
-                      <Upload className="h-4 w-4" />
-                    </div>
+                    {bannerFile ? (
+                      <img
+                        src={URL.createObjectURL(bannerFile)}
+                        alt="Preview"
+                        className="h-8 w-24 rounded-xl object-cover border border-[#F7931A]/30 shrink-0"
+                      />
+                    ) : formData.banner_url ? (
+                      <img
+                        src={formData.banner_url}
+                        alt="Current Banner"
+                        className="h-8 w-24 rounded-xl object-cover border border-slate-200 dark:border-white/10 shrink-0"
+                      />
+                    ) : (
+                      <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-slate-100 dark:bg-white/10 text-[#F7931A] shrink-0">
+                        <Upload className="h-4 w-4" />
+                      </div>
+                    )}
                     <div>
                       <p className="text-xs font-black text-slate-950 dark:text-white truncate max-w-[120px]">{bannerFile ? 'New Banner' : 'Change Banner'}</p>
                     </div>
@@ -428,17 +474,21 @@ export default function ConnectedProfilePage() {
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 font-black text-xs uppercase">X</span>
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400">
+                    <svg viewBox="0 0 24 24" className="w-full h-full fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+                  </div>
                   <input
                     type="text"
                     value={twitterVal}
                     onChange={(e) => updateSpecificSocial('x.com', e.target.value, 'https://x.com/')}
-                    className="profile-input pl-10 text-sm"
+                    className="profile-input pl-12 text-sm"
                     placeholder="@handle"
                   />
                 </div>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase">GH</span>
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400">
+                    <svg viewBox="0 0 24 24" className="w-full h-full fill-current"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.483 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.479C19.138 20.162 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+                  </div>
                   <input
                     type="text"
                     value={githubVal}
@@ -448,12 +498,14 @@ export default function ConnectedProfilePage() {
                   />
                 </div>
                 <div className="relative">
-                  <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-600 dark:text-slate-400 font-black text-[10px] uppercase">DS</span>
+                  <div className="absolute left-4 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-600 dark:text-slate-400">
+                    <svg viewBox="0 0 24 24" className="w-full h-full fill-current"><path d="M19.27 2.33a22.9 22.9 0 0 0-5.77-1.8 15.7 15.7 0 0 0-.82 1.68 21.6 21.6 0 0 0-6.36 0 15.7 15.7 0 0 0-.82-1.68 22.9 22.9 0 0 0-5.77 1.8A24.6 24.6 0 0 0 .25 19.34a23.3 23.3 0 0 0 7.14 3.59 18 18 0 0 0 1.5-2.43 15.3 15.3 0 0 1-3.4-1.66 11.4 11.4 0 0 0 .28-.22 16.5 16.5 0 0 0 12.46 0c.1 0 .19.14.28.22a15.3 15.3 0 0 1-3.4 1.66 18 18 0 0 0 1.5 2.43 23.3 23.3 0 0 0 7.14-3.59 24.6 24.6 0 0 0-3.38-17.01ZM8.24 16.63c-1.37 0-2.5-1.26-2.5-2.81s1.11-2.81 2.5-2.81 2.5 1.26 2.5 2.81-1.11 2.81-2.5 2.81Zm7.52 0c-1.37 0-2.5-1.26-2.5-2.81s1.11-2.81 2.5-2.81 2.5 1.26 2.5 2.81-1.11 2.81-2.5 2.81Z"/></svg>
+                  </div>
                   <input
                     type="text"
                     value={discordVal}
                     onChange={(e) => updateSpecificSocial('discord.com', e.target.value, 'https://discord.com/users/')}
-                    className="profile-input pl-10 text-sm"
+                    className="profile-input pl-12 text-sm"
                     placeholder="ID"
                   />
                 </div>
@@ -518,7 +570,15 @@ export default function ConnectedProfilePage() {
               </div>
             </div>
 
-            <button type="submit" disabled={saving} className="btn-primary flex w-full items-center justify-center gap-3 py-5 text-lg shadow-[0_20px_40px_rgba(247,147,26,0.2)]">
+            <button
+              type="submit"
+              disabled={saving || !hasChanges}
+              className={`btn-primary flex w-full items-center justify-center gap-3 py-5 text-lg shadow-[0_20px_40px_rgba(247,147,26,0.2)] transition-all duration-300 ${
+                (!hasChanges || saving)
+                  ? 'opacity-40 cursor-not-allowed filter grayscale shadow-none hover:translate-y-0'
+                  : ''
+              }`}
+            >
               {saving ? <Loader2 className="h-5 w-5 animate-spin" /> : <Save className="h-5 w-5" />}
               {saving ? 'Saving Profile...' : 'Save Profile'}
             </button>
@@ -526,29 +586,6 @@ export default function ConnectedProfilePage() {
         </section>
       </div>
 
-      <section className="mx-auto max-w-4xl glass-card mt-8 overflow-hidden p-8 relative flex flex-col items-center justify-center text-center">
-        <div className="absolute right-0 top-0 h-48 w-48 rounded-full bg-[#F7931A]/10 blur-3xl" />
-        <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-[#F7931A]/15 text-[#F7931A]">
-          <Crown className="h-8 w-8" />
-        </div>
-        <h2 className="font-outfit text-3xl font-black uppercase tracking-tighter text-slate-900 dark:text-white">
-          {profile?.is_creator ? 'Creator Profile' : 'Become a Creator'}
-        </h2>
-        <p className="mt-4 max-w-xl text-sm font-medium text-slate-500">
-          {profile?.is_creator
-            ? 'Manage your creator page, categories, and subscription settings.'
-            : 'Send value directly to your favorite creators. No middlemen, no waiting periods.'}
-        </p>
-        <div className="mt-8">
-          <Link
-            href="/dashboard"
-            className="btn-primary flex items-center justify-center gap-3 py-4 px-8"
-          >
-            <Rocket className="h-5 w-5" />
-            Go to Dashboard
-          </Link>
-        </div>
-      </section>
 
       <AnimatePresence>
         {showSuccess && (

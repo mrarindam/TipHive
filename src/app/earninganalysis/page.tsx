@@ -1,7 +1,7 @@
 'use client';
 
 import { motion } from 'framer-motion';
-import { useDashboard } from '../layout';
+import { useDashboard } from '@/components/providers/DashboardProvider';
 import AnalyticsDashboard from '@/components/dashboard/AnalyticsDashboard';
 
 export default function EarningAnalysisPage() {

@@ -88,9 +88,9 @@ export default function FloatingDock() {
       icon: <CoinsIcon className="w-6.5 h-6.5" />,
       type: 'category',
       subLinks: [
-        { name: 'Tip Circles', href: '/dashboard/tipcircle', icon: <Users className="w-6.5 h-6.5" strokeWidth={2.5} /> },
-        { name: 'Subscriptions', href: '/dashboard/subscriptions', icon: <Calendar className="w-6.5 h-6.5" strokeWidth={2.5} /> },
-        { name: 'Posting', href: '/dashboard/posts', icon: <Edit3 className="w-6.5 h-6.5" strokeWidth={2.5} /> },
+        { name: 'Tip Circles', href: '/tipcircle', icon: <Users className="w-6.5 h-6.5" strokeWidth={2.5} /> },
+        { name: 'Subscriptions', href: '/subscriptions', icon: <Calendar className="w-6.5 h-6.5" strokeWidth={2.5} /> },
+        { name: 'Posting', href: '/posts', icon: <Edit3 className="w-6.5 h-6.5" strokeWidth={2.5} /> },
       ],
     },
     {
@@ -98,10 +98,10 @@ export default function FloatingDock() {
       icon: <History className="w-6.5 h-6.5" />,
       type: 'category',
       subLinks: [
-        { name: 'Activity Feed', href: '/dashboard/activityfeed', icon: <History className="w-6.5 h-6.5" strokeWidth={2.5} /> },
-        { name: 'Analytics', href: '/dashboard/earninganalysis', icon: <TrendingUp className="w-6.5 h-6.5" strokeWidth={2.5} /> },
-        { name: 'Sent Support', href: '/dashboard/sentsupport', icon: <Heart className="w-6.5 h-6.5" strokeWidth={2.5} /> },
-        { name: 'My Subscriptions', href: '/dashboard/mysubsriptions', icon: <Bookmark className="w-6.5 h-6.5" strokeWidth={2.5} /> },
+        { name: 'Activity Feed', href: '/activityfeed', icon: <History className="w-6.5 h-6.5" strokeWidth={2.5} /> },
+        { name: 'Analytics', href: '/earninganalysis', icon: <TrendingUp className="w-6.5 h-6.5" strokeWidth={2.5} /> },
+        { name: 'Sent Support', href: '/sentsupport', icon: <Heart className="w-6.5 h-6.5" strokeWidth={2.5} /> },
+        { name: 'My Subscriptions', href: '/mysubsriptions', icon: <Bookmark className="w-6.5 h-6.5" strokeWidth={2.5} /> },
       ],
     },
     {
@@ -109,7 +109,7 @@ export default function FloatingDock() {
       icon: <Settings className="w-6.5 h-6.5" />,
       type: 'category',
       subLinks: [
-        { name: 'Visual Toolkit', href: '/dashboard/visual-toolkit', icon: <Settings className="w-6.5 h-6.5" strokeWidth={2.5} /> },
+        { name: 'Visual Toolkit', href: '/visual-toolkit', icon: <Settings className="w-6.5 h-6.5" strokeWidth={2.5} /> },
         { name: 'Edit Profile', href: '/editprofile', icon: <UserCog className="w-6.5 h-6.5" strokeWidth={2.5} /> },
       ],
     },
@@ -136,7 +136,7 @@ export default function FloatingDock() {
   ];
 
   // Do not render floating dock on embed pages or post writing pages
-  if (pathname?.startsWith('/embed/') || pathname?.includes('/dashboard/createposts')) {
+  if (pathname?.startsWith('/embed/') || pathname?.includes('/createposts')) {
     return null;
   }
 

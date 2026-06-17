@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSearchParams } from 'next/navigation';
-import { useDashboard } from '../layout';
+import { useDashboard } from '@/components/providers/DashboardProvider';
 import { supabase } from '@/lib/supabase';
 import InboxSidebar, { ChatPreview } from '@/components/dashboard/inbox/InboxSidebar';
 import ChatWindow, { Message } from '@/components/dashboard/inbox/ChatWindow';

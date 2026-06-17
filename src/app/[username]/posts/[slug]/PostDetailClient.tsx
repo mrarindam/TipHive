@@ -4,7 +4,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { supabase } from '@/lib/supabase';
 import { SinglePostSkeleton } from '@/components/ui/Skeleton';
-import { Heart, ArrowLeft, Share2, MessageCircle, Zap, Lock, Globe2, Users } from 'lucide-react';
+import { Heart, Share2, MessageCircle, Zap, Lock, Globe2, Users } from 'lucide-react';
 import Link from 'next/link';
 import { useAccount } from 'wagmi';
 import { useWalletAuth } from '@/lib/wallet-auth-shim';
@@ -273,13 +273,10 @@ export default function PostDetailClient() {
     ? 'Available for supporters and members. Tip or subscribe to unlock full access.'
     : 'This visual content is exclusive for my amazing members. Subscribe to unlock full access!';
   const unlockCta = isSupportersPost ? 'Visit Creator' : 'Unlock Now';
-  const type = post.video_url ? 'video' : post.image_url ? 'image' : 'text';
+
 
   return (
-    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="max-w-4xl mx-auto pb-10 px-4">
-      <button onClick={() => router.push(`/${creator.username}/posts`)} className="flex items-center gap-2 text-slate-400 hover:text-white mb-8 transition-colors font-bold text-sm">
-        <ArrowLeft className="w-4 h-4" /> Back to Posts
-      </button>
+    <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.2 }} className="max-w-4xl mx-auto pb-10 px-4 pt-10">
 
       <div className="relative space-y-8">
         {/* Post Header Info */}
@@ -288,7 +285,9 @@ export default function PostDetailClient() {
             <div className="flex flex-col">
               <p className="text-sm text-slate-400 font-bold uppercase tracking-widest">{new Date(post.created_at as string).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</p>
               <div className="flex items-center gap-2 mt-1">
-                <span className="text-[10px] font-black text-[#8A2BE2] uppercase tracking-widest bg-[#8A2BE2]/10 px-2 py-0.5 rounded-md">{type}</span>
+                <Link href={`/${creator.username}`} className="text-[10px] font-black text-[#8A2BE2] uppercase tracking-widest bg-[#8A2BE2]/10 px-2 py-0.5 rounded-md hover:bg-[#8A2BE2]/20 transition-colors">
+                  {creator.display_name || creator.username}
+                </Link>
                 {!!post.category && <span className="text-[10px] font-black text-[#F7931A] uppercase tracking-widest bg-[#F7931A]/10 px-2 py-0.5 rounded-md">{post.category as string}</span>}
               </div>
             </div>
@@ -312,7 +311,6 @@ export default function PostDetailClient() {
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-black tracking-tighter mb-4 font-outfit text-slate-900 dark:text-white leading-tight">
             {post.title as string}
           </h1>
-          <div className="w-20 h-1.5 bg-gradient-to-r from-[#8A2BE2] to-[#F7931A] rounded-full mb-10 opacity-50" />
 
           {/* Media Rendering */}
           {!!post.image_url && (
@@ -421,51 +419,36 @@ export default function PostDetailClient() {
 
             // Standard Video Player for Non-Audio
             return (
-              <div className="relative mb-12 group">
-                {/* Ambient Background Glow */}
-                {!isLocked && videoUrl.includes('cloudinary.com') && (
-                  <div className="absolute inset-0 -m-8 opacity-40 blur-[80px] pointer-events-none transition-opacity duration-1000 group-hover:opacity-60">
-                    <img
-                      src={videoUrl
-                        .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_800,e_blur:2000/')
-                        .replace(/\.[^.]+$/, '.jpg')}
-                      alt=""
-                      className="w-full h-full object-cover"
-                    />
-                  </div>
-                )}
-
-                <div className="w-full relative rounded-[2.5rem] overflow-hidden aspect-video bg-slate-150/40 dark:bg-black/40 backdrop-blur-md shadow-[0_20px_50px_rgba(0,0,0,0.5)] border border-slate-200 dark:border-white/10 p-1 md:p-2">
-                  <div className="w-full h-full rounded-[2rem] overflow-hidden relative">
-                    {isLocked ? (
-                      <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-black/80 backdrop-blur-xl p-6 text-center z-10">
-                        <div className="w-20 h-20 bg-[#F7931A]/10 rounded-full flex items-center justify-center mb-6 border border-[#F7931A]/20">
-                          <Lock className="w-10 h-10 text-[#F7931A]" />
-                        </div>
-                        <h3 className="text-3xl font-black mb-2 uppercase tracking-tight text-slate-900 dark:text-white">{isSupportersPost ? 'Supporters & Members' : 'Exclusive Content'}</h3>
-                        <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-sm font-medium">{isSupportersPost ? 'Available for supporters and members. Tip or subscribe to unlock this video.' : 'Unlock this video and support the creator to get full access.'}</p>
-                        <Link href={unlockHref} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] uppercase tracking-widest text-sm flex items-center gap-3 hover:scale-105 transition-all">
-                          <Zap className="w-4 h-4 fill-current" /> {isSupportersPost ? 'Visit Creator' : 'Subscribe to Watch'}
-                        </Link>
+              <div className="relative mb-12">
+                <div className="w-full relative rounded-2xl overflow-hidden aspect-video bg-black border border-slate-200 dark:border-white/10 shadow-sm">
+                  {isLocked ? (
+                    <div className="absolute inset-0 flex flex-col items-center justify-center bg-white/95 dark:bg-black/80 backdrop-blur-xl p-6 text-center z-10">
+                      <div className="w-20 h-20 bg-[#F7931A]/10 rounded-full flex items-center justify-center mb-6 border border-[#F7931A]/20">
+                        <Lock className="w-10 h-10 text-[#F7931A]" />
                       </div>
-                    ) : (
-                      <video
-                        src={videoUrl}
-                        controls
-                        className="w-full h-full object-contain relative z-10"
-                        controlsList="nodownload"
-                        poster={videoUrl
-                          .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_1000/')
-                          .replace(/\.[^.]+$/, '.jpg')}
-                      />
-                    )}
-                  </div>
+                      <h3 className="text-3xl font-black mb-2 uppercase tracking-tight text-slate-900 dark:text-white">{isSupportersPost ? 'Supporters & Members' : 'Exclusive Content'}</h3>
+                      <p className="text-slate-600 dark:text-slate-400 mb-8 max-w-sm font-medium">{isSupportersPost ? 'Available for supporters and members. Tip or subscribe to unlock this video.' : 'Unlock this video and support the creator to get full access.'}</p>
+                      <Link href={unlockHref} className="bg-[#8A2BE2] text-white font-black py-4 px-10 rounded-2xl shadow-[0_15px_30px_rgba(138,43,226,0.4)] uppercase tracking-widest text-sm flex items-center gap-3 hover:scale-105 transition-all">
+                        <Zap className="w-4 h-4 fill-current" /> {isSupportersPost ? 'Visit Creator' : 'Subscribe to Watch'}
+                      </Link>
+                    </div>
+                  ) : (
+                    <video
+                      src={videoUrl}
+                      controls
+                      className="w-full h-full object-contain relative z-10"
+                      controlsList="nodownload"
+                      poster={videoUrl
+                        .replace(/\/video\/upload\//, '/video/upload/so_auto,q_auto,f_jpg,w_1000/')
+                        .replace(/\.[^.]+$/, '.jpg')}
+                    />
+                  )}
                 </div>
               </div>
             );
           })()}
 
-          <div className="tiptap-content min-h-[400px]">
+          <div className="tiptap-content">
             {isLocked ? (
               <div className="relative">
                 <div className="space-y-4 opacity-30 select-none">

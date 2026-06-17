@@ -1,6 +1,6 @@
 'use client';
 
-import { useDashboard, Activity, CreatorProfile } from '../layout';
+import { useDashboard, type Activity, type CreatorProfile } from '@/components/providers/DashboardProvider';
 import { useState } from 'react';
 import { Zap, Loader2, X, Settings2, Heart, CheckCircle2, ExternalLink, Wallet } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,7 +43,7 @@ export default function TipCirclePage() {
           Tip Support <span className="text-[#f7931a]">Flow</span>
         </h1>
         <p className="text-slate-550 dark:text-slate-400 text-base max-w-2xl font-medium leading-relaxed">
-          Every tip is a signal — see who’s backing you and when.
+          Every tip is a signal - see who’s backing you and when.
         </p>
       </motion.div>
 

@@ -17,7 +17,7 @@ import { formatUnits, parseUnits } from 'viem';
 
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import { supabase } from '@/lib/supabase';
-import { useDashboard } from '../layout';
+import { useDashboard } from '@/components/providers/DashboardProvider';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import {
   TESTNET_BORROW, MAINNET_BORROW,
@@ -875,7 +875,7 @@ function MUSDActions() {
       icon: <Calendar size={20} />,
       title: 'TipHive Subscriptions',
       desc: 'Pay creator subscriptions with your MUSD.',
-      href: '/dashboard/subscriptions',
+      href: '/subscriptions',
       external: false,
     },
     {

@@ -7,7 +7,7 @@ import { FileText, ImageIcon, Headphones, Video, Eye, Calendar, Trash2, AlertTri
 import { AnimatePresence } from 'framer-motion';
 import { supabase } from '@/lib/supabase';
 import { useAccount } from 'wagmi';
-import { useDashboard } from '../layout';
+import { useDashboard } from '@/components/providers/DashboardProvider';
 import Pagination from '@/components/ui/Pagination';
 import { Skeleton } from '@/components/ui/Skeleton';
 
@@ -115,7 +115,7 @@ export default function DropsPage() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: i * 0.08 }}
-            onClick={() => router.push(`/dashboard/createposts?type=${type.id}`)}
+            onClick={() => router.push(`/createposts?type=${type.id}`)}
             className="group relative flex flex-col items-center justify-center gap-4 p-8 rounded-2xl bg-white dark:bg-[#0f0f14] border border-slate-200 dark:border-white/5 hover:border-slate-300 dark:hover:border-white/20 transition-all duration-300 hover:scale-[1.03] shadow-sm hover:shadow-[0_0_30px_rgba(0,0,0,0.05)] dark:hover:shadow-[0_0_30px_rgba(0,0,0,0.5)]"
           >
             <div

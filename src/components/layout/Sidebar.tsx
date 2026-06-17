@@ -23,6 +23,8 @@ interface UserProfile {
   username?: string;
   avatar_url?: string;
   name?: string;
+  display_name?: string;
+  wallet_address?: string;
 }
 
 export default function Sidebar() {
@@ -56,13 +58,27 @@ export default function Sidebar() {
       }
     };
     loadProfile();
+
+    const handleProfileUpdate = (event: Event) => {
+      const detail = (event as CustomEvent<UserProfile>).detail;
+      const matchAddress = user?.id && detail?.wallet_address && detail.wallet_address.toLowerCase() === user.id.toLowerCase();
+      if (matchAddress) {
+        setProfile(detail);
+      } else {
+        loadProfile();
+      }
+    };
+
+    window.addEventListener('wallet-profile-updated', handleProfileUpdate);
+
     return () => {
       cancelled = true;
+      window.removeEventListener('wallet-profile-updated', handleProfileUpdate);
     };
   }, [ready, authenticated, user?.id]);
 
   // Do not render sidebar on embed pages or post writing pages
-  if (pathname?.startsWith('/embed/') || pathname?.includes('/dashboard/createposts')) {
+  if (pathname?.startsWith('/embed/') || pathname?.includes('/createposts')) {
     return null;
   }
 
@@ -96,24 +112,24 @@ export default function Sidebar() {
       title: 'Creator Suite',
       items: [
         { name: 'Dashboard', href: '/dashboard', icon: <LayoutDashboard size={18} />, auth: true },
-        { name: 'Tip Circles', href: '/dashboard/tipcircle', icon: <Users size={18} />, auth: true },
-        { name: 'Subscriptions', href: '/dashboard/subscriptions', icon: <Calendar size={18} />, auth: true },
-        { name: 'Posting', href: '/dashboard/posts', icon: <Edit3 size={18} />, auth: true },
+        { name: 'Tip Circles', href: '/tipcircle', icon: <Users size={18} />, auth: true },
+        { name: 'Subscriptions', href: '/subscriptions', icon: <Calendar size={18} />, auth: true },
+        { name: 'Posting', href: '/posts', icon: <Edit3 size={18} />, auth: true },
       ],
     },
     {
       title: 'Activity & Logs',
       items: [
-        { name: 'Activity Feed', href: '/dashboard/activityfeed', icon: <History size={18} />, auth: true },
-        { name: 'Analytics', href: '/dashboard/earninganalysis', icon: <TrendingUp size={18} />, auth: true },
-        { name: 'Sent Support', href: '/dashboard/sentsupport', icon: <Heart size={18} />, auth: true },
-        { name: 'My Subscriptions', href: '/dashboard/mysubsriptions', icon: <Bookmark size={18} />, auth: true },
+        { name: 'Activity Feed', href: '/activityfeed', icon: <History size={18} />, auth: true },
+        { name: 'Analytics', href: '/earninganalysis', icon: <TrendingUp size={18} />, auth: true },
+        { name: 'Sent Support', href: '/sentsupport', icon: <Heart size={18} />, auth: true },
+        { name: 'My Subscriptions', href: '/mysubsriptions', icon: <Bookmark size={18} />, auth: true },
       ],
     },
     {
       title: 'Settings',
       items: [
-        { name: 'Visual Toolkit', href: '/dashboard/visual-toolkit', icon: <Settings size={18} />, auth: true },
+        { name: 'Visual Toolkit', href: '/visual-toolkit', icon: <Settings size={18} />, auth: true },
         { name: 'Edit Profile', href: '/editprofile', icon: <UserCog size={18} />, auth: true },
       ],
     },
@@ -235,10 +251,10 @@ export default function Sidebar() {
               <img
                 src={profile.avatar_url}
                 alt=""
-                className="w-6 h-6 rounded-full object-cover border border-slate-200 dark:border-white/10 shrink-0"
+                className="w-8 h-8 rounded-full object-cover border border-slate-200 dark:border-white/10 shrink-0 shadow-sm"
               />
             ) : (
-              <div className="w-6 h-6 rounded-full bg-[#f7931a]/20 border border-[#f7931a]/50 flex items-center justify-center text-[10px] font-black text-[#f7931a] shrink-0">
+              <div className="w-8 h-8 rounded-full bg-[#f7931a]/20 border border-[#f7931a]/50 flex items-center justify-center text-[11px] font-black text-[#f7931a] shrink-0">
                 {profile?.username ? profile.username[0].toUpperCase() : 'P'}
               </div>
             )}
@@ -248,7 +264,7 @@ export default function Sidebar() {
                 : 'opacity-0 max-w-0 overflow-hidden ml-0 pointer-events-none'
             }`}>
               <span className="block truncate text-slate-800 dark:text-white group-hover:text-slate-900 dark:group-hover:text-white leading-tight font-black">
-                {profile?.name || 'Profile'}
+                {profile?.display_name || profile?.name || 'Profile'}
               </span>
               <span className="block text-[9px] text-slate-500 font-bold lowercase truncate tracking-normal">
                 @{profile?.username || 'creator'}

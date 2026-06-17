@@ -31,6 +31,7 @@ export default function PostsClient() {
   const [postSortOrder, setPostSortOrder] = useState<'latest' | 'oldest'>('latest');
   const [hasTipped, setHasTipped] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isMobileFilterOpen, setIsMobileFilterOpen] = useState(false);
 
   useEffect(() => {
     if (!creator) return;
@@ -122,6 +123,60 @@ export default function PostsClient() {
     >
 
       <div className="xl:col-span-8 space-y-6">
+        {/* Mobile Filter Toggle */}
+        <div className="xl:hidden bg-white dark:bg-[#0a0a0c] border border-slate-200 dark:border-white/10 rounded-3xl p-6 shadow-sm">
+          <button
+            onClick={() => setIsMobileFilterOpen(!isMobileFilterOpen)}
+            className="w-full flex items-center justify-between font-black uppercase tracking-tighter text-lg text-slate-900 dark:text-white"
+          >
+            <div className="flex items-center gap-3">
+              <Filter className="w-5 h-5 text-[#8A2BE2]" />
+              <span className="italic">Filter Posts</span>
+            </div>
+            <ChevronDown className={`w-5 h-5 text-slate-500 transition-transform duration-300 ${isMobileFilterOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {isMobileFilterOpen && (
+            <div className="mt-6 pt-6 border-t border-slate-100 dark:border-white/5 space-y-4">
+              <h4 className="text-[10px] font-black uppercase tracking-[0.2em] text-[#8A2BE2] mb-4 flex items-center gap-2">
+                <Lock className="w-3.5 h-3.5" /> Access
+              </h4>
+              <div className="space-y-4">
+                {[
+                  { id: 'all', label: 'All Posts', icon: <Sparkles className="w-4 h-4" /> },
+                  { id: 'public', label: 'Public', icon: <Globe2 className="w-4 h-4" /> },
+                  { id: 'supporters', label: 'Supporters Only', icon: <Users className="w-4 h-4" /> },
+                  { id: 'exclusive', label: 'Members Only', icon: <Lock className="w-4 h-4" /> }
+                ].map((item) => (
+                  <button 
+                    key={item.id} 
+                    type="button"
+                    onClick={() => {
+                      setPostAccessFilter(item.id as 'all' | 'public' | 'supporters' | 'exclusive');
+                      setIsMobileFilterOpen(false);
+                    }}
+                    className="w-full flex items-center justify-between group cursor-pointer text-left py-2"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${postAccessFilter === item.id ? 'border-[#8A2BE2] bg-[#8A2BE2]/10' : 'border-slate-200 dark:border-white/10'}`}>
+                        {postAccessFilter === item.id && <div className="w-2.5 h-2.5 rounded-full bg-[#8A2BE2]" />}
+                      </div>
+                      <span className={`text-sm font-bold ${postAccessFilter === item.id ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
+                        {item.label}
+                      </span>
+                    </div>
+                    {postAccessFilter === item.id && (
+                      <span className="text-[#8A2BE2]">
+                        {item.icon}
+                      </span>
+                    )}
+                  </button>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
         <div className="flex items-center justify-between mb-2">
           <div>
             <h2 className="text-2xl font-black text-slate-900 dark:text-white">All Posts</h2>
@@ -231,7 +286,7 @@ export default function PostsClient() {
         </div>
       </div>
 
-      <div className="xl:col-span-4">
+      <div className="hidden xl:block xl:col-span-4">
         <div className={`bg-white/90 dark:bg-[#0a0a0c]/80 ${enableBlur ? 'backdrop-blur-xl' : ''} border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 sticky top-24 shadow-sm dark:shadow-2xl`}>
 
           <div className="flex items-center gap-3 mb-8 pb-4 border-b border-slate-100 dark:border-white/5">

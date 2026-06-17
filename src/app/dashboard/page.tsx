@@ -1,6 +1,6 @@
 'use client';
 
-import { useDashboard } from './layout';
+import { useDashboard } from '@/components/providers/DashboardProvider';
 
 import { motion } from 'framer-motion';
 import {

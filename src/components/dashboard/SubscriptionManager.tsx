@@ -62,7 +62,7 @@ interface Subscriber {
 
 
 import { useWalletAuth } from '@/lib/wallet-auth-shim';
-import { useDashboard } from '@/app/dashboard/layout';
+import { useDashboard } from '@/components/providers/DashboardProvider';
 
 export default function SubscriptionManager() {
   const { address } = useAccount();

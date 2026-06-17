@@ -11,12 +11,13 @@ async function checkSchema() {
   const { data, error } = await supabase
     .from('user_profiles')
     .select('*')
-    .limit(1);
+    .eq('username', 'mrarindam')
+    .maybeSingle();
   
   if (error) {
     console.error('Error fetching user_profiles:', error);
   } else {
-    console.log('Sample profile:', data[0]);
+    console.log('Sample profile:', data);
   }
 }
 

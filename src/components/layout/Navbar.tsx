@@ -16,7 +16,7 @@ export default function Navbar() {
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const pathname = usePathname();
 
-  if (pathname?.includes('/dashboard/createposts') || pathname?.startsWith('/docs')) return null;
+  if (pathname?.includes('/createposts') || pathname?.startsWith('/docs')) return null;
 
   return (
     <nav className="fixed top-0 left-0 lg:left-[76px] w-full lg:w-[calc(100%-76px)] z-[100] border-b border-slate-200 dark:border-white/5 bg-white/80 dark:bg-[#050508]/85 backdrop-blur-2xl transition-all duration-300">

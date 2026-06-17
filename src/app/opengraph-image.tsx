@@ -4,7 +4,7 @@ import { ImageResponse } from 'next/og';
 export const runtime = 'edge';
 
 // Image metadata
-export const alt = 'TipHive — The Bitcoin-Native Tipping Platform for Creators';
+export const alt = 'TipHive - The Bitcoin-Native Tipping Platform for Creators';
 export const size = {
   width: 1200,
   height: 630,

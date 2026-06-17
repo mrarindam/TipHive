@@ -3,7 +3,7 @@
 import { useParams, usePathname } from 'next/navigation';
 import { useState, useEffect, useCallback, createContext, useContext } from 'react';
 import { supabase } from '@/lib/supabase';
-import { Share2, CheckCircle2, Video, MessageSquare, Code, Calendar, MapPin, AtSign, Globe } from 'lucide-react';
+import { Share2, CheckCircle2, Video, Calendar, MapPin, Globe } from 'lucide-react';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
@@ -169,7 +169,24 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   // Always scroll to top when navigation happens within profile pages
   useEffect(() => {
-    window.scrollTo(0, 0);
+    const scrollToTop = () => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTo(0, 0);
+      if (document.body) {
+        document.body.scrollTo(0, 0);
+      }
+    };
+
+    scrollToTop();
+
+    // Catch late renders/scroll restorations by Next.js
+    const timer = setTimeout(scrollToTop, 50);
+    const frame = requestAnimationFrame(scrollToTop);
+
+    return () => {
+      clearTimeout(timer);
+      cancelAnimationFrame(frame);
+    };
   }, [pathname]);
 
   const handleFollow = async () => {
@@ -264,9 +281,21 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   const getSocialIcon = (url: string) => {
     const l = url.toLowerCase();
-    if (l.includes('x.com') || l.includes('twitter.com')) return <AtSign className="w-4 h-4" />;
-    if (l.includes('github.com')) return <Code className="w-4 h-4" />;
-    if (l.includes('discord.com')) return <MessageSquare className="w-4 h-4" />;
+    if (l.includes('x.com') || l.includes('twitter.com')) {
+      return (
+        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z"/></svg>
+      );
+    }
+    if (l.includes('github.com')) {
+      return (
+        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.483 0-.237-.008-.866-.013-1.7-2.782.603-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.464-1.11-1.464-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.831.092-.646.35-1.086.636-1.336-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.577.688.479C19.138 20.162 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+      );
+    }
+    if (l.includes('discord.com')) {
+      return (
+        <svg viewBox="0 0 24 24" className="w-4 h-4 fill-current"><path d="M19.27 2.33a22.9 22.9 0 0 0-5.77-1.8 15.7 15.7 0 0 0-.82 1.68 21.6 21.6 0 0 0-6.36 0 15.7 15.7 0 0 0-.82-1.68 22.9 22.9 0 0 0-5.77 1.8A24.6 24.6 0 0 0 .25 19.34a23.3 23.3 0 0 0 7.14 3.59 18 18 0 0 0 1.5-2.43 15.3 15.3 0 0 1-3.4-1.66 11.4 11.4 0 0 0 .28-.22 16.5 16.5 0 0 0 12.46 0c.1 0 .19.14.28.22a15.3 15.3 0 0 1-3.4 1.66 18 18 0 0 0 1.5 2.43 23.3 23.3 0 0 0 7.14-3.59 24.6 24.6 0 0 0-3.38-17.01ZM8.24 16.63c-1.37 0-2.5-1.26-2.5-2.81s1.11-2.81 2.5-2.81 2.5 1.26 2.5 2.81-1.11 2.81-2.5 2.81Zm7.52 0c-1.37 0-2.5-1.26-2.5-2.81s1.11-2.81 2.5-2.81 2.5 1.26 2.5 2.81-1.11 2.81-2.5 2.81Z"/></svg>
+      );
+    }
     if (l.includes('youtube.com')) return <Video className="w-4 h-4" />;
     return <Globe className="w-4 h-4" />;
   };
@@ -292,7 +321,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
   return (
     <ProfileContext.Provider value={{ creator, loading, followersCount, postsCount, isFollowing, isOwner, totalEarned, handleFollow, fetchData }}>
-      <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white selection:bg-[#F7931A]/30 pb-20 pt-28 transition-colors duration-300">
+      <div className="min-h-screen bg-slate-50 dark:bg-black text-slate-900 dark:text-white selection:bg-[#F7931A]/30 pb-20 pt-20 transition-colors duration-300">
         <div className="w-full space-y-8 px-4 md:px-6 lg:px-8 flex flex-col">
 
           {/* Main Creator Card */}
@@ -303,9 +332,9 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
 
             <div className="relative">
               <motion.div
-                animate={{ height: isHome ? (typeof window !== 'undefined' && window.innerWidth < 768 ? 225 : 500) : 0, opacity: isHome ? 1 : 0 }}
+                animate={{ height: isHome ? 'auto' : 0, opacity: isHome ? 1 : 0 }}
                 transition={simplifyAnimations ? { duration: 0.2 } : { duration: 0.4, ease: "easeInOut" }}
-                className="w-full relative bg-slate-100 dark:bg-[#111113] overflow-hidden aspect-[16/9] md:aspect-[3/1] md:rounded-t-3xl"
+                className="w-full relative bg-slate-100 dark:bg-[#111113] overflow-hidden aspect-[3/1] md:rounded-t-3xl"
               >
 
                 {creator.banner_url ? (
@@ -313,7 +342,6 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                 ) : (
                   <Image src="https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?q=80&w=2000" alt="Banner" fill className="object-cover opacity-80" unoptimized />
                 )}
-                <div className="absolute inset-0 bg-gradient-to-t from-white dark:from-[#0a0a0c] via-transparent to-transparent opacity-85"></div>
               </motion.div>
 
               {isHome && (
@@ -437,7 +465,7 @@ export default function ProfileLayout({ children }: { children: React.ReactNode 
                     </div>
                   </motion.div>
 
-                  <motion.div layout={enableLayoutTransition} className="flex items-center gap-3">
+                  <motion.div layout={enableLayoutTransition} className={`items-center gap-3 ${isOwner ? 'hidden md:flex' : 'flex'}`}>
 
                     {isOwner ? (
                       <Link href="/dashboard" className={`flex items-center justify-center gap-2 border border-[#8A2BE2] bg-[#8A2BE2]/10 text-[#8A2BE2] hover:bg-[#8A2BE2] hover:text-white font-bold rounded-2xl transition-all ${isHome ? 'py-3 px-8' : 'py-2 px-6 text-sm'}`}>

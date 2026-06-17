@@ -265,7 +265,7 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
             initial={{ opacity: 0, y: -20, scale: 0.95 }}
             animate={{ opacity: 1, y: 0, scale: 1 }}
             exit={{ opacity: 0, y: -20, scale: 0.95 }}
-            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-full max-md:px-4"
+            className="fixed top-24 left-1/2 -translate-x-1/2 z-[100] w-full max-w-md px-4"
           >
             <div className={`glass-card p-4 flex items-center justify-between border ${notification.type === 'error' ? 'border-red-500/50 bg-red-500/10' : 'border-green-500/50 bg-green-500/10'} shadow-[0_20px_40px_rgba(0,0,0,0.4)]`}>
               <div className="flex items-center gap-3">
@@ -297,89 +297,75 @@ export default function SubscriptionSection({ creatorAddress, creatorName, limit
         {plans.map((plan) => (
           <motion.div
             key={plan.id}
-            whileHover={{ y: -8, scale: 1.01 }}
-            className="relative group p-[2px] rounded-[3.5rem] overflow-hidden"
+            whileHover={{ y: -6 }}
+            className="relative h-full w-full bg-white dark:bg-[#07070a] border border-slate-200 dark:border-white/10 rounded-[2.5rem] p-8 flex flex-col overflow-hidden shadow-sm hover:shadow-xl transition-all duration-300"
           >
-            {/* Animated Gradient Border */}
-            <div className="absolute inset-0 bg-gradient-to-br from-[#8A2BE2] via-white/10 to-[#F7931A] opacity-30 group-hover:opacity-100 transition-opacity duration-700 blur-[1px]" />
-
-            <div className="relative h-full w-full bg-white dark:bg-[#0B0F19] border border-slate-200 dark:border-white/5 rounded-3xl p-6 flex flex-col z-10 overflow-hidden shadow-sm dark:shadow-none">
-              {/* Decorative Background Glows */}
-              <div className="absolute top-0 left-0 w-32 h-32 bg-[#8A2BE2]/10 blur-[60px] rounded-full -ml-16 -mt-16 pointer-events-none" />
-              <div className="absolute bottom-0 right-0 w-32 h-32 bg-[#F7931A]/10 blur-[60px] rounded-full -mr-16 -mb-16 pointer-events-none" />
-
-              <div className="flex justify-between items-start mb-6">
-                <div className="space-y-1">
-                  <h3 className="text-3xl font-black text-slate-900 dark:text-white font-outfit uppercase tracking-tighter leading-none group-hover:text-[#F7931A] transition-colors duration-300">
-                    {plan.name}
-                  </h3>
-                  <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-white/5 rounded-full border border-slate-200 dark:border-white/5 w-fit">
-                    <Clock className="w-3 h-3 text-[#8A2BE2]" />
-                    <span className="text-[10px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">{plan.duration / 86400} DAYS ACCESS</span>
-                  </div>
+            <div className="flex justify-between items-start mb-6">
+              <div className="space-y-1">
+                <h3 className="text-3xl font-black text-slate-900 dark:text-white font-outfit uppercase tracking-tighter leading-none group-hover:text-[#F7931A] transition-colors duration-300">
+                  {plan.name}
+                </h3>
+                <div className="flex items-center gap-2 px-3 py-1 bg-slate-50 dark:bg-white/5 rounded-full border border-slate-200 dark:border-white/5 w-fit">
+                  <Clock className="w-3 h-3 text-[#8A2BE2]" />
+                  <span className="text-[10px] font-black text-slate-550 dark:text-slate-400 uppercase tracking-widest">{plan.duration / 86400} DAYS ACCESS</span>
                 </div>
-                <div className="text-right flex flex-col items-end">
-                  <div className="flex items-center gap-2">
-                    <span className="text-4xl font-black text-slate-900 dark:text-white font-outfit tracking-tighter">{plan.price}</span>
-                    <div className="relative">
-                      <div className="absolute inset-0 bg-white blur-md opacity-20" />
-                      <div className="relative bg-[#FF0055] p-1.5 rounded-full shadow-[0_0_15px_rgba(255,0,85,0.4)]">
-                        <MUSDLogo className="w-5 h-5" />
-                      </div>
+              </div>
+              <div className="text-right flex flex-col items-end">
+                <div className="flex items-center gap-2">
+                  <span className="text-4xl font-black text-slate-900 dark:text-white font-outfit tracking-tighter">{plan.price}</span>
+                  <div className="relative">
+                    <div className="absolute inset-0 bg-white blur-md opacity-20" />
+                    <div className="relative bg-[#FF0055] p-1.5 rounded-full shadow-[0_0_15px_rgba(255,0,85,0.4)]">
+                      <MUSDLogo className="w-5 h-5" />
                     </div>
                   </div>
-                  <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-2">
-                    {plan.duration / 86400 === 30 ? '1 Month Membership' :
-                      plan.duration / 86400 === 365 ? 'Annual Membership' :
-                        `${plan.duration / 86400} Days Membership`}
+                </div>
+                <span className="text-[10px] text-slate-500 font-black uppercase tracking-[0.2em] mt-2">
+                  {plan.duration / 86400 === 30 ? '1 Month Membership' :
+                    plan.duration / 86400 === 365 ? 'Annual Membership' :
+                      `${plan.duration / 86400} Days Membership`}
+                </span>
+              </div>
+            </div>
+
+            <div className="flex-grow flex flex-col justify-between">
+              <div className="space-y-6">
+                <div className="min-h-[80px] flex items-center">
+                  <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium transition-all duration-300 text-[13px]">
+                    {plan.description || `Elevate your experience with ${plan.name}—unlocking a universe of premium content and direct creator access.`}
+                  </p>
+                </div>
+
+                <div className={`${plans.length === 1 ? 'space-y-3' : 'flex flex-wrap gap-2'} pb-8`}>
+                  {(plan.perks?.length ? plan.perks : ['Exclusive Content Access', 'Direct Messaging', 'VIP Badge']).map((perk, i) => (
+                    <div key={i} className={`flex items-center gap-3 transition-all duration-300 group/perk ${plans.length === 1 ? '' : 'px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
+                      }`}>
+                      <CheckCircle2 className="w-5 h-5 text-[#F7931A] shrink-0" />
+                      <span className={`${plans.length === 1 ? 'text-xs' : 'text-[10px]'} font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest group-hover/perk:text-slate-900 dark:group-hover/perk:text-white transition-colors`}>
+                        {perk}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <button
+                onClick={() => setPreviewPlan(plan)}
+                disabled={status === 'approving' || status === 'subscribing'}
+                className="relative w-full py-6 rounded-[2.5rem] bg-[#F7931A] text-black overflow-hidden group/btn transition-all duration-300 hover:bg-[#e08513] hover:scale-[1.02] active:scale-[0.97] hover:shadow-md"
+              >
+                <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
+                <div className="relative flex items-center justify-center gap-3">
+                  {(status === 'subscribing' && selectedPlan?.id === plan.id) && (
+                    <Loader2 className="w-6 h-6 animate-spin text-black" />
+                  )}
+                  <span className="font-black font-outfit uppercase tracking-[0.15em] text-base">
+                    {(status === 'approving' && selectedPlan?.id === plan.id) ? 'Processing...' :
+                      (status === 'subscribing' && selectedPlan?.id === plan.id) ? 'Subscribing...' :
+                        'Join'}
                   </span>
                 </div>
-              </div>
-
-              <div className="flex-grow flex flex-col justify-between">
-                <div className="space-y-6">
-                  <div className="min-h-[80px] flex items-center">
-                    <p className="text-slate-600 dark:text-slate-400 leading-relaxed font-medium transition-all duration-300 text-[13px]">
-                      {plan.description || `Elevate your experience with ${plan.name}—unlocking a universe of premium content and direct creator access.`}
-                    </p>
-                  </div>
-
-                  <div className={`${plans.length === 1 ? 'space-y-3' : 'flex flex-wrap gap-2'} pb-8`}>
-                    {(plan.perks?.length ? plan.perks : ['Exclusive Content Access', 'Direct Messaging', 'VIP Badge']).map((perk, i) => (
-                      <div key={i} className={`flex items-center gap-3 transition-all duration-300 group/perk ${plans.length === 1 ? '' : 'px-3 py-2 rounded-xl bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/5 hover:bg-slate-100 dark:hover:bg-white/10'
-                        }`}>
-                        <div className={`flex items-center justify-center text-[#8A2BE2] ${plans.length === 1 ? 'w-6 h-6 rounded-lg bg-[#8A2BE2]/10 border border-[#8A2BE2]/20' : ''
-                          }`}>
-                          <Check className={plans.length === 1 ? 'w-3.5 h-3.5' : 'w-3 h-3'} />
-                        </div>
-                        <span className={`${plans.length === 1 ? 'text-xs' : 'text-[10px]'} font-bold text-slate-600 dark:text-slate-400 uppercase tracking-widest group-hover/perk:text-slate-900 dark:group-hover/perk:text-white transition-colors`}>
-                          {perk}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-
-                <button
-                  onClick={() => setPreviewPlan(plan)}
-                  disabled={status === 'approving' || status === 'subscribing'}
-                  className="relative w-full py-6 rounded-[2.5rem] bg-[#F7931A] text-black overflow-hidden group/btn transition-all duration-500 hover:shadow-[0_0_30px_rgba(247,147,26,0.3)] active:scale-[0.97]"
-                >
-                  <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover/btn:translate-x-full transition-transform duration-1000" />
-                  <div className="relative flex items-center justify-center gap-3">
-                    {(status === 'subscribing' && selectedPlan?.id === plan.id) ? (
-                      <Loader2 className="w-6 h-6 animate-spin text-black" />
-                    ) : (
-                      <Zap className="w-6 h-6 fill-black" />
-                    )}
-                    <span className="font-black font-outfit uppercase tracking-[0.15em] text-base">
-                      {(status === 'approving' && selectedPlan?.id === plan.id) ? 'Processing...' :
-                        (status === 'subscribing' && selectedPlan?.id === plan.id) ? 'Subscribing...' :
-                          'Join the Circle'}
-                    </span>
-                  </div>
-                </button>
-              </div>
+              </button>
             </div>
           </motion.div>
         ))}

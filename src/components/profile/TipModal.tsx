@@ -216,10 +216,10 @@ export default function TipModal({
                   <button
                     onClick={handleTip}
                     disabled={tipStatus === 'approving' || tipStatus === 'tipping'}
-                    className="w-full bg-[#8A2BE2] text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-[#7828c8] hover:scale-[1.01] active:scale-[0.98] transition-all shadow-[0_20px_40px_rgba(138,43,226,0.2)] text-xs uppercase tracking-[0.2em] disabled:opacity-60"
+                    className="w-full bg-[#8A2BE2] text-white font-black py-5 rounded-[2rem] flex items-center justify-center gap-3 hover:bg-[#731cb3] hover:scale-[1.02] active:scale-[0.98] transition-all duration-300 shadow-md hover:shadow-lg text-xs uppercase tracking-[0.2em] disabled:opacity-60"
                   >
                     {tipStatus === 'approving' ? 'Confirming Approval...' :
-                      tipStatus === 'tipping' ? 'Sending Tip...' : `Send ${creator.button_text || 'Tip'}`}
+                      tipStatus === 'tipping' ? 'Sending Tip...' : `${creator.button_text || 'Tip'}`}
                   </button>
                 </div>
               </div>

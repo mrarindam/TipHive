@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { useDashboard, Activity } from '../layout';
+import { useDashboard, type Activity } from '@/components/providers/DashboardProvider';
 import { Heart, History, ExternalLink } from 'lucide-react';
 import MUSDLogo from '@/components/ui/MUSDLogo';
 import Pagination from '@/components/ui/Pagination';
