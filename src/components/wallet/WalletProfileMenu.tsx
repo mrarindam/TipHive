@@ -9,7 +9,6 @@ import { formatEther } from 'viem';
 import {
   BadgeCheck,
   Bitcoin,
-  BookOpen,
   ExternalLink,
   LogOut,
   User,

@@ -43,7 +43,7 @@ async function checkStats() {
   }
 
   // 3. Top 5 latest tips
-  const { data: latestTips, error: latErr } = await supabase
+  const { data: latestTips } = await supabase
     .from('tips')
     .select('from_address, to_address, amount, created_at')
     .order('created_at', { ascending: false })

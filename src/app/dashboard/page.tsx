@@ -5,7 +5,6 @@ import { useDashboard } from './layout';
 import { motion } from 'framer-motion';
 import {
   User, DollarSign, Loader2, Copy, Check, TrendingUp, History, Globe, Wallet,
-  Bitcoin, Sparkles, Share2, Heart, Calendar, Edit3, ArrowRight, Palette,
 } from 'lucide-react';
 import Link from 'next/link';
 import { useState, useEffect } from 'react';

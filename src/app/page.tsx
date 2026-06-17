@@ -4,14 +4,14 @@ import HomePageClient from "./HomePageClient";
 const SITE_URL = "https://tiphive.xyz";
 
 export const metadata: Metadata = {
-  title: "TipHive — The Bitcoin-Native Tipping Platform on Mezo L2",
+  title: "TipHive - The Bitcoin-Native Tipping Platform on Mezo L2",
   description:
     "Empower creators with instant, fee-less Bitcoin-native tips on Mezo L2. 0% platform fees, non-custodial, MUSD-powered subscriptions and content monetization.",
   alternates: {
     canonical: SITE_URL,
   },
   openGraph: {
-    title: "TipHive — The Bitcoin-Native Tipping Platform on Mezo L2",
+    title: "TipHive - The Bitcoin-Native Tipping Platform on Mezo L2",
     description:
       "Empower creators with instant, fee-less Bitcoin-native tips on Mezo L2. 0% platform fees, MUSD-powered subscriptions, and direct fan-to-creator support.",
     url: SITE_URL,
@@ -29,7 +29,7 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: "summary_large_image",
-    title: "TipHive — The Bitcoin-Native Tipping Platform on Mezo L2",
+    title: "TipHive - The Bitcoin-Native Tipping Platform on Mezo L2",
     description:
       "Empower creators with instant, fee-less Bitcoin-native tips on Mezo L2. 0% platform fees, MUSD-powered subscriptions, and direct fan-to-creator support.",
     creator: "@TipHive",
@@ -43,7 +43,7 @@ const homeStructuredData = [
     "@type": "WebPage",
     "@id": `${SITE_URL}/#webpage`,
     url: SITE_URL,
-    name: "TipHive — The Bitcoin-Native Tipping Platform on Mezo L2",
+    name: "TipHive - The Bitcoin-Native Tipping Platform on Mezo L2",
     description:
       "Empower creators with instant, fee-less Bitcoin-native tips on Mezo L2.",
     isPartOf: { "@id": `${SITE_URL}/#website` },

@@ -9,21 +9,12 @@ import {
   DollarSign,
   TrendingUp,
   History,
-  Bitcoin,
-  Sparkles,
-  Share2,
-  Heart,
-  Calendar,
-  Edit3,
-  ArrowRight,
-  Palette,
 } from 'lucide-react';
 import { usePathname, useRouter } from 'next/navigation';
 import { TIPPING_ABI, SUBSCRIPTION_ABI } from '@/lib/contracts';
 import { useNetworkConfig } from '@/lib/hooks/useNetworkConfig';
 import { motion } from 'framer-motion';
 import MUSDLogo from '@/components/ui/MUSDLogo';
-import Link from 'next/link';
 
 export interface CreatorProfile {
   address: string;

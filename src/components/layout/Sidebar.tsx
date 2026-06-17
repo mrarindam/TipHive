@@ -12,7 +12,6 @@ import {
   Edit3,
   Settings,
   UserCog,
-  User,
   Wallet,
   History,
   TrendingUp,
@@ -20,11 +19,16 @@ import {
   Bookmark,
   BookOpen,
 } from 'lucide-react';
+interface UserProfile {
+  username?: string;
+  avatar_url?: string;
+  name?: string;
+}
 
 export default function Sidebar() {
   const pathname = usePathname();
   const { ready, authenticated, user, login } = useWalletAuth();
-  const [profile, setProfile] = useState<any>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [isHovered, setIsHovered] = useState(false);
   const [mounted, setMounted] = useState(false);
 

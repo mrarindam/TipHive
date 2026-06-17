@@ -27,7 +27,7 @@ async function testJoin() {
   if (error) {
     console.error('Error fetching join:', error);
     // Let's try joining as 'creator' or 'profiles' if 'user_profiles' fails
-    const { data: data2, error: error2 } = await supabase
+    const { data: data2 } = await supabase
       .from('posts')
       .select(`
         id,

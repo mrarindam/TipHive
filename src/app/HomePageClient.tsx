@@ -1,28 +1,20 @@
 'use client';
 
 import { useState, useEffect, useRef, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { AnimatePresence } from 'framer-motion';
 import {
   Zap,
-  Globe,
-  Star,
-  Plus,
-  Coins,
-  Clock,
   Heart,
   MessageCircle,
   Share2,
   Lock,
   Globe2,
   Users,
-  Check,
   ExternalLink,
   MessageSquare,
   Send,
-  TrendingUp,
   Sparkles,
-  Music2,
-  Video
+  Music2
 } from 'lucide-react';
 import Link from 'next/link';
 import { useAccount } from 'wagmi';
@@ -30,14 +22,8 @@ import { useWalletAuth } from '@/lib/wallet-auth-shim';
 import { supabase } from '@/lib/supabase';
 import TipModal from '@/components/profile/TipModal';
 import ShareModal from '@/components/ui/ShareModal';
-import MUSDLogo from '@/components/ui/MUSDLogo';
 import { sanitizePostHtml } from '@/lib/sanitize';
-import { Skeleton, PostCardSkeleton } from '@/components/ui/Skeleton';
-
-const extractFirstImage = (html: string) => {
-  const match = html.match(/<img[^>]+src="([^">]+)"/);
-  return match ? match[1] : null;
-};
+import { PostCardSkeleton } from '@/components/ui/Skeleton';
 
 const formatRelativeTime = (dateString: string) => {
   const date = new Date(dateString);
@@ -53,16 +39,6 @@ const formatRelativeTime = (dateString: string) => {
   if (diffDays < 7) return `${diffDays}d ago`;
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 };
-
-function TextThumbnail({ title }: { title: string }) {
-  return (
-    <div className="w-full h-full flex flex-col items-center justify-center p-6 text-center bg-gradient-to-br from-slate-100 via-slate-200 to-slate-300 dark:from-[#1E1B4B] dark:via-[#0F172A] dark:to-[#311042] relative transition-colors duration-300">
-      <span className="text-base font-black text-slate-800 dark:text-white/80 font-outfit uppercase tracking-tight line-clamp-3 leading-snug">
-        {title}
-      </span>
-    </div>
-  );
-}
 
 interface Creator {
   id: string;
@@ -106,20 +82,7 @@ interface FeedPost {
   comments: PostComment[];
 }
 
-interface TippingActivity {
-  id: string;
-  from_address: string;
-  to_address: string;
-  amount: number;
-  created_at: string;
-  message?: string;
-  sender?: Creator | null;
-  receiver?: Creator | null;
-}
 
-interface TopCreatorRow extends Creator {
-  weeklyEarned: number;
-}
 
 export default function HomePageClient() {
   const { address: userAddress } = useAccount();
@@ -127,25 +90,19 @@ export default function HomePageClient() {
   const userId = user?.id;
 
   const [posts, setPosts] = useState<FeedPost[]>([]);
-  const [topCreators, setTopCreators] = useState<TopCreatorRow[]>([]);
-  const [recentActivity, setRecentActivity] = useState<TippingActivity[]>([]);
   
   const [followingIds, setFollowingIds] = useState<string[]>([]);
   const [tippedSet, setTippedSet] = useState<Set<string>>(new Set());
   const [subscribedSet, setSubscribedSet] = useState<Set<string>>(new Set());
 
   // Infinite Scroll & Pagination
-  const [page, setPage] = useState(0);
+  const pageRef = useRef(0);
   const [hasMore, setHasMore] = useState(true);
   const [loadingFeed, setLoadingFeed] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [loadingStats, setLoadingStats] = useState(true);
 
   // Tabs for Feed filter
   const [activeTab, setActiveTab] = useState<'public' | 'members' | 'tips_members'>('public');
-
-  // Sidebar chain filter
-  const [activeChain, setActiveChain] = useState<number>(31611); // default Mezo Testnet
 
   // Comment Drawer states
   const [openCommentsPostId, setOpenCommentsPostId] = useState<string | null>(null);
@@ -153,7 +110,7 @@ export default function HomePageClient() {
   const [submittingCommentId, setSubmittingCommentId] = useState<string | null>(null);
 
   // Modal states
-  const [selectedCreatorForTip, setSelectedCreatorForTip] = useState<any>(null);
+  const [selectedCreatorForTip, setSelectedCreatorForTip] = useState<Creator | null>(null);
   const [isTipModalOpen, setIsTipModalOpen] = useState(false);
 
   const [shareUrl, setShareUrl] = useState('');
@@ -211,7 +168,7 @@ export default function HomePageClient() {
   const fetchFeed = useCallback(async (pageNum: number, isNew = false) => {
     if (isNew) {
       setLoadingFeed(true);
-      setPage(0);
+      pageRef.current = 0;
       setHasMore(true);
     } else {
       setLoadingMore(true);
@@ -283,7 +240,12 @@ export default function HomePageClient() {
       const commentsData = commentsRes.data || [];
 
       const commenterAddresses = Array.from(new Set(commentsData.map(c => c.user_address.toLowerCase())));
-      const profileMap = new Map<string, any>();
+      const profileMap = new Map<string, {
+        wallet_address: string;
+        username: string;
+        display_name: string;
+        avatar_url: string;
+      }>();
 
       if (commenterAddresses.length > 0) {
         const { data: commenterProfiles } = await supabase
@@ -298,7 +260,18 @@ export default function HomePageClient() {
         }
       }
 
-      const assembledPosts = postsData.map((post: any) => {
+      const assembledPosts = (postsData as unknown as {
+        id: string;
+        creator_id: string;
+        title: string;
+        content: string;
+        image_url: string | null;
+        video_url: string | null;
+        visibility: string;
+        category: string | null;
+        created_at: string;
+        user_profiles: unknown;
+      }[]).map((post) => {
         const likesForPost = likesData.filter(l => l.post_id === post.id);
         const commentsForPost = commentsData.filter(c => c.post_id === post.id).map(c => ({
           ...c,
@@ -326,7 +299,13 @@ export default function HomePageClient() {
         };
       });
 
-      setPosts(prev => isNew ? assembledPosts : [...prev, ...assembledPosts]);
+      setPosts(prev => {
+        const base = isNew ? [] : prev;
+        const postMap = new Map<string, FeedPost>();
+        base.forEach(p => postMap.set(p.id, p));
+        assembledPosts.forEach(p => postMap.set(p.id, p));
+        return Array.from(postMap.values());
+      });
       // setHasMore true if we loaded exactly page size (5) and we haven't crossed 50 yet
       setHasMore(postsData.length === 5 && (from + postsData.length) < 50);
     } catch (err) {
@@ -337,118 +316,6 @@ export default function HomePageClient() {
     }
   }, [userAddress, userId]);
 
-  // Fetch top creators and recent activities
-  const fetchStats = useCallback(async () => {
-    setLoadingStats(true);
-    try {
-      const oneWeekAgo = new Date();
-      oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
-      const oneWeekAgoISO = oneWeekAgo.toISOString();
-
-      const { data: weeklyTips } = await supabase
-        .from('tips')
-        .select('to_address, amount, chain_id')
-        .eq('chain_id', activeChain)
-        .gte('created_at', oneWeekAgoISO);
-
-      const weeklyMap = new Map<string, number>();
-      for (const tip of weeklyTips || []) {
-        const addr = tip.to_address.toLowerCase();
-        weeklyMap.set(addr, (weeklyMap.get(addr) || 0) + tip.amount);
-      }
-
-      const sortedAddresses = Array.from(weeklyMap.entries())
-        .sort((a, b) => b[1] - a[1])
-        .map(entry => entry[0]);
-
-      let weeklyCreators: TopCreatorRow[] = [];
-      if (sortedAddresses.length > 0) {
-        const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('id, wallet_address, username, display_name, avatar_url, bio, total_earned, suggested_amounts, button_text')
-          .in('wallet_address', sortedAddresses.slice(0, 10));
-
-        if (profiles) {
-          weeklyCreators = profiles
-            .sort((a, b) => sortedAddresses.indexOf(a.wallet_address.toLowerCase()) - sortedAddresses.indexOf(b.wallet_address.toLowerCase()))
-            .map(p => ({
-              ...p,
-              weeklyEarned: weeklyMap.get(p.wallet_address.toLowerCase()) || 0
-            }));
-        }
-      }
-
-      if (weeklyCreators.length < 10) {
-        const excludedAddresses = weeklyCreators.map(p => p.wallet_address.toLowerCase());
-        const take = 10 - weeklyCreators.length;
-
-        let backfillQuery = supabase
-          .from('user_profiles')
-          .select('id, wallet_address, username, display_name, avatar_url, bio, total_earned, suggested_amounts, button_text')
-          .eq('is_creator', true);
-
-        if (excludedAddresses.length > 0) {
-          backfillQuery = backfillQuery.not('wallet_address', 'in', `(${excludedAddresses.join(',')})`);
-        }
-
-        const { data: allCreators } = await backfillQuery
-          .order('total_earned', { ascending: false })
-          .limit(take);
-
-        const backfilled = (allCreators || []).map(p => ({
-          ...p,
-          weeklyEarned: 0
-        }));
-
-        weeklyCreators = [...weeklyCreators, ...backfilled];
-      }
-
-      setTopCreators(weeklyCreators);
-
-      const { data: recentTips } = await supabase
-        .from('tips')
-        .select('id, from_address, to_address, amount, created_at, message')
-        .order('created_at', { ascending: false })
-        .limit(5);
-
-      if (recentTips && recentTips.length > 0) {
-        const uniqueAddrs = Array.from(new Set([
-          ...recentTips.map(t => t.from_address.toLowerCase()),
-          ...recentTips.map(t => t.to_address.toLowerCase())
-        ]));
-
-        const { data: profiles } = await supabase
-          .from('user_profiles')
-          .select('id, wallet_address, username, display_name, avatar_url')
-          .in('wallet_address', uniqueAddrs);
-
-        const profMap = new Map<string, Creator>();
-        for (const p of profiles || []) {
-          profMap.set(p.wallet_address.toLowerCase(), p);
-        }
-
-        const activity = recentTips.map(t => ({
-          id: t.id,
-          from_address: t.from_address,
-          to_address: t.to_address,
-          amount: t.amount,
-          created_at: t.created_at,
-          message: t.message,
-          sender: profMap.get(t.from_address.toLowerCase()) || null,
-          receiver: profMap.get(t.to_address.toLowerCase()) || null
-        }));
-
-        setRecentActivity(activity);
-      } else {
-        setRecentActivity([]);
-      }
-    } catch (err) {
-      console.error('[homepage] fetchStats failed:', err);
-    } finally {
-      setLoadingStats(false);
-    }
-  }, [activeChain]);
-
   // Infinite Scroll Observer
   const observer = useRef<IntersectionObserver | null>(null);
   const lastElementRef = useCallback((node: HTMLDivElement) => {
@@ -456,11 +323,8 @@ export default function HomePageClient() {
     if (observer.current) observer.current.disconnect();
     observer.current = new IntersectionObserver(entries => {
       if (entries[0].isIntersecting && hasMore) {
-        setPage(prev => {
-          const next = prev + 1;
-          fetchFeed(next);
-          return next;
-        });
+        pageRef.current += 1;
+        fetchFeed(pageRef.current);
       }
     });
     if (node) observer.current.observe(node);
@@ -471,18 +335,13 @@ export default function HomePageClient() {
     loadAccessSets();
     loadFollowing();
     fetchFeed(0, true);
-  }, [loadAccessSets, loadFollowing]);
-
-  useEffect(() => {
-    fetchStats();
-  }, [fetchStats]);
+  }, [loadAccessSets, loadFollowing, fetchFeed]);
 
   // Live updates trigger
   useEffect(() => {
     const refreshData = () => {
       loadAccessSets();
       fetchFeed(0, true);
-      fetchStats();
     };
     window.addEventListener('tip-success', refreshData);
     window.addEventListener('subscription-success', refreshData);
@@ -490,7 +349,7 @@ export default function HomePageClient() {
       window.removeEventListener('tip-success', refreshData);
       window.removeEventListener('subscription-success', refreshData);
     };
-  }, [loadAccessSets, fetchStats]);
+  }, [loadAccessSets, fetchFeed]);
 
   // Follow trigger
   const handleFollowToggle = async (creatorId: string) => {
@@ -691,13 +550,10 @@ export default function HomePageClient() {
       <div className="absolute top-0 right-1/4 w-[500px] h-[500px] bg-gradient-to-tr from-[#F7931A]/5 to-purple-600/5 blur-[120px] rounded-full pointer-events-none z-0 hidden dark:block" />
       <div className="absolute top-[60vh] left-10 w-[400px] h-[400px] bg-gradient-to-tr from-emerald-600/5 to-blue-600/5 blur-[120px] rounded-full pointer-events-none z-0 hidden dark:block" />
 
-      <div className="w-full px-4 md:px-8 relative z-10">
+      <div className="w-full px-4 md:px-8 relative z-10 max-w-6xl mx-auto">
         
-        {/* Main Double Column Layout */}
-        <div className="grid grid-cols-1 xl:grid-cols-3 gap-8 items-start">
-          
-          {/* LEFT: Unified Feed Column (Spans 2) */}
-          <div className="xl:col-span-2 space-y-8">
+        {/* Unified Feed Column */}
+        <div className="space-y-8">
             
             {/* Feed Tabs Selector */}
             <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4 transition-colors duration-300">
@@ -713,7 +569,7 @@ export default function HomePageClient() {
                     <button
                       key={tab.id}
                       onClick={() => {
-                        setActiveTab(tab.id as any);
+                        setActiveTab(tab.id as 'public' | 'members' | 'tips_members');
                         setOpenCommentsPostId(null);
                       }}
                       className={`px-4 py-2 rounded-xl font-bold text-xs uppercase tracking-widest flex items-center gap-2 transition-all ${
@@ -884,12 +740,6 @@ export default function HomePageClient() {
                               </div>
                             </div>
                           )}
-
-                          {!post.image_url && !post.video_url && (
-                            <div className="h-44 border-b border-slate-200 dark:border-white/5 transition-colors duration-300">
-                              <TextThumbnail title={post.title} />
-                            </div>
-                          )}
                         </div>
                       )}
 
@@ -1053,166 +903,6 @@ export default function HomePageClient() {
               </div>
             )}
           </div>
-
-          {/* RIGHT: Stats / Activities Sidebar (Spans 1) */}
-          <div className="space-y-8 xl:sticky xl:top-28 z-20">
-            
-            {/* Blockchain wise Top Earnings */}
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[1.5rem] p-5 md:p-6 shadow-md dark:shadow-2xl relative overflow-hidden transition-all duration-300">
-              <div className="flex items-center justify-between border-b border-slate-200 dark:border-white/5 pb-4 mb-4 transition-colors duration-300">
-                <div>
-                  <h3 className="font-black font-outfit uppercase tracking-tight text-slate-800 dark:text-white text-base flex items-center gap-1.5">
-                    <TrendingUp className="w-4 h-4 text-[#F7931A]" /> Top Creators
-                  </h3>
-                  <p className="text-slate-400 dark:text-slate-500 text-[9px] font-black uppercase tracking-widest mt-0.5">Weekly Tipping</p>
-                </div>
-
-                <div className="flex bg-slate-100 dark:bg-white/[0.03] border border-slate-200 dark:border-white/5 p-0.5 rounded-lg transition-colors duration-300">
-                  <button
-                    onClick={() => setActiveChain(31611)}
-                    className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${
-                      activeChain === 31611 ? 'bg-[#F7931A] text-black' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
-                    }`}
-                  >
-                    Testnet
-                  </button>
-                  <button
-                    onClick={() => setActiveChain(31612)}
-                    className={`px-2 py-1 rounded text-[8px] font-black uppercase tracking-widest transition-all ${
-                      activeChain === 31612 ? 'bg-[#F7931A] text-black' : 'text-slate-500 hover:text-slate-800 dark:text-slate-400 dark:hover:text-white'
-                    }`}
-                  >
-                    Mainnet
-                  </button>
-                </div>
-              </div>
-
-              {loadingStats ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-8 bg-slate-100 dark:bg-white/5 rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : topCreators.length === 0 ? (
-                <div className="text-center py-4 text-slate-500 dark:text-slate-600 text-[10px] font-semibold uppercase tracking-widest italic">
-                  No creators found.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {topCreators.map((creator, index) => {
-                    const rank = index + 1;
-                    return (
-                      <div key={creator.id} className="flex items-center justify-between gap-2 group text-xs">
-                        <div className="flex items-center gap-2 min-w-0">
-                          <span className={`font-black font-outfit w-4 text-center text-[10px] ${
-                            rank === 1 ? 'text-[#F7931A]' :
-                            rank === 2 ? 'text-purple-500 dark:text-purple-400' :
-                            rank === 3 ? 'text-emerald-500 dark:text-emerald-400' : 'text-slate-400 dark:text-slate-500'
-                          }`}>
-                            {rank}
-                          </span>
-
-                          <Link href={`/${creator.username}`} className="w-8 h-8 rounded-lg overflow-hidden shrink-0 border border-slate-200 dark:border-white/10 bg-slate-100 dark:bg-[#111] block relative transition-colors duration-300">
-                            <img
-                              src={creator.avatar_url || `https://ui-avatars.com/api/?name=${encodeURIComponent(creator.display_name || creator.username)}`}
-                              alt=""
-                              className="w-full h-full object-cover"
-                            />
-                          </Link>
-
-                          <div className="min-w-0">
-                            <Link href={`/${creator.username}`} className="font-bold text-slate-800 dark:text-white hover:text-[#F7931A] dark:hover:text-[#F7931A] transition-colors truncate block text-[11px]">
-                              {creator.display_name || creator.username}
-                            </Link>
-                            <span className="text-[9px] text-slate-500 font-semibold truncate block">
-                              @{creator.username}
-                            </span>
-                          </div>
-                        </div>
-
-                        <div className="text-right shrink-0 flex items-center gap-2">
-                          <div className="flex flex-col text-[10px]">
-                            <span className="font-black text-slate-800 dark:text-white">
-                              {creator.weeklyEarned > 0 ? `$${creator.weeklyEarned.toFixed(1)}` : `$0.0`}
-                            </span>
-                          </div>
-
-                          <button
-                            onClick={() => {
-                              setSelectedCreatorForTip(creator);
-                              setIsTipModalOpen(true);
-                            }}
-                            className="p-1.5 bg-slate-100 dark:bg-white/5 hover:bg-[#F7931A] hover:text-black border border-slate-200 dark:border-white/5 rounded-lg transition-all"
-                            title={`Send Tip`}
-                          >
-                            <Zap className="w-3.5 h-3.5 fill-current" />
-                          </button>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-            {/* Live Tipping Activity Ticker */}
-            <div className="bg-white dark:bg-white/[0.02] border border-slate-200 dark:border-white/5 rounded-[1.5rem] p-5 md:p-6 shadow-md dark:shadow-2xl relative overflow-hidden transition-all duration-300">
-              <div className="border-b border-slate-200 dark:border-white/5 pb-4 mb-4 transition-colors duration-300">
-                <h3 className="font-black font-outfit uppercase tracking-tight text-slate-800 dark:text-white text-base flex items-center gap-1.5">
-                  <Clock className="w-4 h-4 text-purple-500 dark:text-purple-400" /> Tipping Activity
-                </h3>
-                <p className="text-slate-400 dark:text-slate-500 text-[9px] font-black uppercase tracking-widest mt-0.5">Last 5 Tip Recipients</p>
-              </div>
-
-              {loadingStats ? (
-                <div className="space-y-3">
-                  {[1, 2, 3].map(i => (
-                    <div key={i} className="h-8 bg-slate-100 dark:bg-white/5 rounded animate-pulse" />
-                  ))}
-                </div>
-              ) : recentActivity.length === 0 ? (
-                <div className="text-center py-6 text-slate-400 dark:text-slate-500 text-[10px] font-semibold uppercase tracking-widest italic border border-slate-200 dark:border-white/5 border-dashed rounded-xl transition-colors duration-300">
-                  No tipping activity.
-                </div>
-              ) : (
-                <div className="space-y-4">
-                  {recentActivity.map(activity => {
-                    const fromName = activity.sender?.display_name || activity.sender?.username || `${activity.from_address.slice(0, 5)}...${activity.from_address.slice(-3)}`;
-                    const toName = activity.receiver?.display_name || activity.receiver?.username || `${activity.to_address.slice(0, 5)}...${activity.to_address.slice(-3)}`;
-                    
-                    return (
-                      <div key={activity.id} className="flex gap-2.5 bg-slate-50 dark:bg-white/[0.01] border border-slate-200 dark:border-white/5 p-3 rounded-xl transition-all duration-300 text-xs">
-                        <div className="w-7 h-7 rounded-lg overflow-hidden border border-slate-200 dark:border-white/10 shrink-0 bg-slate-100 dark:bg-[#111] transition-colors duration-300">
-                          <img
-                            src={activity.sender?.avatar_url || `https://api.dicebear.com/9.x/shapes/svg?seed=${activity.from_address}`}
-                            alt=""
-                            className="w-full h-full object-cover"
-                          />
-                        </div>
-
-                        <div className="flex-1 min-w-0">
-                          <p className="text-[11px] text-slate-600 dark:text-slate-300 leading-tight">
-                            <span className="font-bold text-slate-800 dark:text-white">{fromName}</span> tipped <span className="font-bold text-[#F7931A]">{toName}</span>
-                          </p>
-                          <div className="flex items-center gap-2 mt-1">
-                            <span className="text-[9px] font-black font-outfit text-emerald-600 dark:text-emerald-400 px-1 py-0.5 bg-emerald-100 dark:bg-emerald-500/10 rounded-md">
-                              +${activity.amount} MUSD
-                            </span>
-                            <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase">
-                              {formatRelativeTime(activity.created_at)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              )}
-            </div>
-
-          </div>
-
-        </div>
 
       </div>
 
